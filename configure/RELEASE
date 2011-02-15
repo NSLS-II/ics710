@@ -26,6 +26,7 @@ TEMPLATE_TOP=$(EPICS_BASE)/templates/makeBaseApp/top
 
 # EPICS_BASE usually appears last so other apps can override stuff:
 EPICS_BASE=/usr/lib/epics
+#EPICS_BASE=/home/yhu/nfsControldev32/eclipse/workspace/base-3.14.12
 
 # Set RULES here if you want to take build rules from somewhere
 # other than EPICS_BASE:
