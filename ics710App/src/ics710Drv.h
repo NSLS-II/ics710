@@ -50,14 +50,15 @@ extern "C"
 	extern ics710Driver ics710Drivers[MAX_DEV];
 	extern unsigned nbrIcs710Drivers;
 	extern epicsMutexId ics710DmaMutex;
-	extern int errorExit(int errorCode, ics710Driver *pics710Driver);
-	extern int ics710Config(ics710Driver *pics710_driver);
+	//extern int errorExit(int errorCode, ics710Driver *pics710Driver);
+	//extern int releaseBoard(ics710Driver *pics710Driver);
 	extern int ics710Reconfig(ics710Driver *pics710Driver);
+	extern int ics710Config(ics710Driver *pics710_driver);
 
 }
 
 #define SUCCESS(x) (((x)&0x80000000) == 0)
-
+/*
 #define BOARD_RESET_ERROR		-100
 #define DEFAULT_CLOCK_ERROR		-99
 #define FPDP_CLOCK_ERROR		-98
@@ -76,5 +77,5 @@ extern "C"
 #define STATUS_ERROR			-85
 #define TIMEOUT_ERROR			-84
 #define ENABLE_ERROR			-83
-
+*/
 #endif
