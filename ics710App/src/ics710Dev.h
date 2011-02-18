@@ -6,22 +6,22 @@
 #include <dbScan.h>
 #include <link.h>
 
-struct ics710_record_t
+struct ics710Record
 {
-  int module;
+  int card;
   int channel;
   char name[8];
   void* pvt;
 };
 
-typedef struct ics710_record_t rec_t;
+//typedef struct ics710Record rec_t;
 
-template<class T> int ics710_init_record(T* record, DBLINK link);
-template<class T> int ics710_read_record(T* record);
-template<class T> int ics710_write_record(T* record);
-template<class T> int ics710_init_record_specialized(T* record);
-template<class T> int ics710_read_record_specialized(T* record);
-template<class T> int ics710_write_record_specialized(T* record);
-template<class T> IOSCANPVT ics710_getioscanpvt_specialized(T* record);
+template<class T> int ics710InitRecord(T* record, DBLINK link);
+template<class T> int ics710ReadRecord(T* record);
+template<class T> int ics710WriteRecord(T* record);
+template<class T> int ics710InitRecordSpecialized(T* record);
+template<class T> int ics710ReadRecordSpecialized(T* record);
+template<class T> int ics710WriteRecordSpecialized(T* record);
+template<class T> IOSCANPVT ics710GetioscanpvtSpecialized(T* record);
 
 #endif

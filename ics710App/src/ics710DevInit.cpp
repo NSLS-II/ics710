@@ -1,4 +1,5 @@
-#include "acqiris_dev.hh"
+/*Yong Hu: 02-08-2010*/
+#include "ics710Dev.h"
 
 #include <dbAccess.h>
 #include <recGbl.h>

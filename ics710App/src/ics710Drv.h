@@ -5,6 +5,7 @@
 
 #define MAX_CHANNEL 32
 #define MAX_DEV 8
+#define MAX_SAMPLE 1<<18 // 2^28 =  256K = 262144
 
 #include <dbScan.h>
 #include <epicsMutex.h>
@@ -27,6 +28,7 @@ struct ics710Driver {
   ICS710_MASTER_CONTROL masterControl;
   ICS710_STATUS stat;
   unsigned totalChannel;
+  unsigned swapTimes;
   unsigned long long channelCount; /*must be ULONGLONG*/
   unsigned nSamples; /* Total sample number per channels*/
   unsigned long long acqLength;
@@ -42,18 +44,19 @@ struct ics710Driver {
   unsigned count;
   unsigned timeouts;
   unsigned readErrors;
+  double chData[MAX_CHANNEL][MAX_SAMPLE];
 };
 //typedef struct ics710Driver ad_t;
 
 extern "C"
 {
 	extern ics710Driver ics710Drivers[MAX_DEV];
-	extern unsigned nbrIcs710Drivers;
-	extern epicsMutexId ics710DmaMutex;
+	//extern unsigned nbrIcs710Drivers;
+	//extern epicsMutexId ics710DmaMutex;
 	//extern int errorExit(int errorCode, ics710Driver *pics710Driver);
 	//extern int releaseBoard(ics710Driver *pics710Driver);
-	extern int ics710Reconfig(ics710Driver *pics710Driver);
-	extern int ics710Config(ics710Driver *pics710_driver);
+	//extern int ics710Reconfig(ics710Driver *pics710Driver);
+	//extern int ics710Config(ics710Driver *pics710_driver);
 
 }
 
@@ -78,4 +81,4 @@ extern "C"
 #define TIMEOUT_ERROR			-84
 #define ENABLE_ERROR			-83
 */
-#endif
+#endif //#ifndef ICS710_DRV_H

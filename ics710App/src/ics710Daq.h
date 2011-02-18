@@ -3,7 +3,8 @@
 #ifndef ICS710_DAQ_H
 #define ICS710_DAQ_H
 
-extern "C" {
+extern "C"
+{
   void ics710DaqThread(void* arg);
 }
 
