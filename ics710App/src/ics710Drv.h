@@ -3,16 +3,24 @@
 #ifndef ICS710_DRV_H
 #define ICS710_DRV_H
 
-#define MAX_CHANNEL 32
-#define MAX_DEV 8
-#define MAX_SAMPLE 1<<18 // 2^28 =  256K = 262144
-
 #include <dbScan.h>
 #include <epicsMutex.h>
 #include <epicsEvent.h>
 #include <epicsThread.h>
 
 #include "ics710api.h"
+
+#define MAX_CHANNEL 32
+#define MAX_DEV 8
+#define MAX_SAMPLE 1<<18 // 2^28 =  256K = 262144
+
+#undef ics710Debug
+//#define ICS710IOC_DEBUG
+#ifdef ICS710IOC_DEBUG
+#define ics710Debug(fmt, args...) printf(fmt, ## args)
+#else
+#define ics710Debug(fmt, args...)
+#endif
 /*
 struct ics710_data_t {
   unsigned nsamples;
@@ -20,7 +28,7 @@ struct ics710_data_t {
 };
 */
 struct ics710Driver {
-  unsigned module;
+ // unsigned module;
   HANDLE hDevice;
   ICS710_CONTROL control;
   ICS710_GAIN gainControl;
@@ -45,6 +53,7 @@ struct ics710Driver {
   unsigned timeouts;
   unsigned readErrors;
   double chData[MAX_CHANNEL][MAX_SAMPLE];
+  unsigned truncated;
 };
 //typedef struct ics710Driver ad_t;
 

@@ -1,86 +1,106 @@
-#include "acqiris_dev.hh"
-#include "acqiris_drv.hh"
+/*Yong Hu: 02-08-2010*/
+#include "ics710Drv.h"
+#include "ics710Dev.h"
 
 #include <dbScan.h>
 #include <dbAccess.h>
 #include <waveformRecord.h>
 
 #include <string.h>
+#include <stdio.h>
 
-static void rwf_short(void* dst, const void* src, unsigned nsamples)
+#define MAX_WF_FUNC 1
+
+static int computedVolt(void* dst, const double** src, unsigned nSamples)
+//	  pics710WfFuncStruct->rfunc(pwf->bptr, buffer, nsamples);
 {
-  unsigned size = nsamples*sizeof(short);
-  memcpy(dst, src, size);  
+	  unsigned i = 0;
+	  double* dDst = static_cast<double*>(dst);
+
+	  for (i= 0; i < nSamples; i++)
+	  {
+		  dDst[i] = *src[i];
+	  }
+	  ics710Debug("computeVolt: simple \n ");
+	  return 0;
 }
 
-static void rwf_float(void* dst, const void* src, unsigned nsamples)
-{
-  unsigned size = nsamples*sizeof(float);
-  memcpy(dst, src, size);  
-}
+typedef int (*ics710WfFunc)(void* dst, const double** src, unsigned nSamples);
 
-static void rwf_double(void* dst, const void* src, unsigned nsamples)
+struct ics710WfFuncStruct
 {
-  unsigned size = nsamples*sizeof(double);
-  memcpy(dst, src, size);  
-}
-
-typedef void (*acqiris_parwf_rfunc)(void* dst, const void* src, unsigned nsamples);
-
-struct acqiris_wfrecord_t
-{
-  acqiris_parwf_rfunc rfunc;
+	  ics710WfFunc rfunc;
 };
 
-template<> int acqiris_init_record_specialized(waveformRecord* pwf)
+static struct parseWf
 {
-  acqiris_record_t* arc = reinterpret_cast<acqiris_record_t*>(pwf->dpvt);
-  acqiris_wfrecord_t* rwf = new acqiris_wfrecord_t;
-  switch (pwf->ftvl) {
-  case DBF_SHORT:
-    rwf->rfunc = rwf_short;
-    break;
-  case DBF_FLOAT:
-    rwf->rfunc = rwf_float;
-    break;
-  case DBF_DOUBLE:
-    rwf->rfunc = rwf_double;
-    break;
-  default:
-    rwf->rfunc = 0;
-  }
-  if (rwf->rfunc) {
-    arc->pvt = rwf;
-    return 0;
-  } else {
-    delete rwf;
-    return -1;
-  }
+  const char* name;
+  ics710WfFunc rfunc;
+} parseWfString[MAX_WF_FUNC] =
+{
+  {"WVOL", computedVolt},
+  //{"WAVE", averageVolt},
+  //{"WRMS", rmsVolt},
+};
+
+template<> int ics710InitRecordSpecialized(waveformRecord* pwf)
+{
+	unsigned i;
+	  ics710RecPrivate* pics710RecPrivate = reinterpret_cast<ics710RecPrivate*>(pwf->dpvt);
+	  ics710Debug("ics710InitRecord: card: %d, channel: %d, name: %s \n", pics710RecPrivate->card, pics710RecPrivate->channel, pics710RecPrivate->name);
+
+	  for (i = 0; i < MAX_WF_FUNC; i++)
+	  {
+	       if (0 == strcmp(pics710RecPrivate->name, parseWfString[i].name))
+	       {
+		    	ics710WfFuncStruct* pics710WfFuncStruct = new ics710WfFuncStruct;
+		    	pics710WfFuncStruct->rfunc = parseWfString[i].rfunc;
+		        pics710RecPrivate->pvt = pics710WfFuncStruct;
+		        ics710Debug("parseWfString[i].name: %s \n", parseWfString[i].name);
+		        return 0;
+	       }
+	  }
+
+	  return -1;
 }
 
-template<> int acqiris_read_record_specialized(waveformRecord* pwf)
+template<> int ics710ReadRecordSpecialized(waveformRecord* pwf)
 {
-  acqiris_record_t* arc = reinterpret_cast<acqiris_record_t*>(pwf->dpvt);
-  ad_t* ad = &acqiris_drivers[arc->module];
-  acqiris_wfrecord_t* rwf = reinterpret_cast<acqiris_wfrecord_t*>(arc->pvt);
-  const void* buffer = ad->data[arc->channel].buffer;
-  unsigned nsamples = ad->data[arc->channel].nsamples;
-  if (nsamples > pwf->nelm) {
-    nsamples = pwf->nelm;
-    ad->truncated++;
-  }
-  epicsMutexLock(ad->daq_mutex);
-  rwf->rfunc(pwf->bptr, buffer, nsamples);
-  epicsMutexUnlock(ad->daq_mutex);
-  pwf->nord = nsamples;
-  return 0;
+	  ics710RecPrivate* pics710RecPrivate = reinterpret_cast<ics710RecPrivate*>(pwf->dpvt);
+	  ics710Driver* pics710Driver = &ics710Drivers[pics710RecPrivate->card];
+	  ics710WfFuncStruct* pics710WfFuncStruct = reinterpret_cast<ics710WfFuncStruct*>(pics710RecPrivate->pvt);
+	  //const double** buffer = &pics710Driver->chData[pics710RecPrivate->channel];
+	  ics710Debug("channel #%d: waveform record read started \n ", pics710RecPrivate->channel);
+
+	  if (pics710Driver->nSamples > pwf->nelm)
+	  {
+		  pics710Driver->nSamples = pwf->nelm;
+		  pics710Driver->truncated++;
+		  printf("Warning: set 'NELM' field > nSamples \n ");
+	  }
+
+	  epicsMutexLock(pics710Driver->daqMutex);
+	  //ics710Debug("channel #%d: start to copy data to waveform buffer \n", pics710RecPrivate->channel);
+	  //pics710WfFuncStruct->rfunc(pwf->bptr, buffer, pics710Driver->nSamples);
+	  /*discard the garbage data: 1K / totalChannel*/
+	  memcpy((double*) pwf->bptr, (const double*) &pics710Driver->chData[pics710RecPrivate->channel][1024/pics710Driver->totalChannel],
+			  (pics710Driver->nSamples - 1024/pics710Driver->totalChannel) * sizeof(double));//works
+	  //memcpy((double*) pwf->bptr, pics710Driver->chData[pics710RecPrivate->channel], pics710Driver->nSamples * sizeof(double));//works
+	  //ics710Debug("channel #%d: copy buffer done \n", pics710RecPrivate->channel);
+	  epicsMutexUnlock(pics710Driver->daqMutex);
+
+	  pwf->nord = pics710Driver->nSamples;
+	  ics710Debug("channel #%d: waveform record read completed \n\n", pics710RecPrivate->channel);
+
+	  return 0;
 }
 
 
-template<> IOSCANPVT acqiris_getioscanpvt_specialized(waveformRecord* pwf)
+template<> IOSCANPVT ics710GetioscanpvtSpecialized(waveformRecord* pwf)
 {
-  acqiris_record_t* arc = reinterpret_cast<acqiris_record_t*>(pwf->dpvt);
-  ad_t* ad = &acqiris_drivers[arc->module];
-  return ad->ioscanpvt;
+  ics710RecPrivate* pics710RecPrivate = reinterpret_cast<ics710RecPrivate*>(pwf->dpvt);
+  ics710Driver* pics710Driver = &ics710Drivers[pics710RecPrivate->card];
+  ics710Debug("card #%d: Intr I/O occurred \n ", pics710RecPrivate->card);
+  return pics710Driver->ioscanpvt;
 }
 

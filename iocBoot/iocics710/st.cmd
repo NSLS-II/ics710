@@ -1,4 +1,9 @@
 #!../../bin/linux-x86/ics710
+
+epicsEnvSet("EPICS_CA_MAX_ARRAY_BYTES","10000000")
+epicsEnvSet("ENGINEER","Yong Hu: x3961")
+epicsEnvSet("LOCATION","Blg 902 Rm 18")
+
 cd ../..
 
 dbLoadDatabase "dbd/ics710.dbd"
@@ -11,6 +16,7 @@ ics710Init(0, 2, 1000, 0, 1, 1.24, 0, 0)
 
 #dbLoadTemplate "db/userHost.substitutions"
 #dbLoadRecords "db/dbSubExample.db", "user=yhuHost"
+dbLoadTemplate "db/ics710Channel.substitutions"
 
 iocInit
 

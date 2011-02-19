@@ -31,7 +31,7 @@ extern "C"
   {
 	  if ( (0 < pics710Driver->hDevice) && (NULL != pics710Driver->pAcqData) )
 	  {
-		    printf ("release resources \n");
+		    printf ("release the board \n");
 			ics710FreeDmaBuffer (pics710Driver->hDevice, pics710Driver->pAcqData, pics710Driver->bytesToRead);
 			pics710Driver->pAcqData = NULL;
 			close(pics710Driver->hDevice);
@@ -165,7 +165,6 @@ extern "C"
 			return errorCode;
 		}
 		//usleep(8719 / (1000 * pics710Driver->actualADCRate / 256)); //not working well
-
 		// ADC sync
 		strobe = time(NULL);
 		do
@@ -411,7 +410,8 @@ extern "C"
 			}
 
 			/*debugging*/
-			printf ("%d channels; %d samples per channel, buffer length: %llu, acquisition length: %llu \n",
+			printf("\n********************************************************************************************************************** \n");
+			printf("%d channels; %d samples per channel, buffer length: %llu, acquisition length: %llu \n",
 					pics710Driver->totalChannel, pics710Driver->nSamples, pics710Driver->bufLength + 1, pics710Driver->acqLength + 1);
 
 			if(0 == pics710Driver->control.trigger_select)
@@ -444,12 +444,11 @@ extern "C"
 			snprintf(name, sizeof(name), "tics710Daq%u", card);
 			scanIoInit(&pics710Driver->ioscanpvt);
 			epicsThreadMustCreate(name,epicsThreadPriorityMin,5000000,ics710DaqThread,pics710Driver);
-			printf("spawn a data acquisition thread for card #%d: %s \n ", card, name);
+			printf("spawn a data acquisition thread for ics710 card #%d: %s \n ", card, name);
+			printf("********************************************************************************************************************** \n\n");
 		}// if (0 > pics710Driver->hDevice) else
 
 	//} //for(module=0; module < MAX_DEV; )
-
-	printf("ics710 card #%d is initialized\n", card);
 	return 0;
   }//  static int ics710Init(int card_totalChannel_nSamples_gain_filter_adcClockRate_triggerSel)
 

@@ -6,7 +6,7 @@
 #include <dbScan.h>
 #include <link.h>
 
-struct ics710Record
+struct ics710RecPrivate
 {
   int card;
   int channel;
@@ -14,14 +14,14 @@ struct ics710Record
   void* pvt;
 };
 
-//typedef struct ics710Record rec_t;
+//typedef struct ics710RecPrivate rec_t;
 
 template<class T> int ics710InitRecord(T* record, DBLINK link);
 template<class T> int ics710ReadRecord(T* record);
-template<class T> int ics710WriteRecord(T* record);
+//template<class T> int ics710WriteRecord(T* record);
 template<class T> int ics710InitRecordSpecialized(T* record);
 template<class T> int ics710ReadRecordSpecialized(T* record);
-template<class T> int ics710WriteRecordSpecialized(T* record);
+//template<class T> int ics710WriteRecordSpecialized(T* record);
 template<class T> IOSCANPVT ics710GetioscanpvtSpecialized(T* record);
 
 #endif

@@ -1,28 +1,30 @@
-#include "acqiris_dev.hh"
+/*Yong Hu: 02-08-2010*/
+#include "ics710Dev.h"
 
 #include <devSup.h>
 #include <dbScan.h>
 #include <epicsExport.h>
 #include <waveformRecord.h>
 
-extern "C" {
+extern "C"
+{
   static long init_record(void* record)
   {
-    waveformRecord* r = reinterpret_cast<waveformRecord*>(record);
-    return acqiris_init_record(r, r->inp);
+	    waveformRecord* r = reinterpret_cast<waveformRecord*>(record);
+	    return ics710InitRecord(r, r->inp);
   }
 
   static long read_wf(void* record)
   {
-    waveformRecord* r = reinterpret_cast<waveformRecord*>(record);
-    return acqiris_read_record(r);
+	    waveformRecord* r = reinterpret_cast<waveformRecord*>(record);
+	    return ics710ReadRecord(r);
   }
 
   static long get_ioint_info(int cmd, void* record, IOSCANPVT* ppvt)
   {  
-    waveformRecord* r = reinterpret_cast<waveformRecord*>(record);
-    *ppvt = acqiris_getioscanpvt_specialized(r);
-    return 0;
+	    waveformRecord* r = reinterpret_cast<waveformRecord*>(record);
+	    *ppvt = ics710GetioscanpvtSpecialized(r);
+	    return 0;
   }
 
   struct {
@@ -32,7 +34,7 @@ extern "C" {
     DEVSUPFUN init_record;
     DEVSUPFUN get_ioint_info;
     DEVSUPFUN read_wf;
-  } acqiris_dev_wf_t = {
+  } ics710DevWf = {
     5,
     NULL,
     NULL,
@@ -40,5 +42,5 @@ extern "C" {
     (DEVSUPFUN)get_ioint_info,
     read_wf
   };
-  epicsExportAddress(dset, acqiris_dev_wf_t);
+  epicsExportAddress(dset, ics710DevWf);
 }

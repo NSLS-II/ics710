@@ -22,6 +22,9 @@ ics710_SRCS += ics710_registerRecordDeviceDriver.cpp
 # and the static library(libics710.a) is installed in $(TOP)/lib/linux-x86
 ics710_SRCS += ics710DrvInit.cpp
 ics710_SRCS += ics710Daq.cpp 
+ics710_SRCS += ics710DevInit.cpp
+ics710_SRCS += ics710DrvWf.cpp
+ics710_SRCS += ics710DevWf.cpp 
 # Build the main IOC entry point on workstation OSs.
 ics710_SRCS_DEFAULT += ics710Main.cpp
 
