@@ -102,6 +102,21 @@ extern "C"
 			for (i = 0; i < pics710Driver->swapTimes; i++)//swapTimes=2 works for Continuous Mode, seems not for Capture mode;
 			//for(i = 0; i < 2; i++)//swapTimes=2 works for Continuous Mode, seems not for Capture mode;
 			{
+				if (ICS710_OK != (errorCode = ics710Enable (pics710Driver->hDevice)))
+				{
+					printf("can't enable the board, errorCode: %d \n", errorCode);
+	    			goto daqStart;
+				}
+
+				if (ICS710_CAPTURE_WITHPRETRG == pics710Driver->control.acq_mode)
+				{
+					if (ICS710_OK != (errorCode = (ics710Arm (pics710Driver->hDevice))))
+					{
+						printf ("can't arm the board, errorCode: %d \n", errorCode);
+		    			goto daqStart;
+					}
+				}
+
 	    		if (ICS710_TRIG_INTERNAL == pics710Driver->control.trigger_select) //for Continuous Mode, either put here or above works
 	    		{
 	    			if (ICS710_OK != (errorCode = ics710Trigger(pics710Driver->hDevice)))
@@ -157,6 +172,14 @@ extern "C"
 						i,	pics710Driver->stat.adc_intrpt_rqst, pics710Driver->stat.pci_buf_oflow,
 							pics710Driver->stat.irq, pics710Driver->stat.board_triggered);
 				}
+
+
+	        	if (ICS710_OK != (errorCode = ics710Disable(pics710Driver->hDevice))) // If disable the acquisition, must re-enable at the beginning of the loop
+	        	{
+	        		printf ("can't disable the acquisition, errorCode: %d \n", errorCode);
+	        		//break;
+	    			goto daqStart;
+	        	}
 
 			}//for(i = 0; i < pics710Driver->swapTimes; i++)
 /*

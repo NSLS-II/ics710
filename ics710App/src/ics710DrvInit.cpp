@@ -191,7 +191,7 @@ extern "C"
 			//ics710Initialized = 1;
 			//printf("ADC has been reset and calibrated \n");
 		}//		if(!ics710Initialized)
-
+/*
 		if (ICS710_OK != (errorCode = ics710Enable (pics710Driver->hDevice)))
 		{
 			printf("can't enable the board, errorCode: %d \n", errorCode);
@@ -208,7 +208,7 @@ extern "C"
 				return errorCode;
 			}
 			epicsThreadSleep(2.00);
-		}
+		}*/
 /*
 		if (ICS710_TRIG_INTERNAL == pics710Driver->control.trigger_select) //for Continuous Mode, either put here or above works
 		{
@@ -385,10 +385,10 @@ extern "C"
 			pics710Driver->totalChannel = totalChannel;
 			pics710Driver->nSamples = nSamples;
 			pics710Driver->ics710AdcClockRate = adcClockRate; /*5.12MHz*/
-			/* Yong Hu: if using external trigger and Continuous Mode, must set extrig_mode to level(high) control */
+/* // Yong Hu: if using external trigger and Continuous Mode, must set extrig_mode to level(high) control; disable and re-enable DAQ doesn't work
 			if ( (ICS710_TRIG_EXTERNAL == pics710Driver->control.trigger_select) || (ICS710_CONTINUOUS == pics710Driver->control.acq_mode) )
 				pics710Driver->control.extrig_mode = ICS710_EXTRIG_HIGH;
-
+*/
 			/* Calculated parameters: swapTimes, acquisition length, channel count, buffer length*/
 			if (ICS710_CONTINUOUS == pics710Driver->control.acq_mode)
 				pics710Driver->swapTimes = 2;
