@@ -9,6 +9,7 @@
 #include <link.h>
 
 #include <stdio.h>
+#include <stdlib.h>
 
 static int ics710DadField(void* record, const char* message, const char* fieldname)
 {
@@ -20,6 +21,7 @@ static int ics710DadField(void* record, const char* message, const char* fieldna
 template<class T> int ics710InitRecord(T* record, DBLINK link)
 {
 	  int status;
+	  //ics710RecPrivate *pics710RecPrivate;
 
 	  if (link.type != INST_IO)
 	    return ics710DadField(record, "wrong link type", "");
@@ -29,6 +31,7 @@ template<class T> int ics710InitRecord(T* record, DBLINK link)
 		  return ics710DadField(record, "invalid link", "");
 
 	  ics710RecPrivate* pics710RecPrivate = new ics710RecPrivate;
+	  //ics710RecPrivate *pics710RecPrivate = (ics710RecPrivate *)malloc(sizeof(ics710RecPrivate));//works, but need 'stdlib.h'
 	  const char* sinp = pinstio->string;
 	  status = sscanf(sinp, "C%u S%u %s", &pics710RecPrivate->card, &pics710RecPrivate->channel, pics710RecPrivate->name);
 	  if (status != 3)

@@ -32,7 +32,7 @@ struct ics710WfFuncStruct
 	  ics710WfFunc rfunc;
 };
 
-static struct parseWf
+static struct
 {
   const char* name;
   ics710WfFunc rfunc;
@@ -82,7 +82,7 @@ template<> int ics710ReadRecordSpecialized(waveformRecord* pwf)
 	  epicsMutexLock(pics710Driver->daqMutex);
 	  //ics710Debug("channel #%d: start to copy data to waveform buffer \n", pics710RecPrivate->channel);
 	  //pics710WfFuncStruct->rfunc(pwf->bptr, buffer, pics710Driver->nSamples);
-	  /*discard the garbage data: 1K / totalChannel*/
+	  /*discard the garbage data(1024/totalChannel) at the beginning of the waveform*/
 	  memcpy((double*) pwf->bptr, (const double*) &pics710Driver->chData[pics710RecPrivate->channel][1024/pics710Driver->totalChannel],
 			  (pics710Driver->nSamples - 1024/pics710Driver->totalChannel) * sizeof(double));//works
 	  //memcpy((double*) pwf->bptr, pics710Driver->chData[pics710RecPrivate->channel], pics710Driver->nSamples * sizeof(double));//works

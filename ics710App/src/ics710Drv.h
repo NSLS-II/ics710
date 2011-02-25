@@ -60,12 +60,13 @@ struct ics710Driver {
 extern "C"
 {
 	extern ics710Driver ics710Drivers[MAX_DEV];
+	extern int ics710Initialized;
 	//extern unsigned nbrIcs710Drivers;
 	//extern epicsMutexId ics710DmaMutex;
 	//extern int errorExit(int errorCode, ics710Driver *pics710Driver);
 	//extern int releaseBoard(ics710Driver *pics710Driver);
 	//extern int ics710Reconfig(ics710Driver *pics710Driver);
-	//extern int ics710Config(ics710Driver *pics710_driver);
+	extern int ics710Config(ics710Driver *pics710_driver);
 
 }
 

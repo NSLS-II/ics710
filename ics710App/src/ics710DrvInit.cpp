@@ -1,5 +1,4 @@
 /*Yong Hu: 02-08-2010*/
-
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -12,18 +11,20 @@
 #include <sys/ioctl.h>
 #include <sys/poll.h>
 
-#include "ics710Drv.h"
-#include "ics710Daq.h"
-
+/*vendor's Device Driver*/
 #include "ics710api.h"
 
-#include <epicsExport.h>
-#include <iocsh.h>
+#include "epicsExport.h"
+#include "iocsh.h"
 #include "epicsThread.h"
+
+#include "ics710Drv.h"
+#include "ics710Daq.h"
 
 extern "C"
 {
   ics710Driver ics710Drivers[MAX_DEV];
+  int ics710Initialized = 0;
   //unsigned nbrIcs710Drivers = 0;
   //epicsMutexId ics710DmaMutex;
 
@@ -42,7 +43,7 @@ extern "C"
 	return 0;
   }
 
-  static int ics710Config(ics710Driver *pics710Driver)
+  int ics710Config(ics710Driver *pics710Driver)
   {
 	  int errorCode = 0;
 	  double defaultADCFreq;
@@ -157,33 +158,39 @@ extern "C"
 			return errorCode;
 		}
 
-		// ADC Reset and begin Zero Calibration: must do this
-		if (ICS710_OK != (errorCode = ics710ADCReset (pics710Driver->hDevice)))
+		if(!ics710Initialized) //02-21-2011: must do ADC reset after board reset
 		{
-			printf("can't reset ADC, errorCode: %d \n", errorCode);
-			releaseBoard(pics710Driver);
-			return errorCode;
-		}
-		//usleep(8719 / (1000 * pics710Driver->actualADCRate / 256)); //not working well
-		// ADC sync
-		strobe = time(NULL);
-		do
-		{
-			usleep(10000);//sleep 10ms
-			if(ICS710_OK != (errorCode = ics710StatusGet(pics710Driver->hDevice, &pics710Driver->stat)))
+			// ADC Reset and begin Zero Calibration: must do this
+			if (ICS710_OK != (errorCode = ics710ADCReset (pics710Driver->hDevice)))
 			{
-				printf("can't read status register, errorCode: %d \n", errorCode);
+				printf("can't reset ADC, errorCode: %d \n", errorCode);
 				releaseBoard(pics710Driver);
-				break;
+				return errorCode;
 			}
-			if((time(NULL) - strobe) > timeout)
+			//usleep(8719 / (1000 * pics710Driver->actualADCRate / 256)); //not working well
+			// ADC sync
+			strobe = time(NULL);
+			do
 			{
-				printf("ADC calibration timeout: waited for %d seconds \n", timeout);
-				releaseBoard(pics710Driver);
-				break;
-			}
+				usleep(10000);//sleep 10ms
+				if(ICS710_OK != (errorCode = ics710StatusGet(pics710Driver->hDevice, &pics710Driver->stat)))
+				{
+					printf("can't read status register, errorCode: %d \n", errorCode);
+					releaseBoard(pics710Driver);
+					break;
+				}
+				if((time(NULL) - strobe) > timeout)
+				{
+					printf("ADC calibration timeout: waited for %d seconds \n", timeout);
+					releaseBoard(pics710Driver);
+					break;
+				}
 
-		} while(0 != pics710Driver->stat.cal);
+			} while(0 != pics710Driver->stat.cal);
+
+			//ics710Initialized = 1;
+			//printf("ADC has been reset and calibrated \n");
+		}//		if(!ics710Initialized)
 
 		if (ICS710_OK != (errorCode = ics710Enable (pics710Driver->hDevice)))
 		{
@@ -202,7 +209,17 @@ extern "C"
 			}
 			epicsThreadSleep(2.00);
 		}
-
+/*
+		if (ICS710_TRIG_INTERNAL == pics710Driver->control.trigger_select) //for Continuous Mode, either put here or above works
+		{
+			if (ICS710_OK != (errorCode = ics710Trigger(pics710Driver->hDevice)))
+			{
+				printf ("can't software trigger the board, errorCode: %d \n", errorCode);
+				releaseBoard(pics710Driver);
+				return errorCode;
+			}
+		}
+*/
 		return errorCode;
 
   }// int ics710Config(ics710Driver *pics710Driver)
@@ -225,6 +242,7 @@ extern "C"
 
    // for(module=0; module < MAX_DEV; )
 	//{
+ /*
         if (card < 0 || card > 7)
         {
         	printf("Error: Numbering card should be from 0 to 7: \n");
@@ -272,10 +290,16 @@ extern "C"
         	printf("Error: Acquisition Mode should be from 0 to 2 \n");
         	return -1;
         }
-
-		ics710Driver *pics710Driver = &ics710Drivers[card];
+*/
+      if ((card < 0 || card > 7) || (totalChannel <0 || totalChannel > 32 || (0 != (totalChannel % 2))) || (nSamples < 0 || nSamples > 262144 ) || (gain < 0 || gain > 15 )
+    		  || (filter < 0 || filter > 15 ) || (adcClockRate < 1.00 || adcClockRate > 13.8 ) || (triggerSel < 0 || triggerSel > 1 ) || (acqMode < 0 || acqMode > 2 ))
+      {
+    	  printf("Error: should setup parameters as 'ics710Init(0, 2, 1000, 0, 1, 1.024, 0, 0)': the first card(0), 2(even number) channels, 1000 samples/channel;\n gain is 0--10V input range, filter is 1--10KHz bandwidth, adcClockRate([1.024, 13.8]) is 1.024MHz, triggerSource(0) is internal, acquisition mode(0) is Continuous \n");
+    	  return -1;
+      }
+		ics710Driver *pics710Driver = &ics710Drivers[card];//can't use ics710Drivers[card], must use &
 		pics710Driver->hDevice = -1;
-		//pics710_driver->hDevice = open("/dev/ics710-%u", O_RDWR, module+1);//doesn't work
+		//pics710Driver->hDevice = open("/dev/ics710-%d", O_RDWR, card+1);//doesn't work
 		switch(card)
 		{
 		case 0:
@@ -324,7 +348,7 @@ extern "C"
 
 		if (0 > pics710Driver->hDevice)
 		{
-			printf ("Error: cann't open /dev/ics710-%u, '0' for the first card, '1' for the second, etc. check out if ics710.ko is loaded and /dev/ics710[1:8] exists \n",card, card+1);
+			printf ("Error: cann't open /dev/ics710-%u, '0' for the first card, '1' for the second, etc. check out if ics710.ko is loaded and /dev/ics710[1:8] exists \n",card+1);
 			return -1;
 		}
 		else
@@ -349,6 +373,7 @@ extern "C"
 			pics710Driver->control.fpdp_termin = ICS710_ENABLE; /* ICS710_ENABLE or ICS710_DISABLE */
 			pics710Driver->control.extclk_term = ICS710_ENABLE; /* ICS710_ENABLE or ICS710_DISABLE*/
 			pics710Driver->control.extrig_term = ICS710_ENABLE;/* ICS710_ENABLE or ICS710_DISABLE */
+			/* Yong Hu: if using external trigger and Continuous Mode, must set extrig_mode to level(high) control */
 			pics710Driver->control.extrig_mode = ICS710_EXTRIG_RISING;/* 0:ICS710_EXTRIG_HIGH,1:ICS710_EXTRIG_RISING,2:ICS710_EXTRIG_LOW, 3: ICS710_EXTRIG_FALLING*/
 			pics710Driver->masterControl.board_address = 0;
 		/*setup parameters during initialization */
@@ -360,6 +385,9 @@ extern "C"
 			pics710Driver->totalChannel = totalChannel;
 			pics710Driver->nSamples = nSamples;
 			pics710Driver->ics710AdcClockRate = adcClockRate; /*5.12MHz*/
+			/* Yong Hu: if using external trigger and Continuous Mode, must set extrig_mode to level(high) control */
+			if ( (ICS710_TRIG_EXTERNAL == pics710Driver->control.trigger_select) || (ICS710_CONTINUOUS == pics710Driver->control.acq_mode) )
+				pics710Driver->control.extrig_mode = ICS710_EXTRIG_HIGH;
 
 			/* Calculated parameters: swapTimes, acquisition length, channel count, buffer length*/
 			if (ICS710_CONTINUOUS == pics710Driver->control.acq_mode)
@@ -368,7 +396,8 @@ extern "C"
 				pics710Driver->swapTimes = 1;
 
 			if (ICS710_CAPTURE_WITHPRETRG == pics710Driver->control.acq_mode)
-				pics710Driver->acqLength = pics710Driver->nSamples - 1024 / pics710Driver->totalChannel - 1;
+				//pics710Driver->acqLength = pics710Driver->nSamples - 1024 / pics710Driver->totalChannel - 1;
+				pics710Driver->acqLength = pics710Driver->nSamples - 32 - 1;
 			else
 				pics710Driver->acqLength = pics710Driver->nSamples - 1;
 				//pics710Driver->acqLength = pics710Driver->nSamples/2 - 1;//not working neither
@@ -383,6 +412,7 @@ extern "C"
 			if (pics710Driver->control.packed_data == 0)
 				pics710Driver->bufLength = (pics710Driver->totalChannel * pics710Driver->nSamples / 2)/pics710Driver->swapTimes - 1;
 				//pics710Driver->bufLength = (pics710Driver->totalChannel * pics710Driver->nSamples)/pics710Driver->swapTimes - 1;
+				//pics710Driver->bufLength = (pics710Driver->totalChannel * pics710Driver->nSamples) - 1;
 			else
 				pics710Driver->bufLength = (pics710Driver->totalChannel * pics710Driver->nSamples / 4)/pics710Driver->swapTimes - 1;
 			if (pics710Driver->bufLength > 262143)
@@ -411,8 +441,8 @@ extern "C"
 
 			/*debugging*/
 			printf("\n********************************************************************************************************************** \n");
-			printf("%d channels; %d samples per channel, buffer length: %llu, acquisition length: %llu \n",
-					pics710Driver->totalChannel, pics710Driver->nSamples, pics710Driver->bufLength + 1, pics710Driver->acqLength + 1);
+			printf("%d channels; %d samples/ch, bufLength: %llu, acqLength: %llu, swapTimes: %u, bytesToRead at each buffer swap: %u, totalDmaBuffer: %d Bytes \n",pics710Driver->totalChannel,
+					pics710Driver->nSamples, pics710Driver->bufLength + 1, pics710Driver->acqLength + 1, pics710Driver->swapTimes, pics710Driver->bytesToRead, pics710Driver->swapTimes * pics710Driver->bytesToRead);
 
 			if(0 == pics710Driver->control.trigger_select)
 				printf("internal triggering\n");
@@ -449,6 +479,7 @@ extern "C"
 		}// if (0 > pics710Driver->hDevice) else
 
 	//} //for(module=0; module < MAX_DEV; )
+	//ics710Initialized = 1;
 	return 0;
   }//  static int ics710Init(int card_totalChannel_nSamples_gain_filter_adcClockRate_triggerSel)
 
