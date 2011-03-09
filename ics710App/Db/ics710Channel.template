@@ -1,0 +1,44 @@
+#Yong Hu: ext.3961; see ics710Channel.substitutions
+#HRD(high resolution digitizer) ICS710: 8 channels in total, only 2 channels used here;
+#Follow NSLS-2 naming convention: [PSy[:PI]][-SSy[:SI]][-TSy[:TI]]{Dev[:DI]}[SgN[:SgI][-SgD]] 
+#AS-AM{RadMon:1}DoseRate:1min-I
+
+record(waveform,"${Psy}-${Ssy}{${Dev}}RawVolt:Ch${CHANNEL}-I")
+{
+   field(SCAN,"I/O Intr")
+   field(DESC,"ics710 raw voltage waveform")
+   field(DTYP,"ics710")
+   field(NELM,"${NELM}")
+   field(FTVL,"DOUBLE")
+   field(INP,"@C${CARD} S${CHANNEL} WVOL")
+   field(PREC,"6")
+   field(FLNK,"${Psy}-${Ssy}{${Dev}}WfAveVolt:Ch${CHANNEL}-I_")
+}
+
+record(waveform,"${Psy}-${Ssy}{${Dev}}WfAveVolt:Ch${CHANNEL}-I_")
+{
+   field(DESC,"ics710 averaged voltage")
+   field(DTYP,"ics710")
+   field(NELM,"1")
+   field(FTVL,"DOUBLE")
+   field(INP,"@C${CARD} S${CHANNEL} WAVE")
+   field(PREC,"6")
+}
+
+record(subArray,"${Psy}-${Ssy}{${Dev}}SubAveVolt:Ch${CHANNEL}-I_")
+{
+   field(DESC,"extract ics710 averaged voltage")
+   field(INP,"${Psy}-${Ssy}{${Dev}}WfAveVolt:Ch${CHANNEL}-I_ CP")
+   field (FTVL, "DOUBLE")
+   field (NELM, "1")
+   field (MALM, "1")
+   field (INDX, "0")
+   field(PREC,"6")
+}
+
+record(ai,"${Psy}-${Ssy}{${Dev}}AveVolt:Ch${CHANNEL}-I")
+{
+   field(DESC,"ics710 averaged voltage")
+   field(INP,"${Psy}-${Ssy}{${Dev}}SubAveVolt:Ch${CHANNEL}-I_ CP")
+   field(PREC,"6")
+}

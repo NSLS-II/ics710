@@ -1,5 +1,5 @@
 /* Yong Hu: started on 02-08-2011
- * Prototype IOC fully functions on 03-03-2011
+ * Prototype IOC fully functions on Mar-03-2011
  * */
 #include "ics710Drv.h"
 #include "ics710Dev.h"
@@ -16,15 +16,6 @@
 static int getRawVolt(void* dst, const double* src, unsigned effectiveSamples)
 //	  pics710WfFuncStruct->rfunc(pwf->bptr, buffer, nsamples);
 {
-/*	  unsigned i = 0;
-	  double* dDst = static_cast<double*>(dst);
-
-	  for (i= 0; i < effectiveSamples; i++)
-	  {
-		  dDst[i] = src[i];
-	  }
-	  //ics710Debug("computeVolt: simple \n ");
-*/
 	  memcpy((double *) dst, src, effectiveSamples * sizeof(double));
 	  return 0;
 }
@@ -40,7 +31,7 @@ static int getAveVolt(void* dst, const double* src, unsigned effectiveSamples)
 		  dDst[0] += src[i];
 	  }
 	  dDst[0] /= effectiveSamples;
-	  //ics710Debug("computeVolt: simple \n ");
+
 	  return 0;
 }
 
@@ -66,7 +57,7 @@ template<> int ics710InitRecordSpecialized(waveformRecord* pwf)
 {
 	unsigned i;
 	  ics710RecPrivate* pics710RecPrivate = reinterpret_cast<ics710RecPrivate*>(pwf->dpvt);
-	  ics710Debug("ics710InitRecord: card: %d, channel: %d, name: %s \n", pics710RecPrivate->card, pics710RecPrivate->channel, pics710RecPrivate->name);
+	  ics710Debug("ics710InitWfRecord: card: %d, channel: %d, name: %s \n", pics710RecPrivate->card, pics710RecPrivate->channel, pics710RecPrivate->name);
 
 	  for (i = 0; i < MAX_WF_FUNC; i++)
 	  {
@@ -88,7 +79,6 @@ template<> int ics710ReadRecordSpecialized(waveformRecord* pwf)
 	  ics710RecPrivate* pics710RecPrivate = reinterpret_cast<ics710RecPrivate*>(pwf->dpvt);
 	  ics710Driver* pics710Driver = &ics710Drivers[pics710RecPrivate->card];
 	  ics710WfFuncStruct* pics710WfFuncStruct = reinterpret_cast<ics710WfFuncStruct*>(pics710RecPrivate->pvt);
-	  //const double** buffer = &pics710Driver->chData[pics710RecPrivate->channel];
 	  ics710Debug("channel #%d: waveform record read started \n ", pics710RecPrivate->channel);
 
 	  if ((0 == strcmp(pics710RecPrivate->name, "WVOL")) && (pics710Driver->nSamples > pwf->nelm))
@@ -99,15 +89,12 @@ template<> int ics710ReadRecordSpecialized(waveformRecord* pwf)
 	  }
 
 	  epicsMutexLock(pics710Driver->daqMutex);
-	  //ics710Debug("channel #%d: start to copy data to waveform buffer \n", pics710RecPrivate->channel);
-	  /*discard the garbage data(1024/totalChannel) at the beginning of the waveform*/
-	  /*memcpy((double*) pwf->bptr, (const double*) &pics710Driver->chData[pics710RecPrivate->channel][1024/pics710Driver->totalChannel],
-			  (pics710Driver->nSamples - 1024/pics710Driver->totalChannel) * sizeof(double)); *///works
-	  //memcpy((double*) pwf->bptr, pics710Driver->chData[pics710RecPrivate->channel], pics710Driver->nSamples * sizeof(double));//works
-
-	  pics710WfFuncStruct->rfunc(pwf->bptr, (const double*) &pics710Driver->chData[pics710RecPrivate->channel][1024/pics710Driver->totalChannel],
-			  (pics710Driver->nSamples - 1024/pics710Driver->totalChannel));
-	  //ics710Debug("channel #%d: copy buffer done \n", pics710RecPrivate->channel);
+	  /*discard the garbage data(1024/totalChannel) at the beginning of the waveform
+	   * 03/04/2011:don't need to discard any data since the garbage data only occur at the first acquisition
+	   * */
+	  /*pics710WfFuncStruct->rfunc(pwf->bptr, (const double*) &pics710Driver->chData[pics710RecPrivate->channel][1024/pics710Driver->totalChannel],
+			  (pics710Driver->nSamples - 1024/pics710Driver->totalChannel));*/
+	  pics710WfFuncStruct->rfunc(pwf->bptr, (const double*) &pics710Driver->chData[pics710RecPrivate->channel][0],pics710Driver->nSamples );
 	  epicsMutexUnlock(pics710Driver->daqMutex);
 
 	  pwf->nord = pics710Driver->nSamples;
@@ -115,7 +102,6 @@ template<> int ics710ReadRecordSpecialized(waveformRecord* pwf)
 
 	  return 0;
 }
-
 
 template<> IOSCANPVT ics710GetioscanpvtSpecialized(waveformRecord* pwf)
 {

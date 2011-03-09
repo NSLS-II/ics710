@@ -1,0 +1,10 @@
+#Yong Hu: ext.3961; see ics710Card.template
+#HRD(high resolution digitizer) ICS710;
+#Follow NSLS-2 naming convention: [PSy[:PI]][-SSy[:SI]][-TSy[:TI]]{Dev[:DI]}[SgN[:SgI][-SgD]] 
+#AS-AM{RadMon:1}DoseRate:1min-I
+
+file "db/ics710Card.template"
+{
+    pattern {Psy,     Ssy,     Dev,    CARD }
+            {"LBT",   "BI",   "HRD",   "0" }
+}

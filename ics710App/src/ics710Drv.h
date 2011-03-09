@@ -6,7 +6,6 @@
 #include <dbScan.h>
 #include <epicsMutex.h>
 #include <epicsEvent.h>
-#include <epicsThread.h>
 
 #include "ics710api.h"
 
@@ -23,7 +22,6 @@
 #endif
 
 struct ics710Driver {
- // unsigned module;
   HANDLE hDevice;
   ICS710_CONTROL control;
   ICS710_GAIN gainControl;
@@ -49,16 +47,10 @@ struct ics710Driver {
   double chData[MAX_CHANNEL][MAX_SAMPLE];
   unsigned truncated;
 };
-//typedef struct ics710Driver ad_t;
 
 extern "C"
 {
 	extern ics710Driver ics710Drivers[MAX_DEV];
-	//extern unsigned nbrIcs710Drivers;
-	//extern epicsMutexId ics710DmaMutex;
-	//extern int releaseBoard(ics710Driver *pics710Driver);
-	extern int ics710Config(ics710Driver *pics710_driver);
-
 }
 
 #endif //#ifndef ICS710_DRV_H

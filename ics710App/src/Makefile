@@ -25,6 +25,10 @@ ics710_SRCS += ics710Daq.cpp
 ics710_SRCS += ics710DevInit.cpp
 ics710_SRCS += ics710DrvWf.cpp
 ics710_SRCS += ics710DevWf.cpp 
+ics710_SRCS += ics710DrvMbbo.cpp
+ics710_SRCS += ics710DevMbbo.cpp 
+ics710_SRCS += ics710DrvLongout.cpp
+ics710_SRCS += ics710DevLongout.cpp
 # Build the main IOC entry point on workstation OSs.
 ics710_SRCS_DEFAULT += ics710Main.cpp
 

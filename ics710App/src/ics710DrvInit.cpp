@@ -1,17 +1,11 @@
 /* Yong Hu: started on 02-08-2011
  * Prototype IOC fully functions on 03-03-2011
  * */
+
 #include <stdio.h>
 #include <string.h>
-#include <stdlib.h>
-#include <math.h>
 #include <fcntl.h>
 #include <unistd.h>
-#include <time.h>
-#include <errno.h>
-#include <sys/types.h>
-#include <sys/ioctl.h>
-#include <sys/poll.h>
 
 /*vendor's Device Driver*/
 #include "ics710api.h"
@@ -26,8 +20,6 @@
 extern "C"
 {
   ics710Driver ics710Drivers[MAX_DEV];
-  int ics710Initialized = 0;
-  //unsigned nbrIcs710Drivers = 0;
   //epicsMutexId ics710DmaMutex;
 
   static int releaseBoard(ics710Driver *pics710Driver)
@@ -45,7 +37,7 @@ extern "C"
 	return 0;
   }
 
-  int ics710Config(ics710Driver *pics710Driver)
+  static int ics710Config(ics710Driver *pics710Driver)
   {
 	  int errorCode = 0;
 	  double defaultADCFreq;
@@ -166,7 +158,7 @@ extern "C"
 		strobe = time(NULL);
 		do
 		{
-			usleep(10000);//sleep 10ms
+			usleep(10000);//delay 10ms
 			if(ICS710_OK != (errorCode = ics710StatusGet(pics710Driver->hDevice, &pics710Driver->stat)))
 			{
 				printf("can't read status register, errorCode: %d \n", errorCode);
@@ -200,27 +192,19 @@ extern "C"
 			epicsThreadSleep(2.00);
 		}
 
-		if (ICS710_TRIG_INTERNAL == pics710Driver->control.trigger_select) //for Continuous Mode, either put here or above works
-		{
-			if (ICS710_OK != (errorCode = ics710Trigger(pics710Driver->hDevice)))
-				printf ("can't software trigger the board, errorCode: %d \n", errorCode);
-			releaseBoard(pics710Driver);
-			return errorCode;
-		}
-
 		return errorCode;
 
   }// int ics710Config(ics710Driver *pics710Driver)
 
   static int ics710Init(int card, int totalChannel, int nSamples, int gain, int filter,
-		  double adcClockRate, int triggerSel, int acqMode)
+		  double samplingRate, int osr, int triggerSel, int acqMode)
   {
       char name[32];
 
       if ((card < 0 || card > 7) || (totalChannel <0 || totalChannel > 32 || (0 != (totalChannel % 2))) || (nSamples < 0 || nSamples > 262144 ) || (gain < 0 || gain > 15 )
-    		  || (filter < 0 || filter > 15 ) || (adcClockRate < 1.00 || adcClockRate > 13.8 ) || (triggerSel < 0 || triggerSel > 1 ) || (acqMode < 0 || acqMode > 2 ))
+    		  || (filter < 0 || filter > 15 ) || (samplingRate < 1.00 || samplingRate > 216 ) || (osr < 0 || osr > 2 ) || (triggerSel < 0 || triggerSel > 1 ) || (acqMode < 0 || acqMode > 2 ))
       {
-    	  printf("Error: should setup parameters as 'ics710Init(0, 2, 1000, 0, 1, 1.024, 0, 0)': the first card(0), 2(even number) channels, 1000 samples/channel;\n gain is 0--10V input range, filter is 1--10KHz bandwidth, adcClockRate([1.024, 13.8]) is 1.024MHz, triggerSource(0) is internal, acquisition mode(0) is Continuous \n");
+    	  printf("Error: should setup parameters looks like 'ics710Init(0, 2, 1000, 0, 1, 200, 2, 1, 1)': the first card(0), 2(even number) channels, 1000 samples/channel;\n gain is 0--10V input range, filter is 1--10KHz bandwidth, samplingRate([4, 216]) is 200KHz, over-sampling ratio is 32, triggerSource(1) is external, acquisition mode(1) is CaptureNoPreTrigger \n");
     	  return -1;
       }
 
@@ -289,7 +273,7 @@ extern "C"
 			pics710Driver->control.fpdp_enable  = ICS710_DISABLE;/* ICS710_ENABLE or ICS710_DISABLE */
 			pics710Driver->control.enable = ICS710_DISABLE;/* ICS710_ENABLE or ICS710_DISABLE */
 			pics710Driver->control.int_trigger = ICS710_INACTIVE; /* ICS710_INACTIVE or ICS710_ACTIVE*/
-			pics710Driver->control.oversamp_ratio = ICS710_SAMP_NORMAL; /*0:ICS710_SAMP_NORMAL,1:ICS710_SAMP_DOUBLE,2:ICS710_SAMP_QUAD*/
+			//pics710Driver->control.oversamp_ratio = ICS710_SAMP_NORMAL; /*0:ICS710_SAMP_NORMAL,1:ICS710_SAMP_DOUBLE,2:ICS710_SAMP_QUAD*/
 			pics710Driver->control.adc_hpfilter_enable = ICS710_DISABLE; /* ICS710_ENABLE or ICS710_DISABLE                  */
 			pics710Driver->control.zero_cal = ICS710_ZCAL_INTERNAL;/* 0: ICS710_ZCAL_EXTERNAL, 1:ICS710_ZCAL_INTERNAL */
 			pics710Driver->control.packed_data = ICS710_UNPACKED_DATA;/* ICS710_UNPACKED_DATA or ICS710_PACKED_DATA */
@@ -300,18 +284,18 @@ extern "C"
 			pics710Driver->control.fpdp_termin = ICS710_ENABLE; /* ICS710_ENABLE or ICS710_DISABLE */
 			pics710Driver->control.extclk_term = ICS710_ENABLE; /* ICS710_ENABLE or ICS710_DISABLE*/
 			pics710Driver->control.extrig_term = ICS710_ENABLE;/* ICS710_ENABLE or ICS710_DISABLE */
-			/* Yong Hu: if using external trigger and Continuous Mode, must set extrig_mode to level(high) control */
 			pics710Driver->control.extrig_mode = ICS710_EXTRIG_RISING;/* 0:ICS710_EXTRIG_HIGH,1:ICS710_EXTRIG_RISING,2:ICS710_EXTRIG_LOW, 3: ICS710_EXTRIG_FALLING*/
 			pics710Driver->masterControl.board_address = 0;
+
 		/*setup parameters during initialization */
 			pics710Driver->control.trigger_select = triggerSel; /*ICS710_TRIG_INTERNAL or ICS710_TRIG_EXTERNAL*/
 			pics710Driver->control.acq_mode = acqMode; /* ICS710_CONTINUOUS or ICS710_CAPTURE_NOPRETRG or ICS710_CAPTURE_WITHPRETRG  */
+			pics710Driver->control.oversamp_ratio = osr;/*0:ICS710_SAMP_NORMAL,1:ICS710_SAMP_DOUBLE,2:ICS710_SAMP_QUAD*/
+			pics710Driver->ics710AdcClockRate = samplingRate * (256/(1<<osr))/1000;
 			pics710Driver->gainControl.input_voltage_range = gain;
-			//inputRange = 10.0/(1+gainControl.input_voltage_range);
 			pics710Driver->filterControl.cutoff_freq_range = filter;
 			pics710Driver->totalChannel = totalChannel;
 			pics710Driver->nSamples = nSamples;
-			pics710Driver->ics710AdcClockRate = adcClockRate; /*5.12MHz*/
  // Yong Hu: if using external trigger and Continuous Mode, must set extrig_mode to level(high) control; disable and re-enable DAQ doesn't work
 			if ( (ICS710_TRIG_EXTERNAL == pics710Driver->control.trigger_select) && (ICS710_CONTINUOUS == pics710Driver->control.acq_mode) )
 				pics710Driver->control.extrig_mode = ICS710_EXTRIG_HIGH;
@@ -338,7 +322,6 @@ extern "C"
 
 			/*allocate DMA memory and clear it*/
 			pics710Driver->bytesToRead = (pics710Driver->bufLength + 1) * 8;  /* bytes to be read from ics-710 memory*/
-			//pics710Driver->bytesToRead = (pics710Driver->bufLength + 1) * 4;  /* bytes to be read from ics-710 memory*/
 			pics710Driver->pAcqData = (long *) ics710AllocateDmaBuffer (pics710Driver->hDevice, pics710Driver->bytesToRead);
 			if (NULL == pics710Driver->pAcqData)
 			{
@@ -356,7 +339,7 @@ extern "C"
 
 			/*debugging*/
 			printf("\n********************************************************************************************************************** \n");
-			printf("%d channels; %d samples/ch, bufLength: %llu, acqLength: %llu, bytesToRead at each buffer swap: %u, totalDmaBuffer: %d Bytes \n",pics710Driver->totalChannel,
+			printf("%d channels; %d samples/ch, bufLength: %llu, acqLength: %llu, bytesToRead: %u, totalDmaBuffer: %d Bytes \n",pics710Driver->totalChannel,
 					pics710Driver->nSamples, pics710Driver->bufLength + 1, pics710Driver->acqLength + 1, pics710Driver->bytesToRead, pics710Driver->bytesToRead);
 
 			if(0 == pics710Driver->control.trigger_select)
@@ -365,6 +348,8 @@ extern "C"
 				printf("external triggering and trigger mode is high-level\n");
 			else if (1 == pics710Driver->control.extrig_mode)
 				printf("external triggering and trigger mode is rising-edge \n");
+			else
+				printf("for external triggering, it's better to use rising-edge for Capture Mode and high-level for Continuous Mode");
 
 			if (ICS710_CAPTURE_WITHPRETRG == pics710Driver->control.acq_mode)
 				printf("Mode of Operation is CaptureWithPreTrigger \n");
@@ -386,7 +371,6 @@ extern "C"
 			/*create a thread*/
 			pics710Driver->runSemaphore = epicsEventMustCreate(epicsEventEmpty);
 			pics710Driver->daqMutex = epicsMutexMustCreate();
-			//ics710DmaMutex = epicsMutexMustCreate();
 			pics710Driver->count = 0;
 			snprintf(name, sizeof(name), "tics710Daq%u", card);
 			scanIoInit(&pics710Driver->ioscanpvt);
@@ -404,19 +388,20 @@ extern "C"
   static const iocshArg ics710InitArg3 = { "gain",iocshArgInt};
   static const iocshArg ics710InitArg4 = { "filter",iocshArgInt};
   static const iocshArg ics710InitArg5 = { "adcClockRate",iocshArgDouble};
-  static const iocshArg ics710InitArg6 = { "triggerSel",iocshArgInt};
-  static const iocshArg ics710InitArg7 = { "acqMode",iocshArgInt};
+  static const iocshArg ics710InitArg6 = { "osr",iocshArgInt};
+  static const iocshArg ics710InitArg7 = { "triggerSel",iocshArgInt};
+  static const iocshArg ics710InitArg8 = { "acqMode",iocshArgInt};
 
-  static const iocshArg * const ics710InitArgs[8] = {
+  static const iocshArg * const ics710InitArgs[9] = {
 		  &ics710InitArg0, &ics710InitArg1, &ics710InitArg2, &ics710InitArg3,
-		  &ics710InitArg4, &ics710InitArg5, &ics710InitArg6, &ics710InitArg7 };
+		  &ics710InitArg4, &ics710InitArg5, &ics710InitArg6, &ics710InitArg7, &ics710InitArg8};
 
-  static const iocshFuncDef ics710InitFuncDef = {"ics710Init",8,ics710InitArgs};
+  static const iocshFuncDef ics710InitFuncDef = {"ics710Init",9,ics710InitArgs};
 
   static void ics710InitCallFunc(const iocshArgBuf *args)
   {
 	  ics710Init(args[0].ival, args[1].ival, args[2].ival, args[3].ival,
-			     args[4].ival, args[5].dval, args[6].ival, args[7].ival);
+			     args[4].ival, args[5].dval, args[6].ival, args[7].ival, args[7].ival);
   }
 
   void ics710Registrar()

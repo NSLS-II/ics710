@@ -17,6 +17,8 @@ include $(TOP)/configure/CONFIG
 #DB += userHost.substitutions
 DB += ics710Channel.template
 DB += ics710Channel.substitutions
+DB += ics710Card.template
+DB += ics710Card.substitutions
 
 #----------------------------------------------------
 # If <anyname>.db template is not named <anyname>*.template add

@@ -1,4 +1,7 @@
-/*Yong Hu: 02-08-2010*/
+/* Yong Hu: started on 02-08-2011
+ * Prototype IOC fully functions on 03-03-2011
+ * */
+
 #include "ics710Dev.h"
 
 #include <dbAccess.h>
@@ -68,7 +71,7 @@ template<class T> int ics710ReadRecord(T* record)
   }
   return 0;
 }
-/*
+
 template<class T> int ics710WriteRecord(T* record)
 {
   int status = ics710WriteRecordSpecialized(record);
@@ -80,20 +83,21 @@ template<class T> int ics710WriteRecord(T* record)
   }
   return 0;
 }
-*/
+
+//static int ics710Init(int card,int totalChannel,int nSamples,int gain,int filter,double samplingRate,int osr, int triggerSel, int acqMode)
 
 //#include <longinRecord.h>
-//#include <longoutRecord.h>
+#include <longoutRecord.h>//totalChannel, nSamples, samplingRate
 //#include <aiRecord.h>
 //#include <aoRecord.h>
-//#include <mbboRecord.h>
+#include <mbboRecord.h> //gain, filter,osr,triggerSel, acqMode
 #include <waveformRecord.h>
 
 //template int acqiris_init_record(longinRecord*,   DBLINK);
-//template int acqiris_init_record(longoutRecord*,  DBLINK);
+template int ics710InitRecord(longoutRecord*,  DBLINK);
 //template int acqiris_init_record(aiRecord*,       DBLINK);
-//template int acqiris_init_record(aoRecord*,       DBLINK);
-//template int acqiris_init_record(mbboRecord*,     DBLINK);
+//template int ics710InitRecord(aoRecord*,       DBLINK);
+template int ics710InitRecord(mbboRecord*,     DBLINK);
 template int ics710InitRecord(waveformRecord*, DBLINK);
 //template int acqiris_read_record(longinRecord*);
 //template int acqiris_read_record(longoutRecord*);
@@ -101,7 +105,7 @@ template int ics710InitRecord(waveformRecord*, DBLINK);
 //template int acqiris_read_record(aoRecord*);
 //template int acqiris_read_record(mbboRecord*);
 template int ics710ReadRecord(waveformRecord*);
-//template int acqiris_write_record(longoutRecord*);
-//template int acqiris_write_record(aoRecord*);
-//template int acqiris_write_record(mbboRecord*);
+template int ics710WriteRecord(longoutRecord*);
+//template int ics710WriteRecord(aoRecord*);
+template int ics710WriteRecord(mbboRecord*);
 

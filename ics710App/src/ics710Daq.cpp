@@ -5,14 +5,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
-#include <math.h>
-#include <fcntl.h>
 #include <unistd.h>
-#include <time.h>
-#include <errno.h>
-#include <sys/types.h>
-#include <sys/ioctl.h>
-#include <sys/poll.h>
 
 #include "ics710Daq.h"
 #include "ics710Drv.h"
@@ -20,7 +13,6 @@
 #include "ics710api.h"
 
 #include "epicsThread.h"
-#include "epicsTime.h"
 
 extern "C"
 {
@@ -29,6 +21,7 @@ extern "C"
   {
 	  unsigned channel = 0;
 	  unsigned nSamples = 0;
+	  double rawVolt;
 
 	  ics710Debug("split the unpacked data into different channel data \n");
 	  for (channel = 0; channel < pics710Driver->totalChannel; channel++)
@@ -36,26 +29,22 @@ extern "C"
 		  for (nSamples = 0; nSamples < pics710Driver->nSamples; nSamples++)
 		  {
 			  if (0 != (channel % 2))
-				  pics710Driver->chData[channel][nSamples]  =
-				   		  (((int)pics710Driver->pAcqData[nSamples * pics710Driver->totalChannel + channel - 1] / (256* 8388608.0))
-				           * (10.00 / (1+pics710Driver->gainControl.input_voltage_range)) * 0.98) - 0.046; //1<<23 = 8388608, volt-volt/50 (50Ohm?), ch1DcOffset=0.0481
+			  {
+				  //1<<23 = 8388608, volt-volt/50 (50Ohm?), ch1DcOffset=0.046 for 10V Input Range
+				  rawVolt = ((int)pics710Driver->pAcqData[nSamples * pics710Driver->totalChannel + channel - 1] / (256* 8388608.0)) * (10.00 / (1+pics710Driver->gainControl.input_voltage_range));
+				  pics710Driver->chData[channel][nSamples] = rawVolt*(1-1/(50*(1+pics710Driver->gainControl.input_voltage_range))) - 0.046;
+			  }
 			  else
-				  pics710Driver->chData[channel][nSamples] =
-						  (((int)pics710Driver->pAcqData[nSamples * pics710Driver->totalChannel + channel + 1] / (256* 8388608.0))
-				           * (10.00 / (1+pics710Driver->gainControl.input_voltage_range)) * 0.98) -0.046;
+			  {
+				  //1<<23 = 8388608, volt-volt/50 (50Ohm?), ch1DcOffset=0.0481
+				  rawVolt = ((int)pics710Driver->pAcqData[nSamples * pics710Driver->totalChannel + channel + 1] / (256* 8388608.0)) * (10.00 / (1+pics710Driver->gainControl.input_voltage_range));
+				  pics710Driver->chData[channel][nSamples] = 0.98*rawVolt - 0.046;
+			  }
 
 			  //(pics710Driver->chData[channel])++;
 		  }//		  for (nSamples = 0; nSamples < pics710Driver->nSamples; nSamples++)
 
 	  }//	  for (channel = 0; channel < pics710Driver->totalChannel; channel++)
-
-	  ics710Debug("channel #1 data from 600 to 610: \n");
-	  for (nSamples = 600; nSamples < 610; nSamples++)
-		  ics710Debug("%f \t", pics710Driver->chData[0][nSamples]);
-
-	  ics710Debug("channel #2 data from 600 to 610: \n");
-	  for (nSamples = 600; nSamples < 610; nSamples++)
-		  ics710Debug("%f \t", pics710Driver->chData[1][nSamples]);
 
 	  return 0;
   }
@@ -70,14 +59,13 @@ extern "C"
 	 ics710Driver *pics710Driver = static_cast<ics710Driver*>(arg);
 	 int errorCode;
      int timeout = 5; /* seconds */
-     pics710Driver->running = 1;
+     //pics710Driver->running = 1;
 
     while (1)
     {
 		ics710Debug("enter ics710DaqThread. \n");
     	epicsThreadSleep(1.00);
-    	//epicsEventWait(pics710Driver->runSemaphore);
-		//printf (" get runSemaphore \n");
+    	epicsEventWait(pics710Driver->runSemaphore);
         do
         {
  daqStart:
@@ -87,23 +75,29 @@ extern "C"
 				goto daqStart;
 			}
 
+			if (ICS710_TRIG_INTERNAL == pics710Driver->control.trigger_select)
+			{
+				if (ICS710_OK != (errorCode = ics710Trigger(pics710Driver->hDevice)))
+				{
+					printf ("can't software trigger the board, errorCode: %d \n", errorCode);
+					goto daqStart;
+				}
+			}
+
 			if (ICS710_OK != (errorCode = ics710WaitADCInt(pics710Driver->hDevice, &timeout)))
 			{
 				printf ("wait ADC interrupt timeout(%d seconds), errorCode: %d \n", timeout, errorCode);
 				pics710Driver->timeouts++;
 				goto daqStart;
 			}
-			//epicsMutexLock(pics710Driver->daqMutex);
-			//epicsMutexLock(ics710DmaMutex);
-			//if (ICS710_OK != (errorCode = read(pics710Driver->hDevice, pics710Driver->pAcqData + i*(pics710Driver->bufLength +1)*2, pics710Driver->bytesToRead)))
-			//'cast long' still works: bufLength = 500 - 1, pics710Driver->pAcqData + 2*500 =  1000 * 4 (4Bytes/long) = 4K; must use i*()*2, if use i*()*3, errorCode=-1
+
+			epicsMutexLock(pics710Driver->daqMutex);
 			if (0 > (errorCode = read(pics710Driver->hDevice, pics710Driver->pAcqData, pics710Driver->bytesToRead)))
 			{
 				printf ("can't read the data, errorCode: %d \n", errorCode);
 				goto daqStart;
 			}
-            //epicsMutexUnlock(ics710DmaMutex);
-            //epicsMutexUnlock(pics710Driver->daqMutex);
+            epicsMutexUnlock(pics710Driver->daqMutex);
 
 			if (pics710Driver->control.packed_data == 0)
 				fileUnpackedData710(pics710Driver);
