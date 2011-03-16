@@ -41,4 +41,36 @@ record(ai,"${Psy}-${Ssy}{${Dev}}AveVolt:Ch${CHANNEL}-I")
    field(DESC,"ics710 averaged voltage")
    field(INP,"${Psy}-${Ssy}{${Dev}}SubAveVolt:Ch${CHANNEL}-I_ CP")
    field(PREC,"6")
+   #field(UNIT,"Volt")
+   field(FLNK, "${Psy}-${Ssy}{${Dev}}Counter:Ch${CHANNEL}-I")
 }
+
+record(calc,"${Psy}-${Ssy}{${Dev}}Counter:Ch${CHANNEL}-I")
+{
+   field(DESC,"counter")
+	field(CALC, "A+1")
+	field(INPA, "${Psy}-${Ssy}{${Dev}}Counter:Ch${CHANNEL}-I.VAL  NPP NMS")
+	field(TSEL, "${Psy}-${Ssy}{${Dev}}AveVolt:Ch${CHANNEL}-I.TIME")
+}
+
+#calculate timestamp difference (ics710 DAQ time);
+record(aSub,"${Psy}-${Ssy}{${Dev}}aSub-I_")
+{
+   field(DESC,"calculate DaqTime")
+    field (INAM,"ics710AsubInit")
+    field (SNAM,"ics710AsubProcess")
+    field (INPA, "${Psy}-${Ssy}{${Dev}}AveVolt:Ch0-I CP")
+    field (FTA, "DOUBLE")
+    field (NOA, "1")
+    field (OUTA, "${Psy}-${Ssy}{${Dev}}DaqTime-I_")
+    field (FTVA, "DOUBLE")
+    field (NOVA, "1")
+}
+
+record (ai, "${Psy}-${Ssy}{${Dev}}DaqTime-I_")
+{
+   field(DESC,"DaqTime")
+    field (INP,"${Psy}-${Ssy}{${Dev}}aSub-I_.VALA CP")
+    field (PREC,"3")
+    #field(UNIT,"ms")
+ }

@@ -1,4 +1,6 @@
 registrar(ics710Registrar)
+function(ics710AsubInit)
+function(ics710AsubProcess)
 #device(ai,        INST_IO, ics710Dev_ai_t,  "acqiris")
 #device(ao,        INST_IO, ics710DevAo,  "ics710")
 #device(longin,    INST_IO, acqiris_dev_li_t,  "acqiris")

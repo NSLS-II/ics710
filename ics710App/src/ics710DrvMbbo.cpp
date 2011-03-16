@@ -15,6 +15,8 @@
 #include <stdlib.h>
 
 #define MAX_MBBO_FUNC 6
+/*global variable: defined in ics710DrvInit.cpp*/
+extern  ics710Driver ics710Drivers[MAX_DEV];
 
 static int setGain(ics710Driver *pics710Driver, int val)
 {

@@ -6,6 +6,7 @@
 #include <dbScan.h>
 #include <epicsMutex.h>
 #include <epicsEvent.h>
+#include <epicsTime.h>
 
 #include "ics710api.h"
 
@@ -48,9 +49,18 @@ struct ics710Driver {
   unsigned truncated;
 };
 
+/*don't use 'extern' to define global variables which will be used in both C and C++:
+ *startTime will be used ics710Daq.cpp and ics710Asbu.c
+ * */
+#ifdef __cplusplus
 extern "C"
 {
-	extern ics710Driver ics710Drivers[MAX_DEV];
+#endif
+	//extern epicsTimeStamp startTime;
+	//extern ics710Driver ics710Drivers[MAX_DEV];
+	//extern epicsTime startTime;
+#ifdef __cplusplus
 }
+#endif
 
 #endif //#ifndef ICS710_DRV_H

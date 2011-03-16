@@ -13,9 +13,14 @@
 #include "ics710api.h"
 
 #include "epicsThread.h"
+#include "epicsTime.h"
+
+/*global variable: defined in ics710DrvInit.cpp*/
+extern epicsTimeStamp startTime;
 
 extern "C"
 {
+  //epicsTimeStamp startTime;
   //static int fileUnpackedData710 (pics710Driver->pAcqData, pics710Driver->totalChannel, i, pics710Driver->nSamples)
   static int fileUnpackedData710 (ics710Driver *pics710Driver)
   {
@@ -32,13 +37,15 @@ extern "C"
 			  {
 				  //1<<23 = 8388608, volt-volt/50 (50Ohm?), ch1DcOffset=0.046 for 10V Input Range
 				  rawVolt = ((int)pics710Driver->pAcqData[nSamples * pics710Driver->totalChannel + channel - 1] / (256* 8388608.0)) * (10.00 / (1+pics710Driver->gainControl.input_voltage_range));
-				  pics710Driver->chData[channel][nSamples] = rawVolt*(1-1/(50*(1+pics710Driver->gainControl.input_voltage_range))) - 0.046;
+				  pics710Driver->chData[channel][nSamples] = rawVolt;
+				  //pics710Driver->chData[channel][nSamples] = rawVolt*(1-1/(50*(1+pics710Driver->gainControl.input_voltage_range))) - 0.046;
 			  }
 			  else
 			  {
 				  //1<<23 = 8388608, volt-volt/50 (50Ohm?), ch1DcOffset=0.0481
 				  rawVolt = ((int)pics710Driver->pAcqData[nSamples * pics710Driver->totalChannel + channel + 1] / (256* 8388608.0)) * (10.00 / (1+pics710Driver->gainControl.input_voltage_range));
-				  pics710Driver->chData[channel][nSamples] = 0.98*rawVolt - 0.046;
+				  pics710Driver->chData[channel][nSamples] = rawVolt;
+				  //pics710Driver->chData[channel][nSamples] = 0.98*rawVolt - 0.046;
 			  }
 
 			  //(pics710Driver->chData[channel])++;
@@ -58,7 +65,8 @@ extern "C"
   {
 	 ics710Driver *pics710Driver = static_cast<ics710Driver*>(arg);
 	 int errorCode;
-     int timeout = 5; /* seconds */
+     int timeout = 1; /* seconds */
+     char buf[30];
      //pics710Driver->running = 1;
 
     while (1)
@@ -69,6 +77,8 @@ extern "C"
         do
         {
  daqStart:
+ 	 	 	//epicsTimeGetCurrent(&startTime);
+ 	 	 	//startTime = epicsTime::getCurrent();
 			if (ICS710_OK != (errorCode = ics710BufferReset (pics710Driver->hDevice)))
 			{
 				printf("can't reset buffer register, errorCode: %d \n", errorCode);
@@ -90,7 +100,11 @@ extern "C"
 				pics710Driver->timeouts++;
 				goto daqStart;
 			}
-
+ 	 	 	epicsTimeGetCurrent(&startTime);
+ /*
+ 	 	 	epicsTimeToStrftime(buf, 30, "%Y/%m/%d %H:%M:%S.%06f", &startTime);
+ 	 	 	printf("staTime: %s \n",buf);
+*/
 			epicsMutexLock(pics710Driver->daqMutex);
 			if (0 > (errorCode = read(pics710Driver->hDevice, pics710Driver->pAcqData, pics710Driver->bytesToRead)))
 			{
@@ -104,8 +118,8 @@ extern "C"
 			else
 				filePackedData710(pics710Driver);
 
-            scanIoRequest(pics710Driver->ioscanpvt);
             ics710Debug("scanIoRequest: send interrupt to waveform records \n");
+            scanIoRequest(pics710Driver->ioscanpvt);
             pics710Driver->count++;
 
         } while (pics710Driver->running);

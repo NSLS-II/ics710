@@ -17,9 +17,13 @@
 #include "ics710Drv.h"
 #include "ics710Daq.h"
 
+/*global variable*/
+ics710Driver ics710Drivers[MAX_DEV];
+epicsTimeStamp startTime;
+
 extern "C"
 {
-  ics710Driver ics710Drivers[MAX_DEV];
+  //ics710Driver ics710Drivers[MAX_DEV];
   //epicsMutexId ics710DmaMutex;
 
   static int releaseBoard(ics710Driver *pics710Driver)
