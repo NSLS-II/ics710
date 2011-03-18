@@ -15,7 +15,7 @@ ics710_registerRecordDeviceDriver pdbbase
 #int acqMode = 1; /*0: Continuous, 1: ICS710_CAPTURE_NOPRETRG, 2: ICS710_CAPTURE_WITHPRETRG*/
 #For CBLM at NSLS, 1.2Hz external trigger, 200.0KS/s(12.8MHz clock), 500ms length
 # for Linac ICTs, 300 us * 200KS/s = 60 samples, pluse fake/garbage data 1024/4=256, 60+256 ~ 320
-ics710Init(0, 4, 320, 0, 10, 200.0, 2, 1, 1)
+ics710Init(0, 4, 640, 0, 10, 200.0, 2, 1, 1)
 
 dbLoadTemplate "db/ics710Channel.substitutions"
 dbLoadTemplate "db/ics710Card.substitutions"

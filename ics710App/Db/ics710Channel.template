@@ -3,14 +3,14 @@
 #Follow NSLS-2 naming convention: [PSy[:PI]][-SSy[:SI]][-TSy[:TI]]{Dev[:DI]}[SgN[:SgI][-SgD]] 
 #AS-AM{RadMon:1}DoseRate:1min-I
 
-record(waveform,"${Psy}-${Ssy}{${Dev}}RawVolt:Ch${CHANNEL}-I")
+record(waveform,"${Psy}-${Ssy}{${Dev}}WfRawVolt:Ch${CHANNEL}-I")
 {
    field(SCAN,"I/O Intr")
    field(DESC,"ics710 raw voltage waveform")
    field(DTYP,"ics710")
    field(NELM,"${NELM}")
    field(FTVL,"DOUBLE")
-   field(INP,"@C${CARD} S${CHANNEL} WVOL")
+   field(INP,"@C${CARD} S${CHANNEL} WRAW")
    field(PREC,"6")
    field(FLNK,"${Psy}-${Ssy}{${Dev}}WfAveVolt:Ch${CHANNEL}-I_")
 }
@@ -23,54 +23,94 @@ record(waveform,"${Psy}-${Ssy}{${Dev}}WfAveVolt:Ch${CHANNEL}-I_")
    field(FTVL,"DOUBLE")
    field(INP,"@C${CARD} S${CHANNEL} WAVE")
    field(PREC,"6")
+   field(FLNK,"${Psy}-${Ssy}{${Dev}}SubAveVolt:Ch${CHANNEL}-I_")
 }
 
 record(subArray,"${Psy}-${Ssy}{${Dev}}SubAveVolt:Ch${CHANNEL}-I_")
 {
    field(DESC,"extract ics710 averaged voltage")
-   field(INP,"${Psy}-${Ssy}{${Dev}}WfAveVolt:Ch${CHANNEL}-I_ CP")
+   field(INP,"${Psy}-${Ssy}{${Dev}}WfAveVolt:Ch${CHANNEL}-I_")
    field (FTVL, "DOUBLE")
    field (NELM, "1")
    field (MALM, "1")
    field (INDX, "0")
    field(PREC,"6")
+   field(FLNK,"${Psy}-${Ssy}{${Dev}}AveVolt:Ch${CHANNEL}-I")
 }
 
 record(ai,"${Psy}-${Ssy}{${Dev}}AveVolt:Ch${CHANNEL}-I")
 {
    field(DESC,"ics710 averaged voltage")
-   field(INP,"${Psy}-${Ssy}{${Dev}}SubAveVolt:Ch${CHANNEL}-I_ CP")
+   field(INP,"${Psy}-${Ssy}{${Dev}}SubAveVolt:Ch${CHANNEL}-I_")
    field(PREC,"6")
-   #field(UNIT,"Volt")
-   field(FLNK, "${Psy}-${Ssy}{${Dev}}Counter:Ch${CHANNEL}-I")
+   field(EGU,"Volt")
+   field(FLNK, "${Psy}-${Ssy}{${Dev}}TimeDiff:Ch${CHANNEL}-aSub_")
 }
 
-record(calc,"${Psy}-${Ssy}{${Dev}}Counter:Ch${CHANNEL}-I")
+#calculate time spent on different operations ;
+record(aSub,"${Psy}-${Ssy}{${Dev}}TimeDiff:Ch${CHANNEL}-aSub_")
 {
-   field(DESC,"counter")
-	field(CALC, "A+1")
-	field(INPA, "${Psy}-${Ssy}{${Dev}}Counter:Ch${CHANNEL}-I.VAL  NPP NMS")
-	field(TSEL, "${Psy}-${Ssy}{${Dev}}AveVolt:Ch${CHANNEL}-I.TIME")
-}
-
-#calculate timestamp difference (ics710 DAQ time);
-record(aSub,"${Psy}-${Ssy}{${Dev}}aSub-I_")
-{
-   field(DESC,"calculate DaqTime")
+    field(DESC,"calculate differnet time")
     field (INAM,"ics710AsubInit")
     field (SNAM,"ics710AsubProcess")
-    field (INPA, "${Psy}-${Ssy}{${Dev}}AveVolt:Ch0-I CP")
+    field (INPA, "${Psy}-${Ssy}{${Dev}}AveVolt:Ch${CHANNEL}-I")
     field (FTA, "DOUBLE")
     field (NOA, "1")
-    field (OUTA, "${Psy}-${Ssy}{${Dev}}DaqTime-I_")
+    field (OUTA, "${Psy}-${Ssy}{${Dev}}TrigRate:Ch${CHANNEL}-I_ PP")
     field (FTVA, "DOUBLE")
     field (NOVA, "1")
+    field (OUTB, "${Psy}-${Ssy}{${Dev}}RawDataRdTm:Ch${CHANNEL}-I_ PP")
+    field (FTVB, "DOUBLE")
+    field (NOVB, "1")
+    field (OUTC, "${Psy}-${Ssy}{${Dev}}LoopTm:Ch${CHANNEL}-I_ PP")
+    field (FTVC, "DOUBLE")
+    field (NOVC, "1")
+    field (OUTD, "${Psy}-${Ssy}{${Dev}}WaitIntTm:Ch${CHANNEL}-I_ PP")
+    field (FTVD, "DOUBLE")
+    field (NOVD, "1")
 }
 
-record (ai, "${Psy}-${Ssy}{${Dev}}DaqTime-I_")
+record (ai, "${Psy}-${Ssy}{${Dev}}TrigRate:Ch${CHANNEL}-I_")
 {
-   field(DESC,"DaqTime")
-    field (INP,"${Psy}-${Ssy}{${Dev}}aSub-I_.VALA CP")
-    field (PREC,"3")
-    #field(UNIT,"ms")
+    field(DESC,"trigger rate")
+    field (INP,"${Psy}-${Ssy}{${Dev}}TimeDiff:Ch${CHANNEL}-aSub_.VALA")
+    field (PREC,"1")
+    field(EGU,"Hz")
+    #field(FLNK, "${Psy}-${Ssy}{${Dev}}RawDataRdTm:Ch${CHANNEL}-I_")
  }
+ 
+record (ai, "${Psy}-${Ssy}{${Dev}}RawDataRdTm:Ch${CHANNEL}-I_")
+{
+    field(DESC,"raw Data Readout Time")
+    field (INP,"${Psy}-${Ssy}{${Dev}}TimeDiff:Ch${CHANNEL}-aSub_.VALB")
+    field (PREC,"6")
+    field(EGU,"milli-seconds")
+    #field(FLNK, "${Psy}-${Ssy}{${Dev}}LoopTm:Ch${CHANNEL}-I_")
+ }
+ 
+record (ai, "${Psy}-${Ssy}{${Dev}}LoopTm:Ch${CHANNEL}-I_")
+{
+    field(DESC,"whole Loop Time")
+    field (INP,"${Psy}-${Ssy}{${Dev}}TimeDiff:Ch${CHANNEL}-aSub_.VALC")
+    field (PREC,"6")
+    field(EGU,"milli-seconds")
+    #field(FLNK, "${Psy}-${Ssy}{${Dev}}WaitIntTm:Ch${CHANNEL}-I_")
+ }
+ 
+record (ai, "${Psy}-${Ssy}{${Dev}}WaitIntTm:Ch${CHANNEL}-I_")
+{
+    field(DESC,"Wait ADC Interrupt Time")
+    field (INP,"${Psy}-${Ssy}{${Dev}}TimeDiff:Ch${CHANNEL}-aSub_.VALD")
+    field (PREC,"6")
+    field(EGU,"milli-seconds")
+    field(FLNK, "${Psy}-${Ssy}{${Dev}}Counter:Ch${CHANNEL}-I")
+ }
+ 
+record(calc,"${Psy}-${Ssy}{${Dev}}Counter:Ch${CHANNEL}-I")
+{
+   field(DESC,"trigger counter")
+	field(CALC, "A+1")
+	field(INPA, "${Psy}-${Ssy}{${Dev}}Counter:Ch${CHANNEL}-I.VAL  NPP NMS")
+	#field(TSEL, "${Psy}-${Ssy}{${Dev}}AveVolt:Ch${CHANNEL}-I.TIME")
+	#field(FLNK, "LN{GUN}Trip-Cmd.PROC")
+}

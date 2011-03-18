@@ -56,7 +56,7 @@ static struct
   ics710WfFunc rfunc;
 } parseWfString[MAX_WF_FUNC] =
 {
-  {"WVOL", getRawVolt},
+  {"WRAW", getRawVolt},
   {"WAVE", getAveVolt},
   //{"WRMS", getRmsVolt},
 };
@@ -97,7 +97,7 @@ template<> int ics710ReadRecordSpecialized(waveformRecord* pwf)
 		  printf("Warning: set 'NELM' field > nSamples \n ");
 	  }
 
-	  epicsMutexLock(pics710Driver->daqMutex);
+	  //epicsMutexLock(pics710Driver->daqMutex);
 	  /*discard the garbage data(1024/totalChannel) at the beginning of the waveform
 	   * 03/04/2011:don't need to discard any data since the garbage data only occur at the first acquisition
 	   * 03/10/2011: still get fake data if totalChannel > 2
@@ -105,7 +105,7 @@ template<> int ics710ReadRecordSpecialized(waveformRecord* pwf)
 	  pics710WfFuncStruct->rfunc(pwf->bptr, (const double*) &pics710Driver->chData[pics710RecPrivate->channel][1024/pics710Driver->totalChannel],
 			  (pics710Driver->nSamples - 1024/pics710Driver->totalChannel));
 	  //pics710WfFuncStruct->rfunc(pwf->bptr, (const double*) &pics710Driver->chData[pics710RecPrivate->channel][0],pics710Driver->nSamples );
-	  epicsMutexUnlock(pics710Driver->daqMutex);
+	  //epicsMutexUnlock(pics710Driver->daqMutex);
 
 	  pwf->nord = pics710Driver->nSamples;
 	  ics710Debug("channel #%d: waveform record (%s) read completed \n\n", pics710RecPrivate->channel, pwf->name);

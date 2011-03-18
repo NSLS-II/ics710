@@ -19,7 +19,11 @@
 
 /*global variable*/
 ics710Driver ics710Drivers[MAX_DEV];
-epicsTimeStamp startTime;
+//epicsTimeStamp startTime;
+double timeAtLoopStart = 0.0;
+double timeAfterADCInt = 0.0;
+double triggerRate = 0;
+double timeAfterRead = 0.0;
 
 extern "C"
 {
@@ -391,7 +395,7 @@ extern "C"
   static const iocshArg ics710InitArg2 = { "nSamples",iocshArgInt};
   static const iocshArg ics710InitArg3 = { "gain",iocshArgInt};
   static const iocshArg ics710InitArg4 = { "filter",iocshArgInt};
-  static const iocshArg ics710InitArg5 = { "adcClockRate",iocshArgDouble};
+  static const iocshArg ics710InitArg5 = { "sampleRate",iocshArgDouble};
   static const iocshArg ics710InitArg6 = { "osr",iocshArgInt};
   static const iocshArg ics710InitArg7 = { "triggerSel",iocshArgInt};
   static const iocshArg ics710InitArg8 = { "acqMode",iocshArgInt};

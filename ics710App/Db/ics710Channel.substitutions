@@ -7,9 +7,9 @@
 file "db/ics710Channel.template"
 {
     pattern {Psy,     Ssy,     Dev,    CARD,     CHANNEL,    NELM}
-            {"LBT",   "BI",   "HRD",   "0",      "0",        "320"}
-            {"LBT",   "BI",   "HRD",   "0",      "1",        "320"}
-            {"LBT",   "BI",   "HRD",   "0",      "2",        "320"}
-            {"LBT",   "BI",   "HRD",   "0",      "3",        "320"}
+            {"LBT",   "BI",   "HRD",   "0",      "0",        "640"}
+            {"LBT",   "BI",   "HRD",   "0",      "1",        "640"}
+            {"LBT",   "BI",   "HRD",   "0",      "2",        "640"}
+            {"LBT",   "BI",   "HRD",   "0",      "3",        "640"}
             #{"LBT",   "BI",   "HRD",   "0",      "4",        "10000"}
 }

@@ -6,6 +6,8 @@
 #include <string.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <sys/time.h>//for microsecond: gettimeofday()
+#include <math.h>
 
 #include "ics710Daq.h"
 #include "ics710Drv.h"
@@ -16,7 +18,11 @@
 #include "epicsTime.h"
 
 /*global variable: defined in ics710DrvInit.cpp*/
-extern epicsTimeStamp startTime;
+//extern epicsTimeStamp startTime;
+extern double timeAtLoopStart;
+extern double timeAfterADCInt;
+extern double triggerRate;
+extern double timeAfterRead;
 
 extern "C"
 {
@@ -65,8 +71,11 @@ extern "C"
   {
 	 ics710Driver *pics710Driver = static_cast<ics710Driver*>(arg);
 	 int errorCode;
-     int timeout = 1; /* seconds */
+     int timeout = 5; /* seconds */
      char buf[30];
+     epicsTimeStamp now;
+     double oldTimeAfterADCInt;
+     int i = 0;
      //pics710Driver->running = 1;
 
     while (1)
@@ -77,8 +86,12 @@ extern "C"
         do
         {
  daqStart:
- 	 	 	//epicsTimeGetCurrent(&startTime);
- 	 	 	//startTime = epicsTime::getCurrent();
+ 	 	 	 // strange: timeAtLoopStart > timeAfterADCInt?
+ 	 	 	epicsTimeGetCurrent(&now);
+ 	 	 	epicsTimeToStrftime(buf, 30, "%Y/%m/%d %H:%M:%S.%06f", &now);
+ 	 	 	//printf("DAQ start: %s \n", buf);
+	 	 	timeAtLoopStart = now.secPastEpoch + now.nsec/1000000000.0;
+
 			if (ICS710_OK != (errorCode = ics710BufferReset (pics710Driver->hDevice)))
 			{
 				printf("can't reset buffer register, errorCode: %d \n", errorCode);
@@ -100,18 +113,64 @@ extern "C"
 				pics710Driver->timeouts++;
 				goto daqStart;
 			}
- 	 	 	epicsTimeGetCurrent(&startTime);
+ 	 	 	//epicsTimeGetCurrent(&startTime);
+ 	 	 	epicsTimeGetCurrent(&now);
+ 	 	 	epicsTimeToStrftime(buf, 30, "%Y/%m/%d %H:%M:%S.%06f", &now);
+ 	 	 	//printf("ADC Intrr: %s \n", buf);
+ 	 	 	timeAfterADCInt = now.secPastEpoch + now.nsec/1000000000.0;
+ 	 	 	//printf("total loop time: %f seconds \n", (timeAfterADCInt - oldTimeAfterADCInt));
+ 	 	 	//printf("external trigger rate: %.02f Hz \n", 1.0/(timeAfterADCInt - oldTimeAfterADCInt));
+ 	 	 	//triggerRate = ceil(1.0/(timeAfterADCInt - oldTimeAfterADCInt));
+ 	 	 	triggerRate = 1.0/(timeAfterADCInt - oldTimeAfterADCInt);
+            oldTimeAfterADCInt = timeAfterADCInt;
+            //time_t t1 = time(NULL);
+            timeval tim;
+            gettimeofday(&tim, NULL);
+            double t1 = tim.tv_sec + (tim.tv_usec/1000000.0);
  /*
  	 	 	epicsTimeToStrftime(buf, 30, "%Y/%m/%d %H:%M:%S.%06f", &startTime);
  	 	 	printf("staTime: %s \n",buf);
 */
 			epicsMutexLock(pics710Driver->daqMutex);
+/*
+ 	 	 	epicsTimeGetCurrent(&now);
+ 	 	 	timeAfterADCInt = now.secPastEpoch + now.nsec/1000000000.0;
+*/
 			if (0 > (errorCode = read(pics710Driver->hDevice, pics710Driver->pAcqData, pics710Driver->bytesToRead)))
 			{
 				printf ("can't read the data, errorCode: %d \n", errorCode);
+				epicsMutexUnlock(pics710Driver->daqMutex);
 				goto daqStart;
 			}
+/*
+ 	 	 	epicsTimeGetCurrent(&now);
+ 	 	 	timeAfterRead = now.secPastEpoch + now.nsec/1000000000.0;
+ 	 	 	printf("time spent on raw ADC data readout: %f seconds\n", (timeAfterRead - timeAfterADCInt));
+*/
             epicsMutexUnlock(pics710Driver->daqMutex);
+
+ 	 	 	epicsTimeGetCurrent(&now);
+ 	 	 	timeAfterRead = now.secPastEpoch + now.nsec/1000000000.0;
+ 	 	 	//printf("time spent on raw ADC data readout: %f seconds\n", (timeAfterRead - timeAfterADCInt));
+ 	 	 	//time_t t2 = time(NULL);
+ 	 	 	//printf("%f seconds \n",t2 - t1);//time() only gives second resolution
+ 	 	 	gettimeofday(&tim, NULL);
+ 	 	 	double t2 = tim.tv_sec + (tim.tv_usec/1000000.0);
+ 	 	 	//printf("%f seconds \n",t2 - t1);
+ 	 	 	//if ((timeAfterRead - timeAfterADCInt) < 0.005)
+ 	 	 	if ((t2 - t1) < 0.005)
+ 	 	 	{
+ 	 	 		i++;
+ 	 	 	 	//printf("%d \n",i);
+ 	 	 		/*epicsTimeGetCurrent(&now);
+ 	 	 	 	epicsTimeToStrftime(buf, 30, "%Y/%m/%d %H:%M:%S.%06f", &now);
+ 	 	 	 	printf("time: %s \n",buf);*/
+ 	 	 	}
+ 	 	 	else
+ 	 	 	{
+ 	 	 		printf("big jump(%f seconds) occurred at every %dth trigger \n",(timeAfterRead - timeAfterADCInt), i+1);
+ 	 	 		i = 0;
+ 	 	 	}
 
 			if (pics710Driver->control.packed_data == 0)
 				fileUnpackedData710(pics710Driver);
@@ -121,7 +180,12 @@ extern "C"
             ics710Debug("scanIoRequest: send interrupt to waveform records \n");
             scanIoRequest(pics710Driver->ioscanpvt);
             pics710Driver->count++;
-
+/*
+ 	 	 	epicsTimeGetCurrent(&now);
+ 	 	 	epicsTimeToStrftime(buf, 30, "%Y/%m/%d %H:%M:%S.%06f", &now);
+ 	 	 	//printf("DAQ start: %s \n", buf);
+ 	 	 	timeAtLoopStart = now.secPastEpoch + now.nsec/1000000000.0;
+*/
         } while (pics710Driver->running);
 
     }//while(1)
