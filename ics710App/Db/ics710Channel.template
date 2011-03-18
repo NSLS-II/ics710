@@ -65,9 +65,6 @@ record(aSub,"${Psy}-${Ssy}{${Dev}}TimeDiff:Ch${CHANNEL}-aSub_")
     field (OUTC, "${Psy}-${Ssy}{${Dev}}LoopTm:Ch${CHANNEL}-I_ PP")
     field (FTVC, "DOUBLE")
     field (NOVC, "1")
-    field (OUTD, "${Psy}-${Ssy}{${Dev}}WaitIntTm:Ch${CHANNEL}-I_ PP")
-    field (FTVD, "DOUBLE")
-    field (NOVD, "1")
 }
 
 record (ai, "${Psy}-${Ssy}{${Dev}}TrigRate:Ch${CHANNEL}-I_")
@@ -92,15 +89,6 @@ record (ai, "${Psy}-${Ssy}{${Dev}}LoopTm:Ch${CHANNEL}-I_")
 {
     field(DESC,"whole Loop Time")
     field (INP,"${Psy}-${Ssy}{${Dev}}TimeDiff:Ch${CHANNEL}-aSub_.VALC")
-    field (PREC,"6")
-    field(EGU,"milli-seconds")
-    #field(FLNK, "${Psy}-${Ssy}{${Dev}}WaitIntTm:Ch${CHANNEL}-I_")
- }
- 
-record (ai, "${Psy}-${Ssy}{${Dev}}WaitIntTm:Ch${CHANNEL}-I_")
-{
-    field(DESC,"Wait ADC Interrupt Time")
-    field (INP,"${Psy}-${Ssy}{${Dev}}TimeDiff:Ch${CHANNEL}-aSub_.VALD")
     field (PREC,"6")
     field(EGU,"milli-seconds")
     field(FLNK, "${Psy}-${Ssy}{${Dev}}Counter:Ch${CHANNEL}-I")

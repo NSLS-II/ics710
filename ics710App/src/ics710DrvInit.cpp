@@ -19,17 +19,12 @@
 
 /*global variable*/
 ics710Driver ics710Drivers[MAX_DEV];
-//epicsTimeStamp startTime;
-double timeAtLoopStart = 0.0;
 double timeAfterADCInt = 0.0;
 double triggerRate = 0;
 double timeAfterRead = 0.0;
 
 extern "C"
 {
-  //ics710Driver ics710Drivers[MAX_DEV];
-  //epicsMutexId ics710DmaMutex;
-
   static int releaseBoard(ics710Driver *pics710Driver)
   {
 	  if ( (0 < pics710Driver->hDevice) && (NULL != pics710Driver->pAcqData) )
