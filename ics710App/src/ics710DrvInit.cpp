@@ -22,6 +22,7 @@ ics710Driver ics710Drivers[MAX_DEV];
 double timeAfterADCInt = 0.0;
 double triggerRate = 0;
 double timeAfterRead = 0.0;
+double dcOffset[MAX_CHANNEL] = {0.0,0.0,0.0,0.0};//DC offset obtained from aSub
 
 extern "C"
 {

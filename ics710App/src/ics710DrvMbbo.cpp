@@ -7,7 +7,6 @@
 #include "ics710Dev.h"
 #include "ics710Drv.h"
 
-#include <epicsMutex.h>
 #include <mbboRecord.h>
 
 #include <stdio.h>
@@ -163,6 +162,7 @@ template<> int ics710InitRecordSpecialized(mbboRecord* pmbbo)
 {
 	  int i;
 	  ics710RecPrivate* pics710RecPrivate = reinterpret_cast<ics710RecPrivate*>(pmbbo->dpvt);
+	  ics710Driver* pics710Driver = &ics710Drivers[pics710RecPrivate->card];
 	  ics710Debug("ics710IniMbboRecord: record name: %s, card: %d,link name: %s \n", pmbbo->name, pics710RecPrivate->card, pics710RecPrivate->name);
 
 	  for (i = 0; i < MAX_MBBO_FUNC; i++)
@@ -173,11 +173,39 @@ template<> int ics710InitRecordSpecialized(mbboRecord* pmbbo)
 		    	pics710MbboFuncStruct->wfunc = parseMbboString[i].wfunc;
 		        pics710RecPrivate->pvt = pics710MbboFuncStruct;
 		        ics710Debug("parseMbboString[i].name: %s \n", parseMbboString[i].name);
-		        return 0;
+		        //return 0;
 	       }
-	  }
+	       //initialize the .RVAL field using the setup parameters in st.cmd
+	       if (0 == strcmp(pics710RecPrivate->name, "MGAI"))
+	       {
+	    	   ics710GainGet(pics710Driver->hDevice, &(pics710Driver->gainControl));
+	    	   pmbbo->rval = pics710Driver->gainControl.input_voltage_range;
+	       }
+	       if (0 == strcmp(pics710RecPrivate->name, "MFIL"))
+	       {
+	    	   ics710FilterGet(pics710Driver->hDevice, &(pics710Driver->filterControl));
+	    	   pmbbo->rval = pics710Driver->filterControl.cutoff_freq_range;
+	    	   //printf("%s.rval is: %d, cutoff req: %dKHz, \n",pmbbo->name, pmbbo->rval, 10*pics710Driver->filterControl.cutoff_freq_range);
+	       }
+	       if (0 == strcmp(pics710RecPrivate->name, "MOSR"))
+	       {
+	    	   ics710ControlGet(pics710Driver->hDevice, &(pics710Driver->control));
+	    	   pmbbo->rval = pics710Driver->control.oversamp_ratio;
+	       }
+	       if (0 == strcmp(pics710RecPrivate->name, "MTRI"))
+	       {
+	    	   ics710ControlGet(pics710Driver->hDevice, &(pics710Driver->control));
+	    	   pmbbo->rval = pics710Driver->control.trigger_select;
+	       }
+	       if (0 == strcmp(pics710RecPrivate->name, "MACQ"))
+	       {
+	    	   ics710ControlGet(pics710Driver->hDevice, &(pics710Driver->control));
+	    	   pmbbo->rval = pics710Driver->control.acq_mode;
+	       }
 
-	  return -1;
+	  }//for (i = 0; i < MAX_MBBO_FUNC; i++)
+
+	  return 0;
 }
 
 template<> int ics710WriteRecordSpecialized(mbboRecord* pmbbo)

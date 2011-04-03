@@ -43,17 +43,17 @@ record(ai,"${Psy}-${Ssy}{${Dev}}AveVolt:Ch${CHANNEL}-I")
    field(DESC,"ics710 averaged voltage")
    field(INP,"${Psy}-${Ssy}{${Dev}}SubAveVolt:Ch${CHANNEL}-I_")
    field(PREC,"6")
-   field(EGU,"Volt")
-   field(FLNK, "${Psy}-${Ssy}{${Dev}}TimeDiff:Ch${CHANNEL}-aSub_")
+   field(EGU,"Volts")
+   field(FLNK, "${Psy}-${Ssy}{${Dev}}Asub:Ch${CHANNEL}-aSub_")
 }
 
-#calculate time spent on different operations ;
-record(aSub,"${Psy}-${Ssy}{${Dev}}TimeDiff:Ch${CHANNEL}-aSub_")
+#calculate time spent on different operations and setup DC offset for each channel ;
+record(aSub,"${Psy}-${Ssy}{${Dev}}Asub:Ch${CHANNEL}-aSub_")
 {
     field(DESC,"calculate differnet time")
     field (INAM,"ics710AsubInit")
     field (SNAM,"ics710AsubProcess")
-    field (INPA, "${Psy}-${Ssy}{${Dev}}AveVolt:Ch${CHANNEL}-I")
+    field (INPA, "${Psy}-${Ssy}{${Dev}}Offset:Ch${CHANNEL}-SP")
     field (FTA, "DOUBLE")
     field (NOA, "1")
     field (OUTA, "${Psy}-${Ssy}{${Dev}}TrigRate:Ch${CHANNEL}-I_ PP")
@@ -70,7 +70,7 @@ record(aSub,"${Psy}-${Ssy}{${Dev}}TimeDiff:Ch${CHANNEL}-aSub_")
 record (ai, "${Psy}-${Ssy}{${Dev}}TrigRate:Ch${CHANNEL}-I_")
 {
     field(DESC,"trigger rate")
-    field (INP,"${Psy}-${Ssy}{${Dev}}TimeDiff:Ch${CHANNEL}-aSub_.VALA")
+    field (INP,"${Psy}-${Ssy}{${Dev}}Asub:Ch${CHANNEL}-aSub_.VALA")
     field (PREC,"1")
     field(EGU,"Hz")
     #field(FLNK, "${Psy}-${Ssy}{${Dev}}RawDataRdTm:Ch${CHANNEL}-I_")
@@ -79,7 +79,7 @@ record (ai, "${Psy}-${Ssy}{${Dev}}TrigRate:Ch${CHANNEL}-I_")
 record (ai, "${Psy}-${Ssy}{${Dev}}RawDataRdTm:Ch${CHANNEL}-I_")
 {
     field(DESC,"raw Data Readout Time")
-    field (INP,"${Psy}-${Ssy}{${Dev}}TimeDiff:Ch${CHANNEL}-aSub_.VALB")
+    field (INP,"${Psy}-${Ssy}{${Dev}}Asub:Ch${CHANNEL}-aSub_.VALB")
     field (PREC,"6")
     field(EGU,"milli-seconds")
     #field(FLNK, "${Psy}-${Ssy}{${Dev}}LoopTm:Ch${CHANNEL}-I_")
@@ -88,7 +88,7 @@ record (ai, "${Psy}-${Ssy}{${Dev}}RawDataRdTm:Ch${CHANNEL}-I_")
 record (ai, "${Psy}-${Ssy}{${Dev}}LoopTm:Ch${CHANNEL}-I_")
 {
     field(DESC,"whole Loop Time")
-    field (INP,"${Psy}-${Ssy}{${Dev}}TimeDiff:Ch${CHANNEL}-aSub_.VALC")
+    field (INP,"${Psy}-${Ssy}{${Dev}}Asub:Ch${CHANNEL}-aSub_.VALC")
     field (PREC,"6")
     field(EGU,"milli-seconds")
     field(FLNK, "${Psy}-${Ssy}{${Dev}}Counter:Ch${CHANNEL}-I")
@@ -102,3 +102,13 @@ record(calc,"${Psy}-${Ssy}{${Dev}}Counter:Ch${CHANNEL}-I")
 	#field(TSEL, "${Psy}-${Ssy}{${Dev}}AveVolt:Ch${CHANNEL}-I.TIME")
 	#field(FLNK, "LN{GUN}Trip-Cmd.PROC")
 }
+
+record (ao, "${Psy}-${Ssy}{${Dev}}Offset:Ch${CHANNEL}-SP")
+{
+    field(DESC,"DC Offset")
+    field(SCAN, "Passive")
+    #field(PINI, "YES")
+    #field(RVAL, "0.046")
+    field (PREC,"3")
+    field(EGU,"Volts")
+ }

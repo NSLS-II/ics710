@@ -3,13 +3,17 @@
 #Follow NSLS-2 naming convention: [PSy[:PI]][-SSy[:SI]][-TSy[:TI]]{Dev[:DI]}[SgN[:SgI][-SgD]] 
 #AS-AM{RadMon:1}DoseRate:1min-I
 
-
+#note: CHANNEL max. value must match totalChannel in st.cmd
+#		It's better to set NELM equal to nSamples in st.cmd
 file "db/ics710Channel.template"
 {
     pattern {Psy,     Ssy,     Dev,    CARD,     CHANNEL,    NELM}
-            {"LBT",   "BI",   "HRD",   "0",      "0",        "640"}
-            {"LBT",   "BI",   "HRD",   "0",      "1",        "640"}
-            {"LBT",   "BI",   "HRD",   "0",      "2",        "640"}
-            {"LBT",   "BI",   "HRD",   "0",      "3",        "640"}
-            #{"LBT",   "BI",   "HRD",   "0",      "4",        "10000"}
+            {"LBT",   "BI",   "HRD",   "0",      "0",        "32000"}
+            {"LBT",   "BI",   "HRD",   "0",      "1",        "32000"}
+            #{"LBT",   "BI",   "HRD",   "0",      "2",        "7488"}
+            #{"LBT",   "BI",   "HRD",   "0",      "3",        "7488"}
+            #{"LBT",   "BI",   "HRD",   "0",      "4",        "100000"}
+            #{"LBT",   "BI",   "HRD",   "0",      "5",        "100000"}
+            #{"LBT",   "BI",   "HRD",   "0",      "6",        "15488"}
+            #{"LBT",   "BI",   "HRD",   "0",      "7",        "7488"}
 }
