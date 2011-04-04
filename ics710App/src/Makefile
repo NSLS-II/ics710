@@ -5,6 +5,8 @@ include $(TOP)/configure/CONFIG
 #manually copy them from ics710 Linux SDK to 'src', then install them
 INC += ics710api.h
 LIB_INSTALLS_Linux += ../libics710.a    
+#use aSubRecord.h(contains 'not') in .cpp file
+CXXFLAGS+=-fno-operator-names 
 
 # Build the IOC application
 PROD_IOC = ics710
@@ -30,6 +32,7 @@ ics710_SRCS += ics710DevMbbo.cpp
 ics710_SRCS += ics710DrvLongout.cpp
 ics710_SRCS += ics710DevLongout.cpp
 ics710_SRCS += ics710Asub.c
+ics710_SRCS += ics710ProcessWfAsub.cpp
 # Build the main IOC entry point on workstation OSs.
 ics710_SRCS_DEFAULT += ics710Main.cpp
 
