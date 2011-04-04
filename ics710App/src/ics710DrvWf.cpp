@@ -1,6 +1,8 @@
 /* Yong Hu: started on 02-08-2011
  * Prototype IOC fully functions on Mar-03-2011
  * */
+/*ics710DrvWf.cpp: used by ics710DevWf.cpp, put the acquired data of individual channel to waveform record*/
+
 #include "ics710Drv.h"
 #include "ics710Dev.h"
 
@@ -15,17 +17,14 @@
 #define MAX_WF_FUNC 2
 /*global variable: defined in ics710DrvInit.cpp*/
 extern  ics710Driver ics710Drivers[MAX_DEV];
-//epicsTimeStamp endTime;
 
 static int getRawVolt(void* dst, const double* src, unsigned effectiveSamples)
-//	  pics710WfFuncStruct->rfunc(pwf->bptr, buffer, nsamples);
 {
 	  memcpy((double *) dst, src, effectiveSamples * sizeof(double));
 	  return 0;
 }
 
 static int getAveVolt(void* dst, const double* src, unsigned effectiveSamples)
-//	  pics710WfFuncStruct->rfunc(pwf->bptr, buffer, nsamples);
 {
 	  unsigned i = 0;
 	  double* dDst = static_cast<double*>(dst);
@@ -43,11 +42,11 @@ static int getAveVolt(void* dst, const double* src, unsigned effectiveSamples)
 	  return 0;
 }
 
+/* choose the function according to LINK string name */
 typedef int (*ics710WfFunc)(void* dst, const double* src, unsigned effectiveSamples);
-
 struct ics710WfFuncStruct
 {
-	  ics710WfFunc rfunc;
+	  ics710WfFunc rfunc; /* read function*/
 };
 
 static struct
@@ -56,15 +55,16 @@ static struct
   ics710WfFunc rfunc;
 } parseWfString[MAX_WF_FUNC] =
 {
-  {"WRAW", getRawVolt},
-  {"WAVE", getAveVolt},
+  {"WRAW", getRawVolt},/*raw waveform*/
+  {"WAVE", getAveVolt},/*averaged waveform*/
   //{"WRMS", getRmsVolt},
 };
 
+/* associate the link string 'name' with function */
 template<> int ics710InitRecordSpecialized(waveformRecord* pwf)
 {
 	unsigned i;
-	  ics710RecPrivate* pics710RecPrivate = reinterpret_cast<ics710RecPrivate*>(pwf->dpvt);
+	  ics710RecPrivate* pics710RecPrivate = reinterpret_cast<ics710RecPrivate*>(pwf->dpvt); /*retrieve record private data*/
 	  ics710Debug("ics710InitWfRecord: card: %d, channel: %d, name: %s \n", pics710RecPrivate->card, pics710RecPrivate->channel, pics710RecPrivate->name);
 
 	  for (i = 0; i < MAX_WF_FUNC; i++)
@@ -73,31 +73,34 @@ template<> int ics710InitRecordSpecialized(waveformRecord* pwf)
 	       {
 		    	ics710WfFuncStruct* pics710WfFuncStruct = new ics710WfFuncStruct;
 		    	pics710WfFuncStruct->rfunc = parseWfString[i].rfunc;
-		        pics710RecPrivate->pvt = pics710WfFuncStruct;
+		        pics710RecPrivate->pvt = pics710WfFuncStruct; /* save the function to pvt */
 		        ics710Debug("parseWfString[i].name: %s \n", parseWfString[i].name);
-		        //return 0;
+		        return 0;
 	       }
 	  }
 
-	  return 0;
+	  return -1;
 }
 
+/* put the acquired data of individual channel to waveform record: one waveform record for one channel */
 template<> int ics710ReadRecordSpecialized(waveformRecord* pwf)
 {
-	char buf[30];
-	int nSamples, i;
-	  ics710RecPrivate* pics710RecPrivate = reinterpret_cast<ics710RecPrivate*>(pwf->dpvt);
-	  ics710Driver* pics710Driver = &ics710Drivers[pics710RecPrivate->card];
-	  ics710WfFuncStruct* pics710WfFuncStruct = reinterpret_cast<ics710WfFuncStruct*>(pics710RecPrivate->pvt);
+	//char buf[30];
+	unsigned int nSamples = 0;
+	unsigned i = 0;
+	  ics710RecPrivate* pics710RecPrivate = reinterpret_cast<ics710RecPrivate*>(pwf->dpvt);/*retrieve record private data*/
+	  ics710Driver* pics710Driver = &ics710Drivers[pics710RecPrivate->card];/*retrieve ics710 IOC data*/
+	  ics710WfFuncStruct* pics710WfFuncStruct = reinterpret_cast<ics710WfFuncStruct*>(pics710RecPrivate->pvt);/*retrieve the function*/
 	  ics710Debug("channel #%d: waveform record (%s) read started \n ", pics710RecPrivate->channel, pwf->name);
-	  //if ((0 == strcmp(pics710RecPrivate->name, "WRAW")) && ((pics710Driver->nSamples -1024/pics710Driver->totalChannel) > pwf->nelm))
-	  if ((0 == strcmp(pics710RecPrivate->name, "WRAW")) && (pics710Driver->nSamples  > pwf->nelm))
+
+	  if ((0 == strcmp(pics710RecPrivate->name, "WRAW")) && (pics710Driver->nSamples  != pwf->nelm))
 	  {
-		  printf("NELM(%d in waveformRecord) < nSamples(%d in st.cmd): truncate  samples/ch to NELM \n", pwf->nelm, pics710Driver->nSamples);
-		  pics710Driver->nSamples = pwf->nelm;
-		  pics710Driver->truncated++;
+		  printf("NELM(%d in waveformRecord) is not equal to nSamples(%d in st.cmd): set NELM to nSamples \n", pwf->nelm, pics710Driver->nSamples);
+		  pwf->nelm = pics710Driver->nSamples;
+		 /// pics710Driver->truncated++;
 	  }
-	  //Trick: get rid of the garbage data: 1024/totalChannel wrong samples at the beginning, garbage occurs again every 32K/totalChannel
+
+	  /* Trick: get rid of the garbage data: set them as the correct one; 1024/totalChannel samples at the beginning, garbage data occur again every 32K/totalChannel */
 	  for (nSamples = 0; nSamples < pics710Driver->nSamples; nSamples++)
 	  {
 		  if (0 == (nSamples % (32000/pics710Driver->totalChannel)))
@@ -116,20 +119,15 @@ template<> int ics710ReadRecordSpecialized(waveformRecord* pwf)
 	  /*discard the garbage data(1024/totalChannel) at the beginning of the waveform
 	   * 03/04/2011:don't need to discard any data since the garbage data only occur at the first acquisition
 	   * 03/10/2011: still get fake data if totalChannel > 2
-	   * */
+	   * 04/02/2011: play tricks on the garbage data*/
 	  epicsMutexLock(pics710Driver->daqMutex);
 	  //pics710WfFuncStruct->rfunc(pwf->bptr, (const double*) &pics710Driver->chData[pics710RecPrivate->channel][1024/pics710Driver->totalChannel], (pics710Driver->nSamples - 1024/pics710Driver->totalChannel));
 	  pics710WfFuncStruct->rfunc(pwf->bptr, (const double*) &pics710Driver->chData[pics710RecPrivate->channel][0], pics710Driver->nSamples);
 	  epicsMutexUnlock(pics710Driver->daqMutex);
 
-	  //pwf->nord = pics710Driver->nSamples - 1024/pics710Driver->totalChannel;
-	  pwf->nord = pics710Driver->nSamples;
+	  pwf->nord = pics710Driver->nSamples; /*waveform read-out is completed*/
+
 	  ics710Debug("channel #%d: waveform record (%s) read completed \n\n", pics710RecPrivate->channel, pwf->name);
-/*
-	  epicsTimeGetCurrent(&endTime);
-	  epicsTimeToStrftime(buf, 30, "%Y/%m/%d %H:%M:%S.%06f", &endTime);
-	  printf("endTime: %s \n",buf);
-*/
 	  return 0;
 }
 

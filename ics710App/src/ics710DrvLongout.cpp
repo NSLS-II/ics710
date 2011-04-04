@@ -1,8 +1,7 @@
 /* Yong Hu: started on 02-08-2011
  * Prototype IOC fully functions on 03-03-2011
  * */
-
-#include "ics710api.h"
+/* ics710DrvLongout.cpp: used by ics710DevLongout.cpp; reconfigure parameters: totalChannel, samples/ch, samplingRate */
 
 #include "ics710Dev.h"
 #include "ics710Drv.h"
@@ -211,6 +210,7 @@ static int setSamplingRate(longoutRecord* plongout, ics710Driver *pics710Driver,
 	return 0;
 }
 
+/* choose the function according to LINK string name */
 typedef int (*ics710LongoutFunc)(longoutRecord* plongout, ics710Driver *pics710Driver, int val);
 struct ics710LongoutFuncStruct
 {
@@ -238,13 +238,15 @@ template<> int ics710InitRecordSpecialized(longoutRecord* plongout)
 	  {
 	       if (0 == strcmp(pics710RecPrivate->name, parseLongoutString[i].name))
 	       {
+	    		  /* choose the function according to LINK string name */
 		    	ics710LongoutFuncStruct* pics710LongoutFuncStruct = new ics710LongoutFuncStruct;
 		    	pics710LongoutFuncStruct->wfunc = parseLongoutString[i].wfunc;
 		        pics710RecPrivate->pvt = pics710LongoutFuncStruct;
 		        ics710Debug("parseLongoutString[i].name: %s \n", parseLongoutString[i].name);
 		        //return 0;
 	       }
-	       //initialize the .VAL field using the setup parameters in st.cmd
+
+	       /* initialize the .VAL field using the setup parameters in st.cmd */
 	       if (0 == strcmp(pics710RecPrivate->name, "LCHA"))
 	       {
 	    	   ics710ChannelCountGet(pics710Driver->hDevice, &(pics710Driver->channelCount));

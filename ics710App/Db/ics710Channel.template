@@ -109,6 +109,6 @@ record (ao, "${Psy}-${Ssy}{${Dev}}Offset:Ch${CHANNEL}-SP")
     field(SCAN, "Passive")
     #field(PINI, "YES")
     #field(RVAL, "0.046")
-    field (PREC,"3")
+    field (PREC,"5")
     field(EGU,"Volts")
  }

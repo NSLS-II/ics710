@@ -1,6 +1,7 @@
 /* Yong Hu: started on 02-08-2011
  * Prototype IOC fully functions on 03-03-2011
  * */
+/* ics710DevMbbo.cpp: device support for mbbo record; reconfigure parameters: gain, cut-off frequency, osr, triggerSel, acquisition mode, start/stop  */
 
 #include "ics710Dev.h"
 
@@ -13,12 +14,6 @@ extern "C" {
   {
 	    mbboRecord* r = reinterpret_cast<mbboRecord*>(record);
 	    int status = ics710InitRecord(r, r->out);
-	   /*
-	    if (!status)
-	    {
-	    	ics710ReadRecord(r);
-	    }
-	    */
 	    return status;
   }
 

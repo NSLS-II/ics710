@@ -1,8 +1,7 @@
 /* Yong Hu: started on 02-08-2011
  * Prototype IOC fully functions on 03-03-2011
  * */
-
-#include "ics710api.h"
+/* ics710DrvMbbo.cpp: used by ics710DevMbbo.cpp; reconfigure parameters: gain, cut-off frequency, osr, triggerSel, acquisition mode, start/stop */
 
 #include "ics710Dev.h"
 #include "ics710Drv.h"
@@ -27,7 +26,6 @@ static int setGain(ics710Driver *pics710Driver, int val)
 	if (ICS710_OK != (errorCode = ics710GainSet (pics710Driver->hDevice, &(pics710Driver->gainControl))))
 	{
 		printf("can't set gain control register, errorCode: %d \n", errorCode);
-		//releaseBoard(pics710Driver);
 		return errorCode;
 	}
 
@@ -45,7 +43,6 @@ static int setFilter(ics710Driver *pics710Driver, int val)
 	if (ICS710_OK != (errorCode = ics710FilterSet (pics710Driver->hDevice, &(pics710Driver->filterControl))))
 	{
 		printf("can't set filter control register, errorCode: %d \n", errorCode);
-		//releaseBoard(pics710Driver);
 		return errorCode;
 	}
 
@@ -67,6 +64,7 @@ static int setOsr(ics710Driver *pics710Driver, int val)
 	}
 	printf("reconfigure data output rate by setOsr: %3.3f KHz \n", 1000 * pics710Driver->actualADCRate / (256/(1<<val)));
 
+	/*must re-enable the board to start DAQ again*/
 	if (ICS710_OK != (errorCode = ics710Enable (pics710Driver->hDevice)))
 	{
 		printf("can't enable the board in ics710DrvMbbo.cpp/setOsr, errorCode: %d \n", errorCode);
@@ -90,6 +88,7 @@ static int setTrigger(ics710Driver *pics710Driver, int val)
 	}
 	printf("reconfigure triggering to: %s \n", (0 == val)?"internal":"external");
 
+	/*must re-enable the board to start DAQ again*/
 	if (ICS710_OK != (errorCode = ics710Enable (pics710Driver->hDevice)))
 	{
 		printf("can't enable the board in ics710DrvMbbo.cpp/setTrigger, errorCode: %d \n", errorCode);
@@ -113,6 +112,7 @@ static int setAcqMode(ics710Driver *pics710Driver, int val)
 	}
 	printf("reconfigure Acquisition Mode to: %s \n", (0==pics710Driver->control.acq_mode) ? "Continuous":"Capture");
 
+	/*must re-enable the board to start DAQ again*/
 	if (ICS710_OK != (errorCode = ics710Enable (pics710Driver->hDevice)))
 	{
 		printf("can't enable the board in ics710DrvMbbo.cpp/setAcqMode, errorCode: %d \n", errorCode);
@@ -132,13 +132,13 @@ static int setRunning(ics710Driver *pics710Driver, int val)
 		    pics710Driver->count = 0;
 		    pics710Driver->timeouts = 0;
 		    pics710Driver->readErrors = 0;
-		    pics710Driver->truncated = 0;
 		    epicsEventSignal(pics710Driver->runSemaphore);
 	  }
 
 	  return 0;
 }
 
+/* choose the function according to LINK string name */
 typedef int (*ics710MbboFunc)(ics710Driver *pics710Driver, int val);
 struct ics710MbboFuncStruct
 {
@@ -147,7 +147,7 @@ struct ics710MbboFuncStruct
 static struct
 {
   const char* name;
-  ics710MbboFunc wfunc;
+  ics710MbboFunc wfunc; /*write function*/
 } parseMbboString[MAX_MBBO_FUNC] =
 {
   {"MGAI", setGain},
@@ -167,6 +167,7 @@ template<> int ics710InitRecordSpecialized(mbboRecord* pmbbo)
 
 	  for (i = 0; i < MAX_MBBO_FUNC; i++)
 	  {
+		  /* choose the function according to LINK string name */
 	       if (0 == strcmp(pics710RecPrivate->name, parseMbboString[i].name))
 	       {
 		    	ics710MbboFuncStruct* pics710MbboFuncStruct = new ics710MbboFuncStruct;
@@ -175,7 +176,8 @@ template<> int ics710InitRecordSpecialized(mbboRecord* pmbbo)
 		        ics710Debug("parseMbboString[i].name: %s \n", parseMbboString[i].name);
 		        //return 0;
 	       }
-	       //initialize the .RVAL field using the setup parameters in st.cmd
+
+	       /* initialize the .RVAL field using the setup parameters in st.cmd */
 	       if (0 == strcmp(pics710RecPrivate->name, "MGAI"))
 	       {
 	    	   ics710GainGet(pics710Driver->hDevice, &(pics710Driver->gainControl));
