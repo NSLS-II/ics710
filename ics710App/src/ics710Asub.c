@@ -13,6 +13,11 @@
 #include "registryFunction.h"
 #include "aSubRecord.h"
 #include "epicsExport.h"
+#include "link.h"
+#include "dbAddr.h"
+#include "dbCommon.h" /* precord: now = paddr->precord->time;*/
+#include "epicsTime.h"
+
 #include "ics710Drv.h"
 
 int ics710AsubDebug = 0;
@@ -36,13 +41,14 @@ static long ics710AsubInit(aSubRecord *precord,processMethod process)
 static long ics710AsubProcess(aSubRecord *precord)
 {
     double temp;
-    //char buf[30];
+    char buf[30];
     epicsTimeStamp now;
     double timeAtAsub;
     double rwDataReadTime;
     double loopTime;
     int i = 0;
     int channel = 0;
+    DBADDR *paddr;
 
     if (ics710AsubDebug)
     {
@@ -64,6 +70,20 @@ static long ics710AsubProcess(aSubRecord *precord)
     dcOffset[channel]= *(double *)precord->a;
 	//printf("channel-%d DC offset: %f \n",channel,dcOffset[channel]);
 
+    /* get time-stamp of another record: refer to recGblGetTimeStamp(prec) -> dbGetTimeStamp(plink, &prec->time) */
+    /*
+    //struct link *plink = &prec->tsel;
+    struct link *plink = &precord->outa;
+    if (plink->type != DB_LINK)
+        return -1;
+    paddr = (DBADDR *)plink->value.pv_link.pvt;
+    now = paddr->precord->time;
+    printf("OUTA %s time-stamp is: ", paddr->precord->name);
+    //time.strftime(buf,30,"%Y/%m/%d %H:%M:%S.%06f");
+    epicsTimeToStrftime(buf, 30, "%Y/%m/%d %H:%M:%S.%06f", &now);
+    printf("%s \n", buf);
+    //epicsTimeShow(&now, 1);
+*/
     epicsTimeGetCurrent(&now);
     timeAtAsub = now.secPastEpoch + now.nsec/1000000000.0;
 
