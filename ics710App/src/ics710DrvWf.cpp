@@ -14,6 +14,7 @@
 #include <string.h>
 #include <stdio.h>
 
+int maxChannel = 0;
 #define MAX_WF_FUNC 2
 /*global variable: defined in ics710DrvInit.cpp*/
 extern  ics710Driver ics710Drivers[MAX_DEV];
@@ -66,6 +67,7 @@ template<> int ics710InitRecordSpecialized(waveformRecord* pwf)
 	unsigned i;
 	  ics710RecPrivate* pics710RecPrivate = reinterpret_cast<ics710RecPrivate*>(pwf->dpvt); /*retrieve record private data*/
 	  ics710Debug("ics710InitWfRecord: card: %d, channel: %d, name: %s \n", pics710RecPrivate->card, pics710RecPrivate->channel, pics710RecPrivate->name);
+	  if (pics710RecPrivate->channel > maxChannel) maxChannel = pics710RecPrivate->channel;
 
 	  for (i = 0; i < MAX_WF_FUNC; i++)
 	  {
@@ -95,9 +97,17 @@ template<> int ics710ReadRecordSpecialized(waveformRecord* pwf)
 
 	  if ((0 == strcmp(pics710RecPrivate->name, "WRAW")) && (pics710Driver->nSamples  != pwf->nelm))
 	  {
-		  printf("NELM(%d in waveformRecord) is not equal to nSamples(%d in st.cmd): set NELM to nSamples \n", pwf->nelm, pics710Driver->nSamples);
-		  pwf->nelm = pics710Driver->nSamples;
+		  printf("Error:NELM(%d in ics710Channel.substitions) is not equal to nSamples(%d in st.cmd): modify ics710Channel.substitions or st.cmd to make them match\n", pwf->nelm, pics710Driver->nSamples);
+		  //pwf->nelm = pics710Driver->nSamples;
+		  return -1;
 		 /// pics710Driver->truncated++;
+	  }
+
+	  if (pics710Driver->totalChannel != (maxChannel + 1))
+	  {
+		  //printf("maxChannel: %d \n", maxChannel + 1);
+		  printf("Error:max. CHANNEL(%d in ics710Channel.substitions) is not equal to totalChannel(%d in st.cmd): modify ics710Channel.substitions or st.cmd to make them match\n",(maxChannel + 1), pics710Driver->totalChannel);
+		  return -1;
 	  }
 
 	  /* Trick: get rid of the garbage data: set them as the correct one; 1024/totalChannel samples at the beginning, garbage data occur again every 32K/totalChannel */

@@ -3,7 +3,7 @@
 #Follow NSLS-2 naming convention: [PSy[:PI]][-SSy[:SI]][-TSy[:TI]]{Dev[:DI]}[SgN[:SgI][-SgD]] 
 #AS-AM{RadMon:1}DoseRate:1min-I
 
-#note: CHANNEL max. value must match totalChannel in st.cmd
+#note: CHANNEL max. value must match(equal to) totalChannel in st.cmd
 #		It's better to set NELM equal to nSamples in st.cmd
 file "db/ics710Channel.template"
 {

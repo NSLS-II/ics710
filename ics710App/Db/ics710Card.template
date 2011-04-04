@@ -117,6 +117,8 @@ record(mbbo,"${Psy}-${Ssy}{${Dev}}Osr:C${CARD}-SP")
    field(ONST,"Doubl")
    field(TWVL,"2")
    field(TWST,"Quad")
+   #reconfigure the samplingRate: trigger the record to be processed
+   field(FLNK, "${Psy}-${Ssy}{${Dev}}SampleRate:C$(CARD)-SP")
 }
 
 record(mbbo,"${Psy}-${Ssy}{${Dev}}Trigger:C${CARD}-SP")

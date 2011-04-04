@@ -62,9 +62,9 @@ static int setOsr(ics710Driver *pics710Driver, int val)
 		printf("can't set control register(over-sampling ratio), errorCode: %d \n", errorCode);
 		return errorCode;
 	}
-	printf("reconfigure data output rate by setOsr: %3.3f KHz \n", 1000 * pics710Driver->actualADCRate / (256/(1<<val)));
+	printf("reconfigure data output rate by setOsr to %d: %3.3f KHz \n", val, 1000 * pics710Driver->actualADCRate / (256/(1<<val)));
 
-	/*must re-enable the board to start DAQ again*/
+	/*must re-enable the board to start DAQ again after reconfigure control register*/
 	if (ICS710_OK != (errorCode = ics710Enable (pics710Driver->hDevice)))
 	{
 		printf("can't enable the board in ics710DrvMbbo.cpp/setOsr, errorCode: %d \n", errorCode);
@@ -88,7 +88,7 @@ static int setTrigger(ics710Driver *pics710Driver, int val)
 	}
 	printf("reconfigure triggering to: %s \n", (0 == val)?"internal":"external");
 
-	/*must re-enable the board to start DAQ again*/
+	/*must re-enable the board to start DAQ again after reconfigure control register*/
 	if (ICS710_OK != (errorCode = ics710Enable (pics710Driver->hDevice)))
 	{
 		printf("can't enable the board in ics710DrvMbbo.cpp/setTrigger, errorCode: %d \n", errorCode);
@@ -112,7 +112,7 @@ static int setAcqMode(ics710Driver *pics710Driver, int val)
 	}
 	printf("reconfigure Acquisition Mode to: %s \n", (0==pics710Driver->control.acq_mode) ? "Continuous":"Capture");
 
-	/*must re-enable the board to start DAQ again*/
+	/*must re-enable the board to start DAQ again after reconfigure control register*/
 	if (ICS710_OK != (errorCode = ics710Enable (pics710Driver->hDevice)))
 	{
 		printf("can't enable the board in ics710DrvMbbo.cpp/setAcqMode, errorCode: %d \n", errorCode);

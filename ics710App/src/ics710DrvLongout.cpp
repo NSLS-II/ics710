@@ -1,7 +1,9 @@
 /* Yong Hu: started on 02-08-2011
  * Prototype IOC fully functions on 03-03-2011
  * */
-/* ics710DrvLongout.cpp: used by ics710DevLongout.cpp; reconfigure parameters: totalChannel, samples/ch, samplingRate */
+/* ics710DrvLongout.cpp: used by ics710DevLongout.cpp; reconfigure parameters: totalChannel, samples/ch, samplingRate
+ * BUT setTotalChannel and setSamples seem not work well because of re-allocation of DMA memory and reconfiguration of other parameters
+ * */
 
 #include "ics710Dev.h"
 #include "ics710Drv.h"
