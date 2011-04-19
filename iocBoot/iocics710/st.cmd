@@ -3,6 +3,9 @@
 epicsEnvSet("EPICS_CA_MAX_ARRAY_BYTES","10000000")
 epicsEnvSet("ENGINEER","Yong Hu: x3961")
 epicsEnvSet("LOCATION","Blg 902 Rm 18")
+epicsEnvSet "EPICS_CAS_AUTO_BEACON_ADDR_LIST", "NO"
+epicsEnvSet "EPICS_CAS_BEACON_ADDR_LIST", "130.199.195.255:5065"
+epicsEnvSet "EPICS_CAS_SERVER_PORT", "8002" 
 
 cd ../..
 
@@ -15,7 +18,9 @@ ics710_registerRecordDeviceDriver pdbbase
 #int acqMode = 1; /*0: Continuous, 1: ICS710_CAPTURE_NOPRETRG, 2: ICS710_CAPTURE_WITHPRETRG*/
 
 #For CBLMs at NSLS, 1.2Hz trigger, 200.0KS/s(12.8MHz clock), 160ms acquisition length(32K Samples)
-ics710Init(0, 2, 32000, 0, 10, 200.0, 2, 1, 1)
+#ics710Init(0, 2, 32000, 0, 10, 200.0, 2, 1, 1)
+#To reduce the number of garbage data to 1024/32= 32 samples
+ics710Init(0, 32, 3200, 0, 1, 20.0, 0, 1, 1)
 
 # for Linac ICTs, 300 us * 200KS/s = 60 samples, pluse fake/garbage data 1024/4=256, 60+256 ~ 320
 #ics710Init(0, 4, 320, 0, 1, 200.0, 2, 1, 1)

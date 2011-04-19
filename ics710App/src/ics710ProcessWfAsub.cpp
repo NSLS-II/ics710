@@ -18,15 +18,12 @@
 #include "epicsTime.h"
 
 #include "ics710Drv.h"
+#include "ics710Dev.h" /*struct ics710RecPrivate*/
 
 int ics710ProcessWfAsubDebug = 0;
 
 /*global variable: defined in ics710DrvInit.cpp*/
 extern ics710Driver ics710Drivers[MAX_DEV];
-//extern double timeAfterADCInt;
-//extern double triggerRate;
-//extern double timeAfterRead;
-//extern double dcOffset[MAX_CHANNEL];
 
 typedef long (*processMethod)(aSubRecord *precord);
 
@@ -47,7 +44,8 @@ static long ics710ProcessWfAsubProcess(aSubRecord *precord)
     char * pch;
     int card = 0;
     int channel = 0;
-    //DBADDR *paddr;
+    DBADDR *paddr;
+    ics710RecPrivate *pics710RecPrivate;
     double ave[MAX_CHANNEL]  = {0.0, 0.0, 0.0, 0.0};
     double max[MAX_CHANNEL]  = {0.0, 0.0, 0.0, 0.0};
     double min[MAX_CHANNEL]  = {0.0, 0.0, 0.0, 0.0};
@@ -58,7 +56,9 @@ static long ics710ProcessWfAsubProcess(aSubRecord *precord)
     if (ics710ProcessWfAsubDebug)
     	printf("Record %s called and INPA value is: #100: %f #1000: %f\n",precord->name, temp[100], temp[1000]);//works
 
-    /* get #card and #channel information from aSub record name */
+    /* get #card and #channel information from aSub record name
+     * doesn't work for cards > 9 or channels > 9*/
+/*
     if (pch = strstr (precord->name,"Card"))
     {
     	card = *(pch + 4) - 0x30;
@@ -69,9 +69,16 @@ static long ics710ProcessWfAsubProcess(aSubRecord *precord)
     	channel = *(pch + 2) - 0x30;
     	//printf ("channel #: %d \n",channel);
     }
+*/
+    struct link *plink = &precord->inpa;
+    if (DB_LINK != plink->type) return -1;
+    paddr = (DBADDR *)plink->value.pv_link.pvt;
+    pics710RecPrivate = (ics710RecPrivate *)paddr->precord->dpvt;
+    card =  pics710RecPrivate->card;
+    channel = pics710RecPrivate->channel;
 	//printf("Record %s called and INPA value is: #100: %f #1000: %f\n",precord->name, temp[100], temp[1000]);//works
 
-    ics710Driver* pics710Driver = &ics710Drivers[card];/*retrieve ics710 IOC data*/
+	ics710Driver* pics710Driver = &ics710Drivers[card];/*retrieve ics710 IOC data*/
 
     /*calculate max, min, sum, mean*/
     max[channel] = pics710Driver->chData[channel][0];

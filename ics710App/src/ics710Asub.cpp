@@ -19,6 +19,7 @@
 #include "epicsTime.h"
 
 #include "ics710Drv.h"
+#include "ics710Dev.h" /*struct ics710RecPrivate*/
 
 int ics710AsubDebug = 0;
 
@@ -49,6 +50,7 @@ static long ics710AsubProcess(aSubRecord *precord)
     int i = 0;
     int channel = 0;
     DBADDR *paddr;
+    ics710RecPrivate *pics710RecPrivate;
 
     if (ics710AsubDebug)
     {
@@ -60,6 +62,8 @@ static long ics710AsubProcess(aSubRecord *precord)
     }
     //printf("INPA is: %s \n", precord->inpa.text);//doesn't work: get NULL
     //printf("INPA is: %s \n", precord->inpa);// get the input link string, but can't use the string
+/*
+ // doesn't work for channels > 9
     for (i=0; i<sizeof(precord->name); i++)
     {
     	if (isdigit(precord->name[i]))
@@ -67,8 +71,14 @@ static long ics710AsubProcess(aSubRecord *precord)
     		channel = precord->name[i]-0x30;
     	}
     }
+ */
+    struct link *plink = &precord->inpb;
+    if (plink->type != DB_LINK) return -1;
+    paddr = (DBADDR *)plink->value.pv_link.pvt; /*get the pvt/address of the record*/
+    pics710RecPrivate = (ics710RecPrivate*)(paddr->precord->dpvt);/*retrieve the waveform record private data*/
+    channel = pics710RecPrivate->channel;
     dcOffset[channel]= *(double *)precord->a;
-	//printf("channel-%d DC offset: %f \n",channel,dcOffset[channel]);
+    //printf("change the DC offset of ch-%d to %f Volts \n",channel, *(double *)precord->a);
 
     /* get time-stamp of another record: refer to recGblGetTimeStamp(prec) -> dbGetTimeStamp(plink, &prec->time) */
     /*
