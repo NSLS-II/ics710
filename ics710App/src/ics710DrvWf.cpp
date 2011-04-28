@@ -116,11 +116,13 @@ template<> int ics710ReadRecordSpecialized(waveformRecord* pwf)
 		  if (0 == (nSamples % ((32*1024)/pics710Driver->totalChannel))) /*32K = 32*1024*/
 		  {
 			  //printf("nSamples at the beginning: %d \n",nSamples);
-			  for (i = 1; i < 1024/pics710Driver->totalChannel; i++)
+			  //for (i = 1; i < 1024/pics710Driver->totalChannel; i++)
+			  for (i = 0; i < 1024/pics710Driver->totalChannel; i++)
 			  //for (i = 1; i < 1024; i++)
 			  {
 				  if ((nSamples + i) > pics710Driver->nSamples) break;
-				  pics710Driver->chData[pics710RecPrivate->channel][nSamples + i] = pics710Driver->chData[pics710RecPrivate->channel][nSamples];
+				  //pics710Driver->chData[pics710RecPrivate->channel][nSamples + i] = pics710Driver->chData[pics710RecPrivate->channel][nSamples];
+				  pics710Driver->chData[pics710RecPrivate->channel][nSamples + i] = pics710Driver->chData[pics710RecPrivate->channel][nSamples + i + 1024/pics710Driver->totalChannel];
 			  }
 			  nSamples = nSamples + i;
 			  //printf("nSamples end: %d; i: %d \n",nSamples, i);
