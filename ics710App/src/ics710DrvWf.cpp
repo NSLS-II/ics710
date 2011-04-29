@@ -95,13 +95,18 @@ template<> int ics710ReadRecordSpecialized(waveformRecord* pwf)
 	  ics710WfFuncStruct* pics710WfFuncStruct = reinterpret_cast<ics710WfFuncStruct*>(pics710RecPrivate->pvt);/*retrieve the function*/
 	  ics710Debug("channel #%d: waveform record (%s) read started \n ", pics710RecPrivate->channel, pwf->name);
 
-	  if ((0 == strcmp(pics710RecPrivate->name, "WRAW")) && (pics710Driver->nSamples  != pwf->nelm))
+/*	  //if ((0 == strcmp(pics710RecPrivate->name, "WRAW")) && (pics710Driver->nSamples  != pwf->nelm))
+	  if ((0 == strcmp(pics710RecPrivate->name, "WRAW")) && (pics710Driver->nSamples  > pwf->nelm))
 	  {
-		  printf("Error:NELM(%d in ics710Channel.substitions) is not equal to nSamples(%d in st.cmd): modify ics710Channel.substitions or st.cmd to make them match\n", pwf->nelm, pics710Driver->nSamples);
+		  //printf("Error:NELM(%d in ics710Channel.substitions) is not equal to nSamples(%d in st.cmd): modify ics710Channel.substitions or st.cmd to make them match\n", pwf->nelm, pics710Driver->nSamples);
 		  //pwf->nelm = pics710Driver->nSamples;
+		  printf("Error:NELM(%d in ics710Channel.substitions) is less than to nSamples(%d in st.cmd): modify ics710Channel.substitions or st.cmd to make them match\n", pwf->nelm, pics710Driver->nSamples);
 		  return -1;
 		 /// pics710Driver->truncated++;
 	  }
+*/
+	  /*2011-04-29:for better display of waveform data using BOY, set NELM equal to samples/ch */
+	  pwf->nelm = pics710Driver->nSamples;
 
 	  if (pics710Driver->totalChannel != (maxChannel + 1))
 	  {
@@ -120,9 +125,12 @@ template<> int ics710ReadRecordSpecialized(waveformRecord* pwf)
 			  for (i = 0; i < 1024/pics710Driver->totalChannel; i++)
 			  //for (i = 1; i < 1024; i++)
 			  {
-				  if ((nSamples + i) > pics710Driver->nSamples) break;
+				  //if ((nSamples + i) > pics710Driver->nSamples) break;
 				  //pics710Driver->chData[pics710RecPrivate->channel][nSamples + i] = pics710Driver->chData[pics710RecPrivate->channel][nSamples];
-				  pics710Driver->chData[pics710RecPrivate->channel][nSamples + i] = pics710Driver->chData[pics710RecPrivate->channel][nSamples + i + 1024/pics710Driver->totalChannel];
+				  if ((nSamples + i + 1024/pics710Driver->totalChannel) > pics710Driver->nSamples)
+					  pics710Driver->chData[pics710RecPrivate->channel][nSamples + i] = pics710Driver->chData[pics710RecPrivate->channel][pics710Driver->nSamples];
+				  else
+					  pics710Driver->chData[pics710RecPrivate->channel][nSamples + i] = pics710Driver->chData[pics710RecPrivate->channel][nSamples + i + 1024/pics710Driver->totalChannel];
 			  }
 			  nSamples = nSamples + i;
 			  //printf("nSamples end: %d; i: %d \n",nSamples, i);

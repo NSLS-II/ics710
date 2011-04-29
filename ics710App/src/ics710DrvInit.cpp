@@ -50,7 +50,8 @@ extern "C"
 	  unsigned long long fifoFrames = 1;
 	  unsigned long long dmaLocalSpace = 0; /*must be 0 for DMA*/
 	  time_t   strobe;
-	  int timeout = 5;
+	  /*2011-04-29: the lower ADC clock, the longer time for calibration; 20 seconds work for 1KS/s*/
+	  int timeout = 20;
 
 	  /*must reset the board after power-up prior to any further operations*/
 		if (ICS710_OK != (errorCode = ics710BoardReset (pics710Driver->hDevice)))
