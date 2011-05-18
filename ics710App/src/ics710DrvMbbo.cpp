@@ -101,7 +101,8 @@ static int setTrigger(ics710Driver *pics710Driver, int val)
 static int setAcqMode(ics710Driver *pics710Driver, int val)
 {
 	int errorCode;
-
+	/*May-13-2011: it's better not to use Continuous acquisition mode which sometimes gives glitch data*/
+	if (0 == val) val = 1;
 	if (val == pics710Driver->control.acq_mode) return 0;
 
 	pics710Driver->control.acq_mode = val; // 0:ICS710_CONTINUOUS or 1:ICS710_CAPTURE_NOPRETRG or 2:ICS710_CAPTURE_WITHPRETRG
@@ -133,6 +134,10 @@ static int setRunning(ics710Driver *pics710Driver, int val)
 		    pics710Driver->timeouts = 0;
 		    pics710Driver->readErrors = 0;
 		    epicsEventSignal(pics710Driver->runSemaphore);
+	  }
+	  else
+	  {
+		  printf("DAQ is stopped\n");
 	  }
 
 	  return 0;

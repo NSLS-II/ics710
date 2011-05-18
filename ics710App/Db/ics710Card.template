@@ -3,6 +3,8 @@
 #Follow NSLS-2 naming convention: [PSy[:PI]][-SSy[:SI]][-TSy[:TI]]{Dev[:DI]}[SgN[:SgI][-SgD]] 
 #AS-AM{RadMon:1}DoseRate:1min-I
 
+## initialize records RVAL/VAL in ics710Drv*.cpp instead of using PINI
+
 record(mbbo,"${Psy}-${Ssy}{${Dev}}Run:C${CARD}-SP")
 {   
    field(DESC,"setRunning")
@@ -17,6 +19,7 @@ record(mbbo,"${Psy}-${Ssy}{${Dev}}Run:C${CARD}-SP")
    field(ONST,"Running")
 }
 
+## initialize records RVAL/VAL in ics710Drv*.cpp instead of using PINI
 record(mbbo,"${Psy}-${Ssy}{${Dev}}Gain:C${CARD}-SP")
 {   
    field(DESC,"setGain")

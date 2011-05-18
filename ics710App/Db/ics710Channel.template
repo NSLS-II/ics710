@@ -13,82 +13,17 @@ record(waveform,"${Psy}-${Ssy}{${Dev}}WfRawVolt:Ch${CHANNEL}-I")
    field(INP,"@C${CARD} S${CHANNEL} WRAW")
    field(PREC,"6")
    #field(FLNK,"${Psy}-${Ssy}{${Dev}}WfAveVolt:Ch${CHANNEL}-I_")
+   #forward link to aSub record to process waveform data: mean, min, max, rms, integral, std, etc. ;
    field(FLNK,"${Psy}-${Ssy}{${Dev}}WfAsub:Card${CARD}Ch${CHANNEL}-aSub_")
 }
 
-#test 5 algorithms of compress record: INP references an array(waveform record)
-record(compress,"${Psy}-${Ssy}{${Dev}}WfRawVoltCir:Ch${CHANNEL}-com_")
-{
-	field(DESC, "part of waveform data like subArray")
-	field(INP,"${Psy}-${Ssy}{${Dev}}WfRawVolt:Ch${CHANNEL}-I CP NMS")
-	field(ALG,"Circular Buffer")
-	#For array INP, NSAM is the number of samples, like NELM of waveform record 
-	#NSAM < NELM, get 10 samples at the end of the waveform WfRawVolt
-	field(NSAM,"10")
-	#N is meaningless for Circular Buffer
-	#field(N,"${NELM}")
-	field(PREC,"6")
-	field(EGU,"Volts")
-}
-
-record(compress,"${Psy}-${Ssy}{${Dev}}WfRawVoltAve:Ch${CHANNEL}-com_")
-{
-	field(DESC, "average N successive wfs element-by-E")
-	field(INP,"${Psy}-${Ssy}{${Dev}}WfRawVolt:Ch${CHANNEL}-I CP NMS")
-	field(ALG,"Average")
-	#get the whole waveform data
-	field(NSAM,"${NELM}")
-	#for 10Hz Flag image, average successive 9 images
-	field(N,"9")
-	field(PREC,"6")
-	field(EGU,"Volts")
-}
-
-record(compress,"${Psy}-${Ssy}{${Dev}}AveVolt:Ch${CHANNEL}-com_")
-{
-	field(DESC, "waveform averaging by compress")
-	field(INP,"${Psy}-${Ssy}{${Dev}}WfRawVolt:Ch${CHANNEL}-I CP NMS")
-	field(ALG,"N to 1 Average")
-	#For array INP, NSAM is the number of subArrays 
-	field(NSAM,"1")
-	#subarray length is N
-	field(N,"${NELM}")
-	field(PREC,"6")
-	field(EGU,"Volts")
-}
-
-record(compress,"${Psy}-${Ssy}{${Dev}}MaxVolt:Ch${CHANNEL}-com_")
-{
-	field(DESC, "Max in waveform data by compress")
-	field(INP,"${Psy}-${Ssy}{${Dev}}WfRawVolt:Ch${CHANNEL}-I CP NMS")
-	field(ALG,"N to 1 High Value")
-	#For array INP, NSAM is the number of subArrays 
-	field(NSAM,"1")
-	#subarray length is N
-	field(N,"${NELM}")
-	field(PREC,"6")
-	field(EGU,"Volts")
-}
-
-record(compress,"${Psy}-${Ssy}{${Dev}}MinVolt:Ch${CHANNEL}-com_")
-{
-	field(DESC, "Min in waveform data by compress")
-	field(INP,"${Psy}-${Ssy}{${Dev}}WfRawVolt:Ch${CHANNEL}-I CP NMS")
-	field(ALG,"N to 1 Low Value")
-	#For array INP, NSAM is the number of subArrays 
-	field(NSAM,"1")
-	#subarray length is N
-	field(N,"${NELM}")
-	field(PREC,"6")
-	field(EGU,"Volts")
-}
-
-#process the waveform record: mean, min, max, rms, integral, std, etc. ;
+#process the waveform record: mean, min, max, integral(sum), std(RMS noise), etc. ;
 record(aSub,"${Psy}-${Ssy}{${Dev}}WfAsub:Card${CARD}Ch${CHANNEL}-aSub_")
 {
     field(DESC,"process waveform")
     field (INAM,"ics710ProcessWfAsubInit")
     field (SNAM,"ics710ProcessWfAsubProcess")
+    #get CARD and CHANNEL info from the waveform record
     field (INPA, "${Psy}-${Ssy}{${Dev}}WfRawVolt:Ch${CHANNEL}-I")
     field (FTA, "DOUBLE")
     field (NOA, "${NELM}")
@@ -104,6 +39,10 @@ record(aSub,"${Psy}-${Ssy}{${Dev}}WfAsub:Card${CARD}Ch${CHANNEL}-aSub_")
     field (OUTD, "${Psy}-${Ssy}{${Dev}}SumVolt:Ch${CHANNEL}-I PP")
     field (FTVD, "DOUBLE")
     field (NOVD, "1")
+    field (OUTE, "${Psy}-${Ssy}{${Dev}}StdVolt:Ch${CHANNEL}-I PP")
+    field (FTVE, "DOUBLE")
+    field (NOVE, "1")
+    #forward link to another aSub record to get trigger rate, set DC offset, etc.
     field (FLNK, "${Psy}-${Ssy}{${Dev}}Asub:Ch${CHANNEL}-aSub_")
 }
 
@@ -115,7 +54,7 @@ record(ai,"${Psy}-${Ssy}{${Dev}}AveVolt:Ch${CHANNEL}-I")
    field(EGU,"Volts")
 }
 
-#test different algorithms of compress record: INP references a scalar
+#average the 1Hz/10Hz/1.2Hz data over 60 samples
 record(compress,"${Psy}-${Ssy}{${Dev}}AveToMin:Ch${CHANNEL}-I")
 {
 	field(DESC, "Average to minutes")
@@ -123,23 +62,44 @@ record(compress,"${Psy}-${Ssy}{${Dev}}AveToMin:Ch${CHANNEL}-I")
 	field(ALG,"N to 1 Average")
 	#NSAM is similar to NELM of wavefor record 
 	field(NSAM,"1")
-	#averaging over 59 samples: for NSLS-2, 60 samples/minute, 1-second for life-time computation
-	field(N,"59")
+	#averaging over 60 samples: for NSLS-2, 60 samples/minute, 1-second for life-time computation
+	field(N,"60")
 	field(PREC,"6")
 	field(EGU,"Volts")
+	field(FLNK, "${Psy}-${Ssy}{${Dev}}CirBuffer:Ch${CHANNEL}-aSub_")
 }
 
-record(compress,"${Psy}-${Ssy}{${Dev}}AveToMinAve:Ch${CHANNEL}-I")
+#Circular buffer: 60 samples
+record(compress,"${Psy}-${Ssy}{${Dev}}CirBuffer:Ch${CHANNEL}-I")
 {
-	field(DESC, "Average to minutes by Average")
+	field(DESC, "60 Samples buffer")
 	field(INP,"${Psy}-${Ssy}{${Dev}}AveVolt:Ch${CHANNEL}-I CP NMS")
-	field(ALG,"Average")
-	#NSAM is similar to NELM of wavefor record 
-	field(NSAM,"1")
-	#averaging over 59 samples: for NSLS-2, 60 samples/minute, 1-second for life-time computation
-	field(N,"59")
+	field(ALG,"Circular Buffer")
+	field(NSAM,"60")
 	field(PREC,"6")
 	field(EGU,"Volts")
+	#field (FLNK, "${Psy}-${Ssy}{${Dev}}CirBuffer:Ch${CHANNEL}-aSub_")
+}
+
+#Process buffered (1-minute) data: standard deviation(RMS noise), etc.
+record(aSub,"${Psy}-${Ssy}{${Dev}}CirBuffer:Ch${CHANNEL}-aSub_")
+{
+    field (DESC,"process circular data")
+    field (SNAM,"ics710ProcessCirBuffer")
+    field (INPA, "${Psy}-${Ssy}{${Dev}}CirBuffer:Ch${CHANNEL}-I")
+    field (FTA, "DOUBLE")
+    field (NOA, "60")
+    field (OUTA, "${Psy}-${Ssy}{${Dev}}Noise:Ch${CHANNEL}-I PP")
+    field (FTVA, "DOUBLE")
+    field (NOVA, "1")
+}
+
+record(ai,"${Psy}-${Ssy}{${Dev}}Noise:Ch${CHANNEL}-I")
+{
+   field(DESC,"RMS noise over 1-min")
+   field(INP,"${Psy}-${Ssy}{${Dev}}CirBuffer:Ch${CHANNEL}-aSub_.VALA")
+   field(PREC,"6")
+   field(EGU,"Volts")
 }
 
 record(ai,"${Psy}-${Ssy}{${Dev}}MaxVolt:Ch${CHANNEL}-I")
@@ -166,13 +126,23 @@ record(ai,"${Psy}-${Ssy}{${Dev}}SumVolt:Ch${CHANNEL}-I")
    field(EGU,"Volts")
 }
 
+record(ai,"${Psy}-${Ssy}{${Dev}}StdVolt:Ch${CHANNEL}-I")
+{
+   field(DESC,"ics710 std voltage")
+   field(INP,"${Psy}-${Ssy}{${Dev}}WfAsub:Card${CARD}Ch${CHANNEL}-aSub_.VALE")
+   field(PREC,"6")
+   field(EGU,"Volts")
+}
+
 #calculate time spent on different operations and setup DC offset for each channel ;
 record(aSub,"${Psy}-${Ssy}{${Dev}}Asub:Ch${CHANNEL}-aSub_")
 {
     field(DESC,"calculate differnet time")
     field (INAM,"ics710AsubInit")
     field (SNAM,"ics710AsubProcess")
+    #set DC offset of each channel
     field (INPA, "${Psy}-${Ssy}{${Dev}}Offset:Ch${CHANNEL}-SP")
+    #get CARD and CHANNEL info from the waveform record
     field (INPB, "${Psy}-${Ssy}{${Dev}}WfRawVolt:Ch${CHANNEL}-I")
     field (FTA, "DOUBLE")
     field (NOA, "1")
@@ -227,7 +197,7 @@ record (ao, "${Psy}-${Ssy}{${Dev}}Offset:Ch${CHANNEL}-SP")
 {
     field(DESC,"DC Offset")
     field(SCAN, "Passive")
-    #field(PINI, "YES")
+    field(PINI, "YES")
     #for channle 1
     field(VAL, "0.0481")
     #for channle 2
@@ -260,3 +230,84 @@ record (ao, "${Psy}-${Ssy}{${Dev}}Offset:Ch${CHANNEL}-SP")
  #  field(PREC,"6")
  #  field(FLNK,"${Psy}-${Ssy}{${Dev}}AveVolt:Ch${CHANNEL}-I")
 #}
+
+#use and test 5 algorithms of compress record to process waveform data: mean, min, max,etc.; INP references an array(waveform record)
+#record(compress,"${Psy}-${Ssy}{${Dev}}WfRawVoltCir:Ch${CHANNEL}-com_")
+#{
+	#field(DESC, "part of waveform data like subArray")
+	#field(INP,"${Psy}-${Ssy}{${Dev}}WfRawVolt:Ch${CHANNEL}-I CP NMS")
+	#field(ALG,"Circular Buffer")
+	#For array INP, NSAM is the number of samples, like NELM of waveform record 
+	#NSAM < NELM, get 10 samples at the end of the waveform WfRawVolt
+	#field(NSAM,"10")
+	#N is meaningless for Circular Buffer
+	#field(N,"${NELM}")
+	#field(PREC,"6")
+	#field(EGU,"Volts")
+#}
+
+#record(compress,"${Psy}-${Ssy}{${Dev}}WfRawVoltAve:Ch${CHANNEL}-com_")
+#{
+	#field(DESC, "average N successive wfs element-by-E")
+	#field(INP,"${Psy}-${Ssy}{${Dev}}WfRawVolt:Ch${CHANNEL}-I CP NMS")
+	#field(ALG,"Average")
+	#get the whole waveform data
+	#field(NSAM,"${NELM}")
+	#for 10Hz Flag image, average successive 9 images
+	#field(N,"9")
+	#field(PREC,"6")
+	#field(EGU,"Volts")
+#}
+
+#record(compress,"${Psy}-${Ssy}{${Dev}}AveVolt:Ch${CHANNEL}-com_")
+#{
+	#field(DESC, "waveform averaging by compress")
+	#field(INP,"${Psy}-${Ssy}{${Dev}}WfRawVolt:Ch${CHANNEL}-I CP NMS")
+	#field(ALG,"N to 1 Average")
+	#For array INP, NSAM is the number of subArrays 
+	#field(NSAM,"1")
+	#subarray length is N
+	#field(N,"${NELM}")
+	#field(PREC,"6")
+	#field(EGU,"Volts")
+#}
+
+#record(compress,"${Psy}-${Ssy}{${Dev}}MaxVolt:Ch${CHANNEL}-com_")
+#{
+	#field(DESC, "Max in waveform data by compress")
+	#field(INP,"${Psy}-${Ssy}{${Dev}}WfRawVolt:Ch${CHANNEL}-I CP NMS")
+	#field(ALG,"N to 1 High Value")
+	#For array INP, NSAM is the number of subArrays 
+	#field(NSAM,"1")
+	#subarray length is N
+	#field(N,"${NELM}")
+	#field(PREC,"6")
+	#field(EGU,"Volts")
+#}
+
+#record(compress,"${Psy}-${Ssy}{${Dev}}MinVolt:Ch${CHANNEL}-com_")
+#{
+	#field(DESC, "Min in waveform data by compress")
+	#field(INP,"${Psy}-${Ssy}{${Dev}}WfRawVolt:Ch${CHANNEL}-I CP NMS")
+	#field(ALG,"N to 1 Low Value")
+	#For array INP, NSAM is the number of subArrays 
+	#field(NSAM,"1")
+	#subarray length is N
+	#field(N,"${NELM}")
+	#field(PREC,"6")
+	#field(EGU,"Volts")
+#}
+
+#test different algorithms of compress record: INP references a scalar
+record(compress,"${Psy}-${Ssy}{${Dev}}AveToMinAve:Ch${CHANNEL}-I")
+{
+	field(DESC, "Average to minutes by Average")
+	field(INP,"${Psy}-${Ssy}{${Dev}}AveVolt:Ch${CHANNEL}-I CP NMS")
+	field(ALG,"Average")
+	#NSAM is similar to NELM of wavefor record 
+	field(NSAM,"1")
+	#averaging over 59 samples: for NSLS-2, 60 samples/minute, 1-second for life-time computation
+	field(N,"59")
+	field(PREC,"6")
+	field(EGU,"Volts")
+}

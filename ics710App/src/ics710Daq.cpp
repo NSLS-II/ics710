@@ -8,6 +8,7 @@
 #include <unistd.h>
 #include <sys/time.h>/*for microsecond: gettimeofday()*/
 #include <math.h>
+#include <errno.h>
 
 #include "ics710Daq.h"
 #include "ics710Drv.h"
@@ -70,18 +71,26 @@ extern "C"
   {
 	 ics710Driver *pics710Driver = static_cast<ics710Driver*>(arg);
 	 int errorCode;
-     int timeout = 2; /* seconds */
+     int timeout = 10; /* seconds */
+     char buf[30];
      epicsTimeStamp now;
      double oldTimeAfterADCInt = 0.0;
 
     while (1)
     {
-		ics710Debug("enter ics710DaqThread. \n");
+		//ics710Debug("enter ics710DaqThread. \n");
+		printf("enter ics710DaqThread. \n");
     	epicsThreadSleep(1.00);
-    	epicsEventWait(pics710Driver->runSemaphore); /*runSemaphore is setup in ics710DrvMbbo.cpp*/
-        do
+    	epicsEventWait(pics710Driver->runSemaphore); /*runSemaphore is setup in ics710DrvMbbo/Longout.cpp*/
+        //do
+    	while (pics710Driver->running)/*running is setup in ics710DrvMbbo.cpp*/
         {
  daqStart:
+ /*
+ 	 	 	epicsTimeGetCurrent(&now);
+ 	 	    epicsTimeToStrftime(buf, 30, "%Y/%m/%d %H:%M:%S.%06f", &now);
+ 	 	    printf("a new daq started at: %s \n", buf);
+*/
  	 	 	 /*must buffer reset for continuous/multiple acquisitions, otherwise only can get one-short acquisition*/
 			if (ICS710_OK != (errorCode = ics710BufferReset (pics710Driver->hDevice)))
 			{
@@ -97,7 +106,11 @@ extern "C"
 					goto daqStart;
 				}
 			}
-
+/*
+ 	 	 	epicsTimeGetCurrent(&now);
+ 	 	    epicsTimeToStrftime(buf, 30, "%Y/%m/%d %H:%M:%S.%06f", &now);
+ 	 	    printf("buffer reseted at: %s \n", buf);
+*/
 			/* Enable ADC interrupt and wait for acquisition to be complete*/
 			if (ICS710_OK != (errorCode = ics710WaitADCInt(pics710Driver->hDevice, &timeout)))
 			{
@@ -105,11 +118,22 @@ extern "C"
 				pics710Driver->timeouts++;
 				goto daqStart;
 			}
+/*
+ 	 	    do
+ 	 	    {
+ 	 	    	errorCode = ics710WaitADCInt(pics710Driver->hDevice, &timeout);
+ 	 	    } while (EAGAIN == errno);
+ 	 	    if (EBUSY == errno) epicsThreadSleep(0.2);
+*/
  	 	 	epicsTimeGetCurrent(&now);
  	 	 	timeAfterADCInt = now.secPastEpoch + now.nsec/1000000000.0;
  	 	 	triggerRate = 1.0/(timeAfterADCInt - oldTimeAfterADCInt);
             oldTimeAfterADCInt = timeAfterADCInt;
-
+/*
+ 	 	 	epicsTimeGetCurrent(&now);
+ 	 	    epicsTimeToStrftime(buf, 30, "%Y/%m/%d %H:%M:%S.%06f", &now);
+ 	 	    printf("ADC interrupted and acquisition completed at: %s \n", buf);
+*/
             /*Read out data via DMA*/
 			epicsMutexLock(pics710Driver->daqMutex);
 			if (0 > (errorCode = read(pics710Driver->hDevice, pics710Driver->pAcqData, pics710Driver->bytesToRead)))
@@ -119,9 +143,19 @@ extern "C"
 				goto daqStart;
 			}
             epicsMutexUnlock(pics710Driver->daqMutex);
+/*
+ 	 	    do
+ 	 	    {
+ 	 	    	errorCode = read(pics710Driver->hDevice, pics710Driver->pAcqData, pics710Driver->bytesToRead);
+ 	 	    } while (EAGAIN == errno);
+ 	 	    if (EBUSY == errno) epicsThreadSleep(0.2);
+ */
  	 	 	epicsTimeGetCurrent(&now);
  	 	 	timeAfterRead = now.secPastEpoch + now.nsec/1000000000.0;
-
+/*
+ 	 	    epicsTimeToStrftime(buf, 30, "%Y/%m/%d %H:%M:%S.%06f", &now);
+ 	 	    printf("data readout from the board Via DMA at: %s \n", buf);
+*/
  	 	  /*split the raw DMA buffer data into the data of individual channel*/
 			if (pics710Driver->control.packed_data == 0)
 				fileUnpackedData710(pics710Driver);
@@ -129,10 +163,16 @@ extern "C"
 				filePackedData710(pics710Driver);
 
             scanIoRequest(pics710Driver->ioscanpvt);
+/*
+            epicsTimeGetCurrent(&now);
+            epicsTimeToStrftime(buf, 30, "%Y/%m/%d %H:%M:%S.%06f", &now);
+            printf("ioscanpvt sent out at: %s \n", buf);
+*/
             ics710Debug("scanIoRequest: send interrupt to waveform records (I/O Intr) \n");
             pics710Driver->count++;
+            epicsEventSignal(pics710Driver->runSemaphore); /*runSemaphore is setup in ics710DrvMbbo(Longout).cpp*/
 
-        } while (pics710Driver->running);/*running is setup in ics710DrvMbbo.cpp*/
+        } //while (pics710Driver->running);/*running is setup in ics710DrvMbbo.cpp*/
 
     }//while(1)
 

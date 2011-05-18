@@ -9,6 +9,7 @@
 #include "ics710Drv.h"
 
 #include <longoutRecord.h>
+#include <epicsEvent.h>
 
 #include <stdio.h>
 #include <string.h>
@@ -21,6 +22,12 @@ extern  ics710Driver ics710Drivers[MAX_DEV];
 static int setTotalChannel(longoutRecord* plongout, ics710Driver *pics710Driver, int val)
 {
 	int errorCode;
+	/*2011-04-30: reconfiguration of totalChannel is a expensive operation including ADC recalibration, etc.
+	 * just fix totalChannel = 8 */
+	plongout->val = pics710Driver->totalChannel;
+	printf("Sorry, totoalChannel is fixed to %d \n", pics710Driver->totalChannel);
+	return 0;
+
 	if (val == pics710Driver->totalChannel) return 0;
 
 	if (pics710Driver->control.packed_data == 0)
@@ -110,6 +117,7 @@ static int setSamples(longoutRecord* plongout, ics710Driver *pics710Driver, int 
 
 	if (val == pics710Driver->nSamples) return 0;
 
+	epicsEventWait(pics710Driver->runSemaphore);
 	if (val < 1)
 	{
 		printf("number of samples should be > = 1: set Samples = 1 \n");
@@ -177,6 +185,7 @@ static int setSamples(longoutRecord* plongout, ics710Driver *pics710Driver, int 
 
 	plongout->val = val;
 	printf("reconfigure samples/channel to %d samples \n", pics710Driver->nSamples);
+	epicsEventSignal(pics710Driver->runSemaphore);
 
 	return 0;
 }

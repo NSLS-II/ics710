@@ -276,6 +276,7 @@ extern "C"
 		{
 			/* blocking I/O: easy ADC interrupt implementation, seems efficient enough for 10Hz IOC update */
 			fcntl(pics710Driver->hDevice, F_SETFL, fcntl(pics710Driver->hDevice, F_GETFL) & ~O_NONBLOCK);
+			//fcntl(pics710Driver->hDevice, F_SETFL, fcntl(pics710Driver->hDevice, F_GETFL) | O_NONBLOCK);
 
 		/* default parameters: currently fixed in ics710 IOC */
 			pics710Driver->control.adc_clock_select = ICS710_CLOCK_INTERNAL;/*ICS710_CLOCK_INTERNAL or ICS710_CLOCK_EXTERNAL*/
@@ -304,8 +305,9 @@ extern "C"
 			pics710Driver->control.oversamp_ratio = osr;/*0:ICS710_SAMP_NORMAL(best SNR),1:ICS710_SAMP_DOUBLE,2:ICS710_SAMP_QUAD(fastest)*/
 			pics710Driver->ics710AdcClockRate = samplingRate * (256/(1<<osr))/1000;
 			pics710Driver->control.trigger_select = triggerSel; /*ICS710_TRIG_INTERNAL or ICS710_TRIG_EXTERNAL*/
+			/*May-13-2011: it's better not to use Continuous acquisition mode which sometimes gives glitch data*/
+			if(0 == acqMode) acqMode = 1;
 			pics710Driver->control.acq_mode = acqMode; /* ICS710_CONTINUOUS or ICS710_CAPTURE_NOPRETRG or ICS710_CAPTURE_WITHPRETRG  */
-
 			/* To synchronize external event, it's better to use 'external trigger(triggerSel=1) + captureWithoutPreTrigger(acqMode=1)'
 			 * if using external trigger and Continuous Mode, must set extrig_mode to level(high) control; disable and re-enable DAQ doesn't work
 			 * */
@@ -411,7 +413,7 @@ extern "C"
   static void ics710InitCallFunc(const iocshArgBuf *args)
   {
 	  ics710Init(args[0].ival, args[1].ival, args[2].ival, args[3].ival,
-			     args[4].ival, args[5].dval, args[6].ival, args[7].ival, args[7].ival);
+			     args[4].ival, args[5].dval, args[6].ival, args[7].ival, args[8].ival);
   }
 
   void ics710Registrar()

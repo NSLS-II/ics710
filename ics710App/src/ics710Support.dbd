@@ -3,6 +3,8 @@ function(ics710AsubInit)
 function(ics710AsubProcess)
 function(ics710ProcessWfAsubInit)
 function(ics710ProcessWfAsubProcess)
+function(ics710ProcessCirBuffer)
+
 #device(ao,        INST_IO, ics710DevAo,  "ics710")
 device(longout,   INST_IO, ics710DevLongout,  "ics710")
 device(mbbo,      INST_IO, ics710DevMbbo,"ics710")

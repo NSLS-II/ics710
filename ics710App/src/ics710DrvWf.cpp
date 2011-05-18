@@ -141,10 +141,11 @@ template<> int ics710ReadRecordSpecialized(waveformRecord* pwf)
 	   * 03/04/2011:don't need to discard any data since the garbage data only occur at the first acquisition
 	   * 03/10/2011: still get fake data if totalChannel > 2
 	   * 04/02/2011: play tricks on the garbage data*/
-	  epicsMutexLock(pics710Driver->daqMutex);
+	  //epicsMutexLock(pics710Driver->daqMutex);
 	  //pics710WfFuncStruct->rfunc(pwf->bptr, (const double*) &pics710Driver->chData[pics710RecPrivate->channel][1024/pics710Driver->totalChannel], (pics710Driver->nSamples - 1024/pics710Driver->totalChannel));
-	  pics710WfFuncStruct->rfunc(pwf->bptr, (const double*) &pics710Driver->chData[pics710RecPrivate->channel][0], pics710Driver->nSamples);
-	  epicsMutexUnlock(pics710Driver->daqMutex);
+	  //pics710WfFuncStruct->rfunc(pwf->bptr, (const double*) &pics710Driver->chData[pics710RecPrivate->channel][0], pics710Driver->nSamples);
+	  memcpy(pwf->bptr, (const double*) &pics710Driver->chData[pics710RecPrivate->channel][0], sizeof(double) * pics710Driver->nSamples);
+	  //epicsMutexUnlock(pics710Driver->daqMutex);
 
 	  pwf->nord = pics710Driver->nSamples; /*waveform read-out is completed*/
 
