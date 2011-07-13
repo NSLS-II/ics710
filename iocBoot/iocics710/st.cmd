@@ -4,6 +4,7 @@ epicsEnvSet("EPICS_CA_MAX_ARRAY_BYTES","10000000")
 epicsEnvSet("ENGINEER","Yong Hu: x3961")
 epicsEnvSet("LOCATION","Blg 902 Rm 18")
 epicsEnvSet "EPICS_CAS_AUTO_BEACON_ADDR_LIST", "NO"
+epicsEnvSet "EPICS_CAS_BEACON_ADDR_LIST", "130.199.240.255 130.199.241.255:5065"
 #epicsEnvSet "EPICS_CAS_BEACON_ADDR_LIST", "130.199.195.255:5065"
 epicsEnvSet "EPICS_CAS_SERVER_PORT", "8002" 
 
@@ -23,7 +24,7 @@ ics710_registerRecordDeviceDriver pdbbase
 #For CBLMs at NSLS, 1.2Hz trigger, 200.0KS/s(12.8MHz clock), 160ms acquisition length(32K Samples)
 #ics710Init(0, 8, 32000, 0, 10, 200.0, 2, 1, 1)
 #For CBLMs at NSLS, 1.2Hz trigger, 20.0KS/s(1.28MHz clock), 160ms acquisition length(3.2K Samples)
-ics710Init(0, 8, 3200, 0, 1, 4.0, 0, 1, 1)
+ics710Init(0, 8, 32000, 0, 1, 200.0, 2, 1, 1)
 
 #DCCT operation: 8-ch/card, 1K samples/ch, 10V range, 10KHz bw, 1KS/s, over-sampling ratio is 128 , internal trigger, continous acquisition
 # must set OSR = 0 to get the lowest speed 1KS/s
@@ -36,8 +37,19 @@ ics710Init(0, 8, 3200, 0, 1, 4.0, 0, 1, 1)
 # for Linac ICTs, 300 us * 200KS/s = 60 samples, pluse fake/garbage data 1024/8=128, 60 + 128 +200 = 400
 #ics710Init(0, 8, 400, 0, 1, 200.0, 2, 1, 1)
 
-dbLoadTemplate "db/ics710Channel.substitutions"
-dbLoadTemplate "db/ics710Card.substitutions"
+dbLoadRecords "db/ics710Channel.db"
+dbLoadRecords "db/ics710Card.db"
+
+dbLoadRecords ("db/iocAdminSoft.db", "IOC=LTB-BI{ICT-IOC}")
+dbLoadRecords ("db/save_restoreStatus.db", "P=LTB-BI{ICT-AS}")
+save_restoreSet_status_prefix("LTB-BI{ICT-AS}")
+set_savefile_path("./as", "/save")
+set_requestfile_path("./as", "/req")
+system("install -d ./as/save")
+system("install -d ./as/req")
+set_pass0_restoreFile("LBT-ICT_settings.sav")
 
 iocInit
 
+makeAutosaveFileFromDbInfo("as/req/LBT-ICT_settings.req", "autosaveFields_pass0")
+create_monitor_set("LBT-ICT_settings.req", 10, "")

@@ -1,10 +1,14 @@
-#Yong Hu: ext.3961; see ics710Card.template
-#HRD(high resolution digitizer) ICS710;
-#Follow NSLS-2 naming convention: [PSy[:PI]][-SSy[:SI]][-TSy[:TI]]{Dev[:DI]}[SgN[:SgI][-SgD]] 
-#AS-AM{RadMon:1}DoseRate:1min-I
+#### functionality: card setup: run/stop, gain, filter, samples/ch, sampling rate, etc.
+#### Yong Hu: ext.3961; see ics710Card.template
+#### Follow NSLS-2 naming convention: [PSy[:PI]][-SSy[:SI]][-TSy[:TI]]{Dev[:DI]}[SgN[:SgI][-SgD]] 
+## Psy		-	Primary system
+## Ssy		-	Secondary system
+## Dev		-	Device name
+## CARD     -	#board / digitizer; "0" refers to the first digitizer found during initialization. \\
+##              For Acqiris crate and Concurrent CPU, it's the top slot(#5) if there's one digitizer in slot 5 
 
 file "db/ics710Card.template"
 {
     pattern {Psy,     Ssy,     Dev,    CARD }
-            {"LBT",   "BI",   "HRD",   "0" }
+            {"LTB",   "BI",   "ICT",   "0" }
 }

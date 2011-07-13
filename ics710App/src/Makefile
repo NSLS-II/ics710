@@ -18,6 +18,12 @@ ics710_DBD += base.dbd
 #Yong Hu: include dbd for ics710 driver/device support
 ics710_DBD += ics710Support.dbd
 
+#Yong Hu: include iocStatus and autosave which are installed by epics Debian package
+# /usr/lib/epics/dbd/
+ics710_DBD += devIocStats.dbd
+ics710_DBD += asSupport.dbd
+ics710_DBD += system.dbd
+
 # ics710_registerRecordDeviceDriver.cpp derives from ics710.dbd
 ics710_SRCS += ics710_registerRecordDeviceDriver.cpp
 #Yong Hu: works only if the header file(ics710api.h) is installed in $(TOP)/include
@@ -42,6 +48,11 @@ ics710_LIBS += ics710
 #USR_CFLAGS += -DREDHAT61 -I../../../ics710/inc
 #USR_CPPFLAGS += -DREDHAT61 -I../../../ics710/inc
 #ics710_LDFLAGS += -L../../../ics710/api -lics710
+
+#Yong Hu: include autosave and devIocStats libraries which are installed by epics Debian
+#package: /usr/lib/epics/lib/linux-x86
+ics710_LIBS += autosave
+ics710_LIBS += devIocStats
 
 # Finally link to the EPICS Base libraries
 ics710_LIBS += $(EPICS_BASE_IOC_LIBS)

@@ -1,7 +1,7 @@
 /* Yong Hu: started on 02-08-2011
  * Prototype IOC fully functions on Mar-03-2011
  * */
-/*ics710ProcessWfAsbu.c: process waveform record: mean, min, max, rms, integral, std, etc.; */
+/*ics710ProcessWfAsbu.cpp: process waveform record: mean, min, max, rms, integral, std, etc.; */
 
 #include <string.h>
 #include <stdio.h>
@@ -51,27 +51,7 @@ static long ics710ProcessWfAsubProcess(aSubRecord *precord)
     double min[MAX_CHANNEL]  = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
     double sum[MAX_CHANNEL]  = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
     double std[MAX_CHANNEL]  = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
-
-    /*copy the waveform data: must use sizeof(double)*/
-	//memcpy(&temp, (double *)precord->a, precord->noa * sizeof(precord->fta));
-	memcpy(&temp, (double *)precord->a, precord->noa * sizeof(double));
-    if (ics710ProcessWfAsubDebug)
-    	printf("Record %s called and INPA value is: #100: %f #1000: %f\n",precord->name, temp[100], temp[1000]);//works
-
-    /* get #card and #channel information from aSub record name
-     * doesn't work for cards > 9 or channels > 9*/
-/*
-    if (pch = strstr (precord->name,"Card"))
-    {
-    	card = *(pch + 4) - 0x30;
-    	//printf ("card #: %d \n",card);
-    }
-    if (pch = strstr (precord->name,"Ch"))
-    {
-    	channel = *(pch + 2) - 0x30;
-    	//printf ("channel #: %d \n",channel);
-    }
-*/
+//get CARD and CHANNEL info from INPA --waveform record
     struct link *plink = &precord->inpa;
     if (DB_LINK != plink->type) return -1;
     paddr = (DBADDR *)plink->value.pv_link.pvt;

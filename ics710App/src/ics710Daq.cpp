@@ -24,12 +24,13 @@ extern double dcOffset[MAX_CHANNEL];
 
 extern "C"
 {
-  /*split the raw DMA buffer data into the data of individual channel*/
+  /*split the raw DMA buffer data into the data of individual channel: raw integer and double voltage*/
   static int fileUnpackedData710 (ics710Driver *pics710Driver)
   {
 	  unsigned channel = 0;
 	  unsigned nSamples = 0;
-	  double rawVolt;
+	  int rawData;
+	  //double rawVolt;
 	  ics710Debug("split the raw DMA buffer data into the data of individual channel \n");
 
 	  /* convert the raw data(32-bit long) to voltage, then calibrate it (slope=0.98) */
@@ -40,14 +41,21 @@ extern "C"
 			  if (0 != (channel % 2))
 			  {
 				  /* 1<<23 = 8388608, volt-volt/50 (50Ohm?), ch1DcOffset=0.173 for 10V Input Range */
-				  rawVolt = ((int)pics710Driver->pAcqData[nSamples * pics710Driver->totalChannel + channel - 1] / (256* 8388608.0)) * (10.00 / (1+pics710Driver->gainControl.input_voltage_range));
-				  pics710Driver->chData[channel][nSamples] = 0.98 * rawVolt - dcOffset[channel];
+				  //rawVolt = ((int)pics710Driver->pAcqData[nSamples * pics710Driver->totalChannel + channel - 1] / (256* 8388608.0)) * (10.00 / (1+pics710Driver->gainControl.input_voltage_range));
+				  rawData = (int)pics710Driver->pAcqData[nSamples*pics710Driver->totalChannel+channel-1];
+				  pics710Driver->rawData[channel][nSamples] = rawData;
+				  pics710Driver->chData[channel][nSamples] = (rawData/(256* 8388608.0)) * (10.00/(1+pics710Driver->gainControl.input_voltage_range)) - dcOffset[channel];
+				  //pics710Driver->chData[channel][nSamples] = 0.98 * rawVolt - dcOffset[channel];
 			  }
 			  else
 			  {
 				  /* 1<<23 = 8388608, volt-volt/50 (50Ohm?), ch0DcOffset=0.0481 for 10V Input Range */
-				  rawVolt = ((int)pics710Driver->pAcqData[nSamples * pics710Driver->totalChannel + channel + 1] / (256* 8388608.0)) * (10.00 / (1+pics710Driver->gainControl.input_voltage_range));
-				  pics710Driver->chData[channel][nSamples] = 0.98 * rawVolt - dcOffset[channel];
+				  //rawVolt = ((int)pics710Driver->pAcqData[nSamples * pics710Driver->totalChannel + channel + 1] / (256* 8388608.0)) * (10.00 / (1+pics710Driver->gainControl.input_voltage_range));
+				  rawData = (int)pics710Driver->pAcqData[nSamples*pics710Driver->totalChannel+channel+1];
+				  pics710Driver->rawData[channel][nSamples] = rawData;
+				  pics710Driver->chData[channel][nSamples] = (rawData/(256* 8388608.0)) * (10.00/(1+pics710Driver->gainControl.input_voltage_range)) - dcOffset[channel];
+				  //pics710Driver->chData[channel][nSamples] = rawVolt - dcOffset[channel];
+				  //pics710Driver->chData[channel][nSamples] = 0.98 * rawVolt - dcOffset[channel];
  /* third-order polyfit: still get '0.98'
   * pics710Driver->chData[channel][nSamples] = -1.4662e-05*(rawVolt*rawVolt*rawVolt)+1.2958e-04*(rawVolt*rawVolt)+9.8039e-01*rawVolt-4.7776e-02;
 	p21 = -1.4662e-05   1.2958e-04   9.8039e-01  -4.7776e-02
@@ -72,7 +80,7 @@ extern "C"
 	 ics710Driver *pics710Driver = static_cast<ics710Driver*>(arg);
 	 int errorCode;
      int timeout = 10; /* seconds */
-     char buf[30];
+     //char buf[30];
      epicsTimeStamp now;
      double oldTimeAfterADCInt = 0.0;
 

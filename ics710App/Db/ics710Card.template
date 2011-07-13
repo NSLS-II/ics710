@@ -1,11 +1,14 @@
-#Yong Hu: ext.3961; see ics710Card.substitutions
-#HRD(high resolution digitizer) ICS710;
-#Follow NSLS-2 naming convention: [PSy[:PI]][-SSy[:SI]][-TSy[:TI]]{Dev[:DI]}[SgN[:SgI][-SgD]] 
-#AS-AM{RadMon:1}DoseRate:1min-I
+#### functionality: card setup: run/stop, gain, filter, samples/ch, sampling rate, etc.
+#### Yong Hu: ext.3961; see ics710Card.substitutions
+#### Follow NSLS-2 naming convention: [PSy[:PI]][-SSy[:SI]][-TSy[:TI]]{Dev[:DI]}[SgN[:SgI][-SgD]] 
+## Psy		-	Primary system
+## Ssy		-	Secondary system
+## Dev		-	Device name
+## CARD     -	#board / digitizer; "0" refers to the first digitizer found during initialization. \\
+##              For Acqiris crate and Concurrent CPU, it's the top slot(#5) if there's one digitizer in slot 5 
+## note: initialize records RVAL/VAL in ics710Drv*.cpp instead of using PINI
 
-## initialize records RVAL/VAL in ics710Drv*.cpp instead of using PINI
-
-record(mbbo,"${Psy}-${Ssy}{${Dev}}Run:C${CARD}-SP")
+record(mbbo,"${Psy}-${Ssy}{${Dev}}Run-SP")
 {   
    field(DESC,"setRunning")
    field(DTYP,"ics710")
@@ -17,10 +20,11 @@ record(mbbo,"${Psy}-${Ssy}{${Dev}}Run:C${CARD}-SP")
    field(ZRST,"Stopped")
    field(ONVL,"1")
    field(ONST,"Running")
+   info(autosaveFields_pass0, "RVAL")   
 }
 
 ## initialize records RVAL/VAL in ics710Drv*.cpp instead of using PINI
-record(mbbo,"${Psy}-${Ssy}{${Dev}}Gain:C${CARD}-SP")
+record(mbbo,"${Psy}-${Ssy}{${Dev}}Gain-SP")
 {   
    field(DESC,"setGain")
    field(DTYP,"ics710")
@@ -61,10 +65,10 @@ record(mbbo,"${Psy}-${Ssy}{${Dev}}Gain:C${CARD}-SP")
    field(FTST,"0.667V")
    field(FFVL,"15")
    field(FFST,"0.625V")
-   
+   info(autosaveFields_pass0, "RVAL")    
 }
 
-record(mbbo,"${Psy}-${Ssy}{${Dev}}Filter:C${CARD}-SP")
+record(mbbo,"${Psy}-${Ssy}{${Dev}}Filter-SP")
 {   
    field(DESC,"setFilter")
    field(DTYP,"ics710")
@@ -104,9 +108,10 @@ record(mbbo,"${Psy}-${Ssy}{${Dev}}Filter:C${CARD}-SP")
    field(FTST,"140KHz")
    field(FFVL,"15")
    field(FFST,"150KHz")
+   info(autosaveFields_pass0, "RVAL") 
 }
 
-record(mbbo,"${Psy}-${Ssy}{${Dev}}Osr:C${CARD}-SP")
+record(mbbo,"${Psy}-${Ssy}{${Dev}}Osr-SP")
 {   
    field(DESC,"setOverSamplingRatio")
    field(DTYP,"ics710")
@@ -121,10 +126,11 @@ record(mbbo,"${Psy}-${Ssy}{${Dev}}Osr:C${CARD}-SP")
    field(TWVL,"2")
    field(TWST,"Quad")
    #reconfigure the samplingRate: trigger the record to be processed
-   field(FLNK, "${Psy}-${Ssy}{${Dev}}SampleRate:C$(CARD)-SP")
+   field(FLNK, "${Psy}-${Ssy}{${Dev}}SampleRate-SP")
+   info(autosaveFields_pass0, "RVAL")
 }
 
-record(mbbo,"${Psy}-${Ssy}{${Dev}}Trigger:C${CARD}-SP")
+record(mbbo,"${Psy}-${Ssy}{${Dev}}Trigger-SP")
 {   
    field(DESC,"setTrigger")
    field(DTYP,"ics710")
@@ -136,9 +142,10 @@ record(mbbo,"${Psy}-${Ssy}{${Dev}}Trigger:C${CARD}-SP")
    field(ZRST,"Internal")
    field(ONVL,"1")
    field(ONST,"External")
+   info(autosaveFields_pass0, "RVAL")
 }
 
-record(mbbo,"${Psy}-${Ssy}{${Dev}}AcqMode:C${CARD}-SP")
+record(mbbo,"${Psy}-${Ssy}{${Dev}}AcqMode-SP")
 {   
    field(DESC,"setAcquisitionMode")
    field(DTYP,"ics710")
@@ -152,9 +159,10 @@ record(mbbo,"${Psy}-${Ssy}{${Dev}}AcqMode:C${CARD}-SP")
    field(ONST,"CaptureNoPreTrig")
    field(TWVL,"2")
    field(TWST,"CaptureWithPreTrig")
+   info(autosaveFields_pass0, "RVAL")
 }
 
-record(longout,"${Psy}-${Ssy}{${Dev}}TotalCh:C$(CARD)-SP")
+record(longout,"${Psy}-${Ssy}{${Dev}}TotalCh-SP")
 {
    field(DESC,"setTotalChannel")
    field(DTYP,"ics710")
@@ -165,9 +173,10 @@ record(longout,"${Psy}-${Ssy}{${Dev}}TotalCh:C$(CARD)-SP")
    field(HOPR, "8")
    field(LOPR, "2")
    field(EGU, "channel")
+   info(autosaveFields_pass0, "VAL")
 }
 
-record(longout,"${Psy}-${Ssy}{${Dev}}Samples:C$(CARD)-SP")
+record(longout,"${Psy}-${Ssy}{${Dev}}Samples-SP")
 {
    field(DESC,"setSamples")
    field(DTYP,"ics710")
@@ -177,9 +186,11 @@ record(longout,"${Psy}-${Ssy}{${Dev}}Samples:C$(CARD)-SP")
    field(HOPR, "200000")
    field(LOPR, "1")
    field(EGU, "samples")
+   #neither RVAL nor VAL works with autosave 
+   info(autosaveFields_pass0, "RVAL")
 }
 
-record(longout,"${Psy}-${Ssy}{${Dev}}SampleRate:C$(CARD)-SP")
+record(longout,"${Psy}-${Ssy}{${Dev}}SampleRate-SP")
 {
    field(DESC,"setSamplingRate")
    field(DTYP,"ics710")
@@ -188,5 +199,7 @@ record(longout,"${Psy}-${Ssy}{${Dev}}SampleRate:C$(CARD)-SP")
    #field(DOL, "200")
    field(HOPR, "216")
    field(LOPR, "1")
-   field(EGU, "KHz")   
+   field(EGU, "KHz") 
+   #neither RVAL nor VAL works with autosave 
+   info(autosaveFields_pass0, "RVAL")  
 }

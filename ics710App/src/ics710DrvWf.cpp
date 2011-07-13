@@ -19,32 +19,32 @@ int maxChannel = 0;
 /*global variable: defined in ics710DrvInit.cpp*/
 extern  ics710Driver ics710Drivers[MAX_DEV];
 
-static int getRawVolt(void* dst, const double* src, unsigned effectiveSamples)
+//static int getRawVolt(void* dst, const double* src, unsigned effectiveSamples)
+static int getRawData(void* dst, const int* src, unsigned effectiveSamples)
 {
-	  memcpy((double *) dst, src, effectiveSamples * sizeof(double));
+	  //((double *) dst, src, effectiveSamples * sizeof(double));
+	  memcpy((int *) dst, src, effectiveSamples * sizeof(int));
 	  return 0;
 }
 
-static int getAveVolt(void* dst, const double* src, unsigned effectiveSamples)
+//static int getAveVolt(void* dst, const double* src, unsigned effectiveSamples)
+static int getVolts(void* dst, const int* src, unsigned effectiveSamples)
 {
 	  unsigned i = 0;
 	  double* dDst = static_cast<double*>(dst);
-	  //Mar-11-2011: must reset dDst[0] to 0;
-	  dDst[0] = 0.0;
 
 	  for (i= 0; i < effectiveSamples; i++)
 	  {
-		  dDst[0] += src[i];
+		  //dDst[0] = (src[i]/(256* 8388608.0)) * (10.00 / (1+pics710Driver->gainControl.input_voltage_range)) - dcOffset[channel];;
+		  //pics710Driver->chData[channel][nSamples] = pics710Driver->rawData[channel][nSamples]/ (256* 8388608.0) * (10.00 / (1+pics710Driver->gainControl.input_voltage_range)) - dcOffset[channel];
 		  //printf("src[%d] = %f	", i, src[i]);
 	  }
-	  dDst[0] /= effectiveSamples;
-	  //printf("effectiveSamples: %d, averaged value: %f \n", effectiveSamples, dDst[0]);
 
 	  return 0;
 }
 
 /* choose the function according to LINK string name */
-typedef int (*ics710WfFunc)(void* dst, const double* src, unsigned effectiveSamples);
+typedef int (*ics710WfFunc)(void* dst, const int* src, unsigned effectiveSamples);
 struct ics710WfFuncStruct
 {
 	  ics710WfFunc rfunc; /* read function*/
@@ -56,8 +56,9 @@ static struct
   ics710WfFunc rfunc;
 } parseWfString[MAX_WF_FUNC] =
 {
-  {"WRAW", getRawVolt},/*raw waveform*/
-  {"WAVE", getAveVolt},/*averaged waveform*/
+  {"WRAW", getRawData},/*raw waveform: integer data*/
+  {"WVOL", getVolts},/*voltage waveform*/
+  //{"WAVE", getAveVolt},/*averaged waveform*/
   //{"WRMS", getRmsVolt},
 };
 
@@ -81,6 +82,7 @@ template<> int ics710InitRecordSpecialized(waveformRecord* pwf)
 	       }
 	  }
 
+	  printf("unable to initialize waveform record %s \n", pwf->name);
 	  return -1;
 }
 
@@ -116,9 +118,9 @@ template<> int ics710ReadRecordSpecialized(waveformRecord* pwf)
 	  }
 
 	  /* Trick: get rid of the garbage data: set them as the correct one; 1024/totalChannel samples at the beginning, garbage samples occur again every 32*1024/totalChannel */
-	  for (nSamples = 0; nSamples < pics710Driver->nSamples; nSamples++)
+/*	  for (nSamples = 0; nSamples < pics710Driver->nSamples; nSamples++)
 	  {
-		  if (0 == (nSamples % ((32*1024)/pics710Driver->totalChannel))) /*32K = 32*1024*/
+		  if (0 == (nSamples % ((32*1024)/pics710Driver->totalChannel))) //32K = 32*102
 		  {
 			  //printf("nSamples at the beginning: %d \n",nSamples);
 			  //for (i = 1; i < 1024/pics710Driver->totalChannel; i++)
@@ -136,16 +138,24 @@ template<> int ics710ReadRecordSpecialized(waveformRecord* pwf)
 			  //printf("nSamples end: %d; i: %d \n",nSamples, i);
 		  }
 	  }
-
+*/
 	  /*discard the garbage data(1024/totalChannel) at the beginning of the waveform
 	   * 03/04/2011:don't need to discard any data since the garbage data only occur at the first acquisition
 	   * 03/10/2011: still get fake data if totalChannel > 2
-	   * 04/02/2011: play tricks on the garbage data*/
-	  //epicsMutexLock(pics710Driver->daqMutex);
+	   * 04/02/2011: play tricks on the garbage data
+	   * July/12/2011: new boards don't have data glitch issue*/
+	  epicsMutexLock(pics710Driver->daqMutex);
 	  //pics710WfFuncStruct->rfunc(pwf->bptr, (const double*) &pics710Driver->chData[pics710RecPrivate->channel][1024/pics710Driver->totalChannel], (pics710Driver->nSamples - 1024/pics710Driver->totalChannel));
-	  //pics710WfFuncStruct->rfunc(pwf->bptr, (const double*) &pics710Driver->chData[pics710RecPrivate->channel][0], pics710Driver->nSamples);
-	  memcpy(pwf->bptr, (const double*) &pics710Driver->chData[pics710RecPrivate->channel][0], sizeof(double) * pics710Driver->nSamples);
-	  //epicsMutexUnlock(pics710Driver->daqMutex);
+	  //pics710WfFuncStruct->rfunc(pwf->bptr, (const int*) &pics710Driver->rawData[pics710RecPrivate->channel][0], pics710Driver->nSamples);
+	  if (0 == strcmp(pics710RecPrivate->name, "WRAW"))
+	  {
+		  memcpy((int *)pwf->bptr, (const int *) &pics710Driver->rawData[pics710RecPrivate->channel][0], sizeof(int) * pics710Driver->nSamples);
+	  }
+	  else if (0 == strcmp(pics710RecPrivate->name, "WVOL"))
+	  {
+		  memcpy((double *)pwf->bptr, (const double*) &pics710Driver->chData[pics710RecPrivate->channel][0], sizeof(double) * pics710Driver->nSamples);
+	  }
+	  epicsMutexUnlock(pics710Driver->daqMutex);
 
 	  pwf->nord = pics710Driver->nSamples; /*waveform read-out is completed*/
 

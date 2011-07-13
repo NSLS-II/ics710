@@ -62,7 +62,8 @@ static int setOsr(ics710Driver *pics710Driver, int val)
 		printf("can't set control register(over-sampling ratio), errorCode: %d \n", errorCode);
 		return errorCode;
 	}
-	printf("reconfigure data output rate by setOsr to %d: %3.3f KHz \n", val, 1000 * pics710Driver->actualADCRate / (256/(1<<val)));
+	//printf("reconfigure data output rate by setOsr to %d: %3.3f KHz \n", val, 1000 * pics710Driver->actualADCRate / (256/(1<<val)));
+	printf("reconfigure data output rate by setOsr to %d: \n", val);
 
 	/*must re-enable the board to start DAQ again after reconfigure control register*/
 	if (ICS710_OK != (errorCode = ics710Enable (pics710Driver->hDevice)))
@@ -101,7 +102,8 @@ static int setTrigger(ics710Driver *pics710Driver, int val)
 static int setAcqMode(ics710Driver *pics710Driver, int val)
 {
 	int errorCode;
-	/*May-13-2011: it's better not to use Continuous acquisition mode which sometimes gives glitch data*/
+	/*May-13-2011: it's better not to use Continuous acquisition mode which sometimes gives glitch data
+	 * July-12-2011: verified on new boards, Continuous Mode doesn't work well*/
 	if (0 == val) val = 1;
 	if (val == pics710Driver->control.acq_mode) return 0;
 

@@ -49,6 +49,7 @@ struct ics710Driver {
   unsigned count;
   unsigned timeouts;
   unsigned readErrors;
+  int rawData[MAX_CHANNEL][MAX_SAMPLE]; /*raw data(integer) for individual channel*/
   double chData[MAX_CHANNEL][MAX_SAMPLE]; /*voltage data for individual channel*/
 };
 

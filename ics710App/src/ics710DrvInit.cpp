@@ -302,10 +302,25 @@ extern "C"
 			pics710Driver->nSamples = nSamples;
 			pics710Driver->gainControl.input_voltage_range = gain;
 			pics710Driver->filterControl.cutoff_freq_range = filter;
+
 			pics710Driver->control.oversamp_ratio = osr;/*0:ICS710_SAMP_NORMAL(best SNR),1:ICS710_SAMP_DOUBLE,2:ICS710_SAMP_QUAD(fastest)*/
 			pics710Driver->ics710AdcClockRate = samplingRate * (256/(1<<osr))/1000;
+			if (pics710Driver->ics710AdcClockRate < 0.256)
+			{
+				pics710Driver->ics710AdcClockRate = 0.256;
+				samplingRate = pics710Driver->ics710AdcClockRate / ((256.0/(1<<pics710Driver->control.oversamp_ratio))/1000.0);
+				printf("error: sampling rate is too low, set to the speed %f KHz \n", samplingRate);
+			}
+			if (pics710Driver->ics710AdcClockRate > 13.824)
+			{
+				pics710Driver->ics710AdcClockRate = 13.824;
+				samplingRate = pics710Driver->ics710AdcClockRate / ((256.0/(1<<pics710Driver->control.oversamp_ratio))/1000.0);
+				printf("error: sampling rate is too high, set to the speed %f KHz \n", samplingRate);
+			}
+
 			pics710Driver->control.trigger_select = triggerSel; /*ICS710_TRIG_INTERNAL or ICS710_TRIG_EXTERNAL*/
-			/*May-13-2011: it's better not to use Continuous acquisition mode which sometimes gives glitch data*/
+			/*May-13-2011: it's better not to use Continuous acquisition mode which sometimes gives glitch data
+			 *July-12-2011: verified on new boards, Continuous Mode doesn't work well*/
 			if(0 == acqMode) acqMode = 1;
 			pics710Driver->control.acq_mode = acqMode; /* ICS710_CONTINUOUS or ICS710_CAPTURE_NOPRETRG or ICS710_CAPTURE_WITHPRETRG  */
 			/* To synchronize external event, it's better to use 'external trigger(triggerSel=1) + captureWithoutPreTrigger(acqMode=1)'
