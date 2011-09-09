@@ -28,6 +28,7 @@ extern double timeAfterADCInt;
 extern double triggerRate;
 extern double timeAfterRead;
 extern double dcOffset[MAX_CHANNEL];
+extern double inputRange[MAX_CHANNEL];
 
 typedef long (*processMethod)(aSubRecord *precord);
 
@@ -78,6 +79,7 @@ static long ics710AsubProcess(aSubRecord *precord)
     pics710RecPrivate = (ics710RecPrivate*)(paddr->precord->dpvt);/*retrieve the waveform record private data*/
     channel = pics710RecPrivate->channel;
     dcOffset[channel]= *(double *)precord->a;
+    inputRange[channel]= *(double *)precord->c;
     //printf("change the DC offset of ch-%d to %f Volts \n",channel, *(double *)precord->a);
 
     /* get time-stamp of another record: refer to recGblGetTimeStamp(prec) -> dbGetTimeStamp(plink, &prec->time) */

@@ -21,6 +21,7 @@ extern double timeAfterADCInt;
 extern double triggerRate;
 extern double timeAfterRead;
 extern double dcOffset[MAX_CHANNEL];
+extern double inputRange[MAX_CHANNEL];
 
 extern "C"
 {
@@ -44,7 +45,8 @@ extern "C"
 				  //rawVolt = ((int)pics710Driver->pAcqData[nSamples * pics710Driver->totalChannel + channel - 1] / (256* 8388608.0)) * (10.00 / (1+pics710Driver->gainControl.input_voltage_range));
 				  rawData = (int)pics710Driver->pAcqData[nSamples*pics710Driver->totalChannel+channel-1];
 				  pics710Driver->rawData[channel][nSamples] = rawData;
-				  pics710Driver->chData[channel][nSamples] = (rawData/(256* 8388608.0)) * (10.00/(1+pics710Driver->gainControl.input_voltage_range)) - dcOffset[channel];
+				  pics710Driver->chData[channel][nSamples] = (rawData/(256* 8388608.0)) * (inputRange[channel]/(1+pics710Driver->gainControl.input_voltage_range)) + dcOffset[channel];
+				  //pics710Driver->chData[channel][nSamples] = (rawData/(256* 8388608.0)) * (10.00/(1+pics710Driver->gainControl.input_voltage_range)) + dcOffset[channel];
 				  //pics710Driver->chData[channel][nSamples] = 0.98 * rawVolt - dcOffset[channel];
 			  }
 			  else
@@ -53,7 +55,8 @@ extern "C"
 				  //rawVolt = ((int)pics710Driver->pAcqData[nSamples * pics710Driver->totalChannel + channel + 1] / (256* 8388608.0)) * (10.00 / (1+pics710Driver->gainControl.input_voltage_range));
 				  rawData = (int)pics710Driver->pAcqData[nSamples*pics710Driver->totalChannel+channel+1];
 				  pics710Driver->rawData[channel][nSamples] = rawData;
-				  pics710Driver->chData[channel][nSamples] = (rawData/(256* 8388608.0)) * (10.00/(1+pics710Driver->gainControl.input_voltage_range)) - dcOffset[channel];
+				  pics710Driver->chData[channel][nSamples] = (rawData/(256* 8388608.0)) * (inputRange[channel]/(1+pics710Driver->gainControl.input_voltage_range)) + dcOffset[channel];
+				  //pics710Driver->chData[channel][nSamples] = (rawData/(256* 8388608.0)) * (10.00/(1+pics710Driver->gainControl.input_voltage_range)) + dcOffset[channel];
 				  //pics710Driver->chData[channel][nSamples] = rawVolt - dcOffset[channel];
 				  //pics710Driver->chData[channel][nSamples] = 0.98 * rawVolt - dcOffset[channel];
  /* third-order polyfit: still get '0.98'

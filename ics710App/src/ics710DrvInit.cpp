@@ -21,6 +21,7 @@ double timeAfterADCInt = 0.0;
 double triggerRate = 0.0; /*calculate external trigger rate*/
 double timeAfterRead = 0.0;
 double dcOffset[MAX_CHANNEL] = {0.0,0.0,0.0,0.0};//DC offset obtained from aSub
+double inputRange[MAX_CHANNEL] {10.0,10.0,10.0,10.0,10.0,10.0,10.0,10.0,10.0,10.0,10.0,10.0,10.0,10.0,10.0,10.0}; // actual input voltage range for individual channel
 
 extern "C"
 {
