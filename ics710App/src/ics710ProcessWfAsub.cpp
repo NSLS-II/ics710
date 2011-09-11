@@ -24,10 +24,15 @@ int ics710ProcessWfAsubDebug = 0;
 
 /*global variable: defined in ics710DrvInit.cpp*/
 extern ics710Driver ics710Drivers[MAX_DEV];
+extern double timeAfterADCInt;
+extern double triggerRate;
+extern double timeAfterRead;
+extern double dcOffset[MAX_CHANNEL];
+extern double inputRange[MAX_CHANNEL];
 
 typedef long (*processMethod)(aSubRecord *precord);
 
-static long ics710ProcessWfAsubInit(aSubRecord *precord,processMethod process)
+static long ics710InitWfAsub(aSubRecord *precord,processMethod process)
 {
     if (ics710ProcessWfAsubDebug)
         printf("Record %s called ics710ProcessWfAsubInit(%p, %p), initial value is: %d\n",
@@ -35,7 +40,7 @@ static long ics710ProcessWfAsubInit(aSubRecord *precord,processMethod process)
     return(0);
 }
 
-static long ics710ProcessWfAsubProcess(aSubRecord *precord)
+static long ics710ProcessWfAsub(aSubRecord *precord)
 {
     double temp[MAX_SAMPLE];
     //char buf[30];
@@ -96,7 +101,7 @@ static long ics710ProcessWfAsubProcess(aSubRecord *precord)
 }
 
 /*RMS noise over 60 samples (1-minute for 1Hz)*/
-static long ics710ProcessCirBuffer(aSubRecord *precord)
+static long ics710ProcessCirBufferAsub(aSubRecord *precord)
 {
     double temp[60];
     int i = 0;
@@ -128,9 +133,59 @@ static long ics710ProcessCirBuffer(aSubRecord *precord)
 	return(0);
 }
 
+static long ics710ProcessMiscAsub(aSubRecord *precord)
+{
+    double temp;
+    char buf[30];
+    epicsTimeStamp now;
+    double timeAtAsub;
+    double rwDataReadTime;
+    double loopTime;
+    int i = 0;
+    int channel = 0;
+    DBADDR *paddr;
+    ics710RecPrivate *pics710RecPrivate;
+
+    if (ics710ProcessWfAsubDebug)
+    {
+    	//memcpy(&temp, (&precord->a)[0], sizeof(double));//works
+    	memcpy(&temp, (double *)precord->a, sizeof(double));//works
+    	printf("Record %s called and INPA value is: %f \n",precord->name, temp);//works
+    	//printf("Record %s called and INPA value is: %f \n",precord->name,  * (double *)(precord->a));work
+    	//printf("Record %s called and INPA value is: %f \n",precord->name, (&precord->a)[0]);//doesn't work
+    }
+    //printf("INPA is: %s \n", precord->inpa.text);//doesn't work: get NULL
+    //printf("INPA is: %s \n", precord->inpa);// get the input link string, but can't use the string
+//get channel info from waveform record
+    struct link *plink = &precord->inpa;
+    if (plink->type != DB_LINK) return -1;
+    paddr = (DBADDR *)plink->value.pv_link.pvt; /*get the pvt/address of the record*/
+    pics710RecPrivate = (ics710RecPrivate*)(paddr->precord->dpvt);/*retrieve the waveform record private data*/
+    channel = pics710RecPrivate->channel;
+ //input links: offset and input range which are used in ics710Daq.cpp
+    dcOffset[channel]= *(double *)precord->b;
+    inputRange[channel]= *(double *)precord->c;
+    //printf("change the DC offset of ch-%d to %f Volts \n",channel, *(double *)precord->a);
+
+    epicsTimeGetCurrent(&now);
+    timeAtAsub = now.secPastEpoch + now.nsec/1000000000.0;
+
+    rwDataReadTime = 1000 * (timeAfterRead - timeAfterADCInt);//ms
+    loopTime = 1000 * (timeAtAsub - timeAfterADCInt);
+
+ //triggerRate is computed in ics710Daq.cpp
+    memcpy((&precord->vala)[0], &triggerRate, sizeof(double));
+    memcpy((&precord->vala)[1], &rwDataReadTime, sizeof(double));
+    //memcpy((&precord->vala)[2], &loopTime, sizeof(double));
+    memcpy(precord->valc, &loopTime, sizeof(double));//works
+
+	return(0);
+}
+
 /* Register these symbols for use by IOC code: */
 //epicsExportAddress(int, ics710AsubDebug);
-epicsRegisterFunction(ics710ProcessWfAsubInit);
-epicsRegisterFunction(ics710ProcessWfAsubProcess);
-epicsRegisterFunction(ics710ProcessCirBuffer);
+epicsRegisterFunction(ics710InitWfAsub);
+epicsRegisterFunction(ics710ProcessWfAsub);
+epicsRegisterFunction(ics710ProcessCirBufferAsub);
+epicsRegisterFunction(ics710ProcessMiscAsub);
 

@@ -9,37 +9,40 @@
 ##              For Acqiris crate and Concurrent CPU, it's the top slot(#5) if there's one digitizer in slot 5 
 ## NELM     -	max. number of elements of waveform record 
 
-record(waveform,"${PREFIX}RawData-I_")
+#raw waveform data: 32-bit integer
+record(waveform,"${PREFIX}RawWf-I_")
 {
    field(SCAN,"I/O Intr")
-   field(DESC,"ics710 raw integer data")
+   field(DESC,"raw waveform data")
    field(DTYP,"ics710")
    field(NELM,"${NELM}")
-   field(FTVL,"SHORT")
+   #field(FTVL,"SHORT")
+    field(FTVL,"LONG")
    field(INP,"@C${CARD} S${CHANNEL} WRAW")
 }
 
-record(waveform,"${PREFIX}Volt-I")
+record(waveform,"${PREFIX}VoltWf-I")
 {
    field(SCAN,"I/O Intr")
-   field(DESC,"ics710 voltage waveform")
+   field(DESC,"voltage waveform data")
    field(DTYP,"ics710")
    field(NELM,"${NELM}")
    field(FTVL,"DOUBLE")
    field(INP,"@C${CARD} S${CHANNEL} WVOL")
    field(PREC,"6")
+   field(EGU,"V")
    #forward link to aSub record to process waveform data: mean, min, max, rms, integral, std, etc. ;
-   field(FLNK,"${PREFIX}WfAsub-aSub_")
+   field(FLNK,"${PREFIX}VoltWf-aSub_")
 }
 
-#process the waveform record: mean, min, max, integral(sum), std(RMS noise), etc. ;
-record(aSub,"${PREFIX}WfAsub-aSub_")
+#see ics710ProcessWfAsub.cpp: process the waveform record: mean, min, max, integral(sum), std(RMS noise), etc. ;
+record(aSub,"${PREFIX}VoltWf-aSub_")
 {
-    field(DESC,"process waveform")
-    field (INAM,"ics710ProcessWfAsubInit")
-    field (SNAM,"ics710ProcessWfAsubProcess")
+    field (DESC,"process waveform data")
+    field (INAM,"ics710InitWfAsub")
+    field (SNAM,"ics710ProcessWfAsub")
     #get CARD and CHANNEL info from the waveform record
-    field (INPA, "${PREFIX}Volt-I")
+    field (INPA, "${PREFIX}VoltWf-I")
     field (FTA, "DOUBLE")
     field (NOA, "${NELM}")
     field (OUTA, "${PREFIX}AveVolt-I PP")
@@ -54,25 +57,25 @@ record(aSub,"${PREFIX}WfAsub-aSub_")
     field (OUTD, "${PREFIX}SumVolt-I PP")
     field (FTVD, "DOUBLE")
     field (NOVD, "1")
-    field (OUTE, "${PREFIX}StdVolt-I PP")
+    field (OUTE, "${PREFIX}StdVolt-I_ PP")
     field (FTVE, "DOUBLE")
     field (NOVE, "1")
-    #forward link to another aSub record to get trigger rate, set DC offset, etc.
-    field (FLNK, "${PREFIX}Asub-aSub_")
+    #forward link to another misc. aSub record to get trigger rate, set DC offset, etc.
+    field (FLNK, "${PREFIX}Misc-aSub_")
 }
 
 record(ai,"${PREFIX}AveVolt-I")
 {
-   field(DESC,"ics710 averaged voltage")
-   field(INP,"${PREFIX}WfAsub-aSub_.VALA")
+   field(DESC,"averaged voltage")
+   field(INP,"${PREFIX}VoltWf-aSub_.VALA")
    field(PREC,"6")
-   field(EGU,"Volts")
+   field(EGU,"V")
 }
 
 #average the 1Hz/10Hz/1.2Hz data over 60 samples
 record(compress,"${PREFIX}AveToMin-I")
 {
-	field(DESC, "Average to minutes")
+	field(DESC, "Average to minutes(60 samples)")
 	field(INP,"${PREFIX}AveVolt-I CP NMS")
 	field(ALG,"N to 1 Average")
 	#NSAM is similar to NELM of wavefor record 
@@ -80,11 +83,11 @@ record(compress,"${PREFIX}AveToMin-I")
 	#averaging over 60 samples: for NSLS-2, 60 samples/minute, 1-second for life-time computation
 	field(N,"60")
 	field(PREC,"6")
-	field(EGU,"Volts")
-	field(FLNK, "${PREFIX}CirBuffer-aSub_")
+	field(EGU,"V")
+	#field(FLNK, "${PREFIX}CirBuffer-aSub_")
 }
 
-#Circular buffer: 60 samples
+#Circular buffer: 60 samples, 1-min data if 1Hz rate
 record(compress,"${PREFIX}CirBuffer-I")
 {
 	field(DESC, "60 Samples buffer")
@@ -92,81 +95,90 @@ record(compress,"${PREFIX}CirBuffer-I")
 	field(ALG,"Circular Buffer")
 	field(NSAM,"60")
 	field(PREC,"6")
-	field(EGU,"Volts")
-	#field (FLNK, "${PREFIX}CirBuffer-aSub_")
+	field(EGU,"V")
+	field (FLNK, "${PREFIX}CirBuffer-aSub_")
 }
 
-#Process buffered (1-minute) data: standard deviation(RMS noise), etc.
+#see ics710ProcessWfAsbu.cpp: process buffered (1-minute) data: standard deviation(RMS noise), etc.
 record(aSub,"${PREFIX}CirBuffer-aSub_")
 {
-    field (DESC,"process circular data")
-    field (SNAM,"ics710ProcessCirBuffer")
+    field (DESC,"process circular buffer data")
+    field (SNAM,"ics710ProcessCirBufferAsub")
     field (INPA, "${PREFIX}CirBuffer-I")
     field (FTA, "DOUBLE")
     field (NOA, "60")
-    field (OUTA, "${PREFIX}Noise-I PP")
+    field (OUTA, "${PREFIX}StdVoltOverBuffer-I PP")
     field (FTVA, "DOUBLE")
     field (NOVA, "1")
 }
 
-record(ai,"${PREFIX}Noise-I")
+record(ai,"${PREFIX}StdVoltOverBuffer-I")
 {
-   field(DESC,"RMS noise over 1-min")
+   field(DESC,"RMS noise over circular buffer")
    field(INP,"${PREFIX}CirBuffer-aSub_.VALA")
    field(PREC,"6")
-   field(EGU,"Volts")
+   field(EGU,"V")
 }
 
 record(ai,"${PREFIX}MaxVolt-I")
 {
-   field(DESC,"ics710 max voltage")
-   field(INP,"${PREFIX}WfAsub-aSub_.VALB")
+   field(DESC,"max. voltage")
+   field(INP,"${PREFIX}VoltWf-aSub_.VALB")
    field(PREC,"6")
-   field(EGU,"Volts")
+   field(EGU,"V")
 }
 
 record(ai,"${PREFIX}MinVolt-I")
 {
-   field(DESC,"ics710 min voltage")
-   field(INP,"${PREFIX}WfAsub-aSub_.VALC")
+   field(DESC,"min. voltage")
+   field(INP,"${PREFIX}VoltWf-aSub_.VALC")
    field(PREC,"6")
-   field(EGU,"Volts")
+   field(EGU,"V")
 }
 
 record(ai,"${PREFIX}SumVolt-I")
 {
-   field(DESC,"ics710 sum voltage")
-   field(INP,"${PREFIX}WfAsub-aSub_.VALD")
+   field(DESC,"sum voltage")
+   field(INP,"${PREFIX}VoltWf-aSub_.VALD")
    field(PREC,"6")
-   field(EGU,"Volts")
+   #field(EGU,"V")
 }
 
-record(ai,"${PREFIX}StdVolt-I")
+record(ai,"${PREFIX}StdVolt-I_")
 {
-   field(DESC,"ics710 std voltage")
-   field(INP,"${PREFIX}WfAsub-aSub_.VALE")
+   field(DESC,"std voltage")
+   field(INP,"${PREFIX}VoltWf-aSub_.VALE")
    field(PREC,"6")
-   field(EGU,"Volts")
+   field(EGU,"V")
+   field(FLNK,"${PREFIX}StdVolt-I")
 }
 
-#calculate time spent on different operations and setup DC offset for each channel ;
-record(aSub,"${PREFIX}Asub-aSub_")
+record(calc,"${PREFIX}StdVolt-I")
 {
-    field(DESC,"calculate differnet time")
-    field (INAM,"ics710AsubInit")
-    field (SNAM,"ics710AsubProcess")
-    #set DC offset of each channel
-    field (INPA, "${PREFIX}Offset-SP")
-    field (FTA, "DOUBLE")
-    field (NOA, "1")
+   field(DESC,"std voltage(mV)")
+   field(INPA,"${PREFIX}StdVolt-I_")
+   field(CALC,"A*(1e+3)")
+   field(PREC,"6")
+   field(EGU,"mV")
+}
+
+#see ics710ProcessWfAsbu.cpp: calculate time spent on different operations and setup DC offset for each channel ;
+record(aSub,"${PREFIX}Misc-aSub_")
+{
+    field(DESC,"Misc. data processing")
+    field (SNAM,"ics710ProcessMiscAsub")
     #get CARD and CHANNEL info from the waveform record
-    field (INPB, "${PREFIX}Volt-I")
+    field (INPA, "${PREFIX}VoltWf-I")
+    field (FTA, "DOUBLE")
+    field (NOA, "${NELM}")
+    #set DC offset and input range of each channel for calibration in ics710Daq.cpp
+    field (INPB, "${PREFIX}Offset-SP")
     field (FTB, "DOUBLE")
-    field (NOB, "${NELM}")
+    field (NOB, "1")
     field (INPC, "${PREFIX}InputRange-SP")
     field (FTC, "DOUBLE")
     field (NOC, "1")
-    field (OUTA, "${PREFIX}TrigRate-I_ PP")
+    field (OUTA, "${PREFIX}TrigRate-I PP")
     field (FTVA, "DOUBLE")
     field (NOVA, "1")
     field (OUTB, "${PREFIX}RawDataRdTm-I_ PP")
@@ -175,40 +187,6 @@ record(aSub,"${PREFIX}Asub-aSub_")
     field (OUTC, "${PREFIX}LoopTm-I_ PP")
     field (FTVC, "DOUBLE")
     field (NOVC, "1")
-}
-
-record (ai, "${PREFIX}TrigRate-I_")
-{
-    field(DESC,"trigger rate")
-    field (INP,"${PREFIX}Asub-aSub_.VALA")
-    field (PREC,"1")
-    field(EGU,"Hz")
- }
- 
-record (ai, "${PREFIX}RawDataRdTm-I_")
-{
-    field(DESC,"raw Data Readout Time")
-    field (INP,"${PREFIX}Asub-aSub_.VALB")
-    field (PREC,"6")
-    field(EGU,"milli-seconds")
- }
- 
-record (ai, "${PREFIX}LoopTm-I_")
-{
-    field(DESC,"whole Loop Time")
-    field (INP,"${PREFIX}Asub-aSub_.VALC")
-    field (PREC,"6")
-    field(EGU,"milli-seconds")
-    field(FLNK, "${PREFIX}Counter-I")
- }
- 
-record(calc,"${PREFIX}Counter-I")
-{
-   field(DESC,"trigger counter")
-	field(CALC, "A+1")
-	field(INPA, "${PREFIX}Counter-I.VAL  NPP NMS")
-	#field(TSEL, "${PREFIX}AveVolt-I.TIME")
-	#field(FLNK, "LN{GUN}Trip-Cmd.PROC")
 }
 
 record (ao, "${PREFIX}Offset-SP")
@@ -221,7 +199,7 @@ record (ao, "${PREFIX}Offset-SP")
     #for channle 2
     #field(RVAL, "0.1730")
     field (PREC,"5")
-    field(EGU,"Volts")
+    field(EGU,"V")
     #VAL works with autosave
     info(autosaveFields_pass0, "VAL")
  }
@@ -233,112 +211,41 @@ record (ao, "${PREFIX}InputRange-SP")
     field(PINI, "YES")
     field(VAL, "10.0")
     field (PREC,"5")
-    field(EGU,"Volts")
+    field(EGU,"V")
     #VAL works with autosave
     info(autosaveFields_pass0, "VAL")
  }
  
-#record(waveform,"${PREFIX}WfAveVolt-I_")
-#{
-  # field(DESC,"ics710 averaged voltage")
-  # field(DTYP,"ics710")
-  # field(NELM,"1")
-  # field(FTVL,"DOUBLE")
-  # field(INP,"@C${CARD} S${CHANNEL} WAVE")
-  # field(PREC,"6")
-  # #field(FLNK,"${PREFIX}SubAveVolt-I_")
-  # field(FLNK,"${PREFIX}SubAveVolt-I_")
-#}
-
-#record(subArray,"${PREFIX}SubAveVolt-I_")
-#{
- #  field(DESC,"extract ics710 averaged voltage")
- #  field(INP,"${PREFIX}WfAveVolt-I_")
- #  field (FTVL, "DOUBLE")
- #  field (NELM, "1")
- #  field (MALM, "1")
- #  field (INDX, "0")
- #  field(PREC,"6")
- #  field(FLNK,"${PREFIX}AveVolt-I")
-#}
-
-#use and test 5 algorithms of compress record to process waveform data: mean, min, max,etc.; INP references an array(waveform record)
-#record(compress,"${PREFIX}WfRawVoltCir-com_")
-#{
-	#field(DESC, "part of waveform data like subArray")
-	#field(INP,"${PREFIX}WfRawVolt-I CP NMS")
-	#field(ALG,"Circular Buffer")
-	#For array INP, NSAM is the number of samples, like NELM of waveform record 
-	#NSAM < NELM, get 10 samples at the end of the waveform WfRawVolt
-	#field(NSAM,"10")
-	#N is meaningless for Circular Buffer
-	#field(N,"${NELM}")
-	#field(PREC,"6")
-	#field(EGU,"Volts")
-#}
-
-#record(compress,"${PREFIX}WfRawVoltAve-com_")
-#{
-	#field(DESC, "average N successive wfs element-by-E")
-	#field(INP,"${PREFIX}WfRawVolt-I CP NMS")
-	#field(ALG,"Average")
-	#get the whole waveform data
-	#field(NSAM,"${NELM}")
-	#for 10Hz Flag image, average successive 9 images
-	#field(N,"9")
-	#field(PREC,"6")
-	#field(EGU,"Volts")
-#}
-
-#record(compress,"${PREFIX}AveVolt-com_")
-#{
-	#field(DESC, "waveform averaging by compress")
-	#field(INP,"${PREFIX}WfRawVolt-I CP NMS")
-	#field(ALG,"N to 1 Average")
-	#For array INP, NSAM is the number of subArrays 
-	#field(NSAM,"1")
-	#subarray length is N
-	#field(N,"${NELM}")
-	#field(PREC,"6")
-	#field(EGU,"Volts")
-#}
-
-#record(compress,"${PREFIX}MaxVolt-com_")
-#{
-	#field(DESC, "Max in waveform data by compress")
-	#field(INP,"${PREFIX}WfRawVolt-I CP NMS")
-	#field(ALG,"N to 1 High Value")
-	#For array INP, NSAM is the number of subArrays 
-	#field(NSAM,"1")
-	#subarray length is N
-	#field(N,"${NELM}")
-	#field(PREC,"6")
-	#field(EGU,"Volts")
-#}
-
-#record(compress,"${PREFIX}MinVolt-com_")
-#{
-	#field(DESC, "Min in waveform data by compress")
-	#field(INP,"${PREFIX}WfRawVolt-I CP NMS")
-	#field(ALG,"N to 1 Low Value")
-	#For array INP, NSAM is the number of subArrays 
-	#field(NSAM,"1")
-	#subarray length is N
-	#field(N,"${NELM}")
-	#field(PREC,"6")
-	#field(EGU,"Volts")
-#}
-
-#test different algorithms of compress record: INP references a scalar
-record(compress,"${PREFIX}AveToMinAve-I")
+record (ai, "${PREFIX}TrigRate-I")
 {
-	field(DESC, "Average to minutes by Average")
-	field(INP,"${PREFIX}AveVolt-I CP NMS")
-	field(ALG,"Average")
-	#NSAM is similar to NELM of wavefor record 
-	field(NSAM,"1")
-	#averaging over 59 samples: for NSLS-2, 60 samples/minute, 1-second for life-time computation
-	field(N,"59")
-	field(PREC,"6")
-	field(EGU,"Volts")
+    field(DESC,"trigger rate or IOC update rate")
+    field(INP,"${PREFIX}Misc-aSub_.VALA")
+    field(PREC,"4")
+    field(EGU,"Hz")
+ }
+ 
+record (ai, "${PREFIX}RawDataRdTm-I_")
+{
+    field(DESC,"raw Data Readout Time")
+    field (INP,"${PREFIX}Misc-aSub_.VALB")
+    field (PREC,"6")
+    field(EGU,"ms")
+ }
+ 
+record (ai, "${PREFIX}LoopTm-I_")
+{
+    field(DESC,"whole Loop Time")
+    field (INP,"${PREFIX}Misc-aSub_.VALC")
+    field (PREC,"6")
+    field(EGU,"ms")
+    field(FLNK, "${PREFIX}Counter-I")
+ }
+ 
+record(calc,"${PREFIX}Counter-I")
+{
+   field(DESC,"trigger counter")
+	field(CALC, "A+1")
+	field(INPA, "${PREFIX}Counter-I.VAL  NPP NMS")
+	#field(TSEL, "${PREFIX}AveVolt-I.TIME")
+	#field(FLNK, "LN{GUN}Trip-Cmd.PROC")
 }

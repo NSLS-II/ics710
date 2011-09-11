@@ -6,6 +6,7 @@
 #### Dev	-	Device name
 ## CARD     -	#board / digitizer; "0" refers to the first digitizer found during initialization. \\
 ##              For Acqiris crate and Concurrent CPU, it's the top slot(#5) if there's one digitizer in slot 5 
+## NELM     -	max. number of samples 
 ## note: initialize records RVAL/VAL in ics710Drv*.cpp instead of using PINI
 
 record(mbbo,"${PREFIX}Run-SP")
@@ -122,7 +123,7 @@ record(mbbo,"${PREFIX}Osr-SP")
    field(ZRVL,"0")
    field(ZRST,"Normal")
    field(ONVL,"1")
-   field(ONST,"Doubl")
+   field(ONST,"Double")
    field(TWVL,"2")
    field(TWST,"Quad")
    #reconfigure the samplingRate: trigger the record to be processed
@@ -130,7 +131,7 @@ record(mbbo,"${PREFIX}Osr-SP")
    info(autosaveFields_pass0, "RVAL")
 }
 
-record(mbbo,"${PREFIX}Trigger-SP")
+record(mbbo,"${PREFIX}TrigMode-SP")
 {   
    field(DESC,"setTrigger")
    field(DTYP,"ics710")
@@ -172,6 +173,8 @@ record(longout,"${PREFIX}TotalCh-SP")
    #field(DOL, "4")
    field(HOPR, "8")
    field(LOPR, "2")
+   field(DRVH, "8")
+   field(DRVL, "2")
    field(EGU, "channel")
    info(autosaveFields_pass0, "VAL")
 }
@@ -183,11 +186,11 @@ record(longout,"${PREFIX}Samples-SP")
    field(OUT,"@C${CARD} LSAM")
 #   field(PINI,"YES")
 #   field(DOL, "10000")
-   field(HOPR, "200000")
-   field(LOPR, "1")
-   field(EGU, "samples")
+   field(DRVH, "${NELM}")
+   field(DRVL, "1")
+   field(EGU, "sample")
    #neither RVAL nor VAL works with autosave 
-   info(autosaveFields_pass0, "RVAL")
+   info(autosaveFields_pass0, "VAL")
 }
 
 record(longout,"${PREFIX}SampleRate-SP")
@@ -199,7 +202,9 @@ record(longout,"${PREFIX}SampleRate-SP")
    #field(DOL, "200")
    field(HOPR, "216")
    field(LOPR, "1")
+   field(DRVH, "216")
+   field(DRVL, "1")
    field(EGU, "KHz") 
    #neither RVAL nor VAL works with autosave 
-   info(autosaveFields_pass0, "RVAL")  
+   info(autosaveFields_pass0, "VAL")  
 }
