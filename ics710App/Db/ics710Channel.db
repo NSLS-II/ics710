@@ -171,11 +171,11 @@ record(aSub,"${PREFIX}Misc-aSub_")
     field (INPA, "${PREFIX}VoltWf-I")
     field (FTA, "DOUBLE")
     field (NOA, "${NELM}")
-    #set DC offset and input range of each channel for calibration in ics710Daq.cpp
+    #set DC offset and input range coefficient of each channel for calibration in ics710Daq.cpp
     field (INPB, "${PREFIX}Offset-SP")
     field (FTB, "DOUBLE")
     field (NOB, "1")
-    field (INPC, "${PREFIX}InputRange-SP")
+    field (INPC, "${PREFIX}Coeff-SP")
     field (FTC, "DOUBLE")
     field (NOC, "1")
     field (OUTA, "${PREFIX}TrigRate-I PP")
@@ -204,14 +204,13 @@ record (ao, "${PREFIX}Offset-SP")
     info(autosaveFields_pass0, "VAL")
  }
  
-record (ao, "${PREFIX}InputRange-SP")
+record (ao, "${PREFIX}Coeff-SP")
 {
-    field(DESC,"actual input range")
+    field(DESC,"coefficient of input range")
     field(SCAN, "Passive")
     field(PINI, "YES")
-    field(VAL, "10.0")
+    field(VAL, "1.0")
     field (PREC,"5")
-    field(EGU,"V")
     #VAL works with autosave
     info(autosaveFields_pass0, "VAL")
  }

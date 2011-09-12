@@ -31,7 +31,7 @@ extern double timeAfterADCInt;
 extern double triggerRate;
 extern double timeAfterRead;
 extern double dcOffset[MAX_CHANNEL];
-extern double inputRange[MAX_CHANNEL];
+extern double coeff[MAX_CHANNEL];
 
 typedef long (*processMethod)(aSubRecord *precord);
 
@@ -167,7 +167,7 @@ static long ics710ProcessMiscAsub(aSubRecord *precord)
     channel = pics710RecPrivate->channel;
  //input links: offset and input range which are used in ics710Daq.cpp
     dcOffset[channel]= *(double *)precord->b;
-    inputRange[channel]= *(double *)precord->c;
+    coeff[channel]= *(double *)precord->c;
     //printf("change the DC offset of ch-%d to %f Volts \n",channel, *(double *)precord->a);
 
     epicsTimeGetCurrent(&now);
