@@ -3,6 +3,8 @@ function(ics710InitWfAsub)
 function(ics710ProcessWfAsub)
 function(ics710ProcessMiscAsub)
 function(ics710ProcessCirBufferAsub)
+function(ics710InitTimeAxisAsub)
+function(ics710ProcessTimeAxisAsub)
 
 #device(ao,        INST_IO, ics710DevAo,  "ics710")
 device(longout,   INST_IO, ics710DevLongout,  "ics710")

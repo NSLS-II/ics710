@@ -191,6 +191,7 @@ record(longout,"${PREFIX}Samples-SP")
    field(EGU, "sample")
    #neither RVAL nor VAL works with autosave 
    info(autosaveFields_pass0, "VAL")
+   field(FLNK,"${PREFIX}TimeAxis-aSub_")
 }
 
 record(longout,"${PREFIX}SampleRate-SP")
@@ -207,4 +208,46 @@ record(longout,"${PREFIX}SampleRate-SP")
    field(EGU, "KHz") 
    #neither RVAL nor VAL works with autosave 
    info(autosaveFields_pass0, "VAL")  
+}
+
+record(calc,"${PREFIX}SampleLength-I")
+{
+   field(DESC,"Sample length:ms")
+   field(SCAN,"Passive")
+   field(INPA,"${PREFIX}SampleRate-SP CP")
+   field(INPB,"${PREFIX}Samples-SP CP")
+   field(CALC, "(B*1.00)/A")  
+   field(EGU,"ms")
+   field(FLNK,"${PREFIX}TimeAxis-aSub_")
+}
+
+record(aSub,"${PREFIX}TimeAxis-aSub_")
+{
+    field(DESC,"construct time axis")
+    field(INAM,"ics710InitTimeAxisAsub")
+    field(SNAM,"ics710ProcessTimeAxisAsub")
+    #get samples/data points
+    field (INPA, "${PREFIX}Samples-SP")
+    field (FTA, "ULONG")
+    field (NOA, "1")
+    #get sample length (ms) 
+    field (INPB, "${PREFIX}SampleLength-I")
+    field (FTB, "DOUBLE")
+    field (NOB, "1")
+    #waveform data for time axis             
+    field (OUTA, "${PREFIX}TimeAxis-I PP")
+    field (FTVA, "DOUBLE")
+    field (NOVA, "${NELM}")
+}
+
+record(waveform,"${PREFIX}TimeAxis-I")
+{
+   field(SCAN,"Passive")
+   field(DESC,"Time axis: ms unit")
+   field(PINI,"YES")
+   field(NELM,"${NELM}")
+   field(FTVL,"DOUBLE")
+   field(INP,"${PREFIX}TimeAxis-aSub_.VALA")
+   field(PREC,"3")
+   field(EGU,"ms")
 }

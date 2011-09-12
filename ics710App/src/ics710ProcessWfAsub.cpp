@@ -16,11 +16,14 @@
 #include "dbAddr.h"
 #include "dbCommon.h" /* precord: now = paddr->precord->time;*/
 #include "epicsTime.h"
+#include "waveformRecord.h"
 
 #include "ics710Drv.h"
 #include "ics710Dev.h" /*struct ics710RecPrivate*/
 
-int ics710ProcessWfAsubDebug = 0;
+static int ics710ProcessWfAsubDebug = 0;
+static bool timeAxisAsubInitialized = FALSE;
+static double *ptimeAxis;
 
 /*global variable: defined in ics710DrvInit.cpp*/
 extern ics710Driver ics710Drivers[MAX_DEV];
@@ -182,10 +185,66 @@ static long ics710ProcessMiscAsub(aSubRecord *precord)
 	return(0);
 }
 
+static long ics710InitTimeAxisAsub(aSubRecord *precord,processMethod process)
+{
+	if (timeAxisAsubInitialized)
+		return (0);
+    if (NULL == (ptimeAxis = (double *)malloc(precord->nova * sizeof(double))))
+    {
+    	printf("out of memory: timeAxisAsubInit \n");
+    	return -1;
+    }
+    else
+    {
+    	timeAxisAsubInitialized = TRUE;
+    	//printf("allocate memory in timeAxisAsubInit successfully\n");
+    }
+
+    return(0);
+}
+
+static long ics710ProcessTimeAxisAsub(aSubRecord *precord)
+{
+	unsigned long nSample;
+	double sampleLength;
+	unsigned int i = 0;
+	DBLINK *plink;
+	DBADDR *paddr;
+	waveformRecord *pwf;
+
+//input links: number of samples(data points), sample length (N ms)
+	memcpy(&nSample, (unsigned long *)precord->a, precord->noa * sizeof(unsigned long));
+	memcpy(&sampleLength, (double *)precord->b, precord->nob * sizeof(double));
+
+//using effective number of samples(samples/channel or 'NELM') in the waveform instead of 'NOA'(max. samples/ch) for data analysis
+	plink = &precord->outa;
+	if (DB_LINK != plink->type) return -1;
+	//plink->value.pv_link.precord->name;
+	//printf("This aSub record name is: %s, %s \n", precord->name, plink->value.pv_link.precord->name);
+	paddr = (DBADDR *)plink->value.pv_link.pvt;
+	pwf = (waveformRecord *)paddr->precord;
+	pwf->nelm = nSample;
+	//printf("number of effective samples(samples/ch): %d \n", pwf->nelm);
+
+	for (i = 0; i < pwf->nelm; i++)
+	{
+		ptimeAxis[i] = i * (sampleLength/nSample);
+	}
+	//printf("ptimeAxis-1: %f;  ptimeAxis-max: %f;\n", ptimeAxis[1], ptimeAxis[pwf->nelm-1]);
+
+//output links: waveform
+	memcpy((double *)precord->vala, ptimeAxis, pwf->nelm * sizeof(double));
+	//printf("put all output links values \n");
+
+	return(0);
+}
+
 /* Register these symbols for use by IOC code: */
 //epicsExportAddress(int, ics710AsubDebug);
 epicsRegisterFunction(ics710InitWfAsub);
 epicsRegisterFunction(ics710ProcessWfAsub);
 epicsRegisterFunction(ics710ProcessCirBufferAsub);
 epicsRegisterFunction(ics710ProcessMiscAsub);
+epicsRegisterFunction(ics710InitTimeAxisAsub);
+epicsRegisterFunction(ics710ProcessTimeAxisAsub);
 
