@@ -21,7 +21,7 @@ ics710Init(0, 2)
 #CARD: the first card/digitizer is 0;
 #CHANNEL: the first channel of the card is 0;
 #NELM: max. number of samples/channel;
-#DIG:ICTs:the DIGitizer for 2 ICTs;
+#DIG:ICT:the DIGitizer for 2 ICTs;
 dbLoadRecords("db/ics710Channel.db","MON=LTB-BI{ICT:1},CARD=0,CHANNEL=0,NELM=64000")
 dbLoadRecords("db/ics710Channel.db","MON=LTB-BI{ICT:2},CARD=0,CHANNEL=1,NELM=64000")
 dbLoadRecords("db/ics710Card.db","DIG=LTB-BI{DIG:ICT}, CARD=0, NELM=64000")
