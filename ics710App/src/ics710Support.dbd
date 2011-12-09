@@ -1,13 +1,36 @@
+driver(drvIcs710)
 registrar(ics710Registrar)
-function(ics710InitWfAsub)
-function(ics710ProcessWfAsub)
-function(ics710ProcessMiscAsub)
-function(ics710ProcessCirBufferAsub)
-function(ics710InitTimeAxisAsub)
-function(ics710ProcessTimeAxisAsub)
+function(processWf)
+function(processCirBuf)
+#function(ics710ProcessMiscAsub)
+#function(ics710ProcessCirBufferAsub)
+function(createTimeAxis)
 
-#device(ao,        INST_IO, ics710DevAo,  "ics710")
-device(longout,   INST_IO, ics710DevLongout,  "ics710")
-device(mbbo,      INST_IO, ics710DevMbbo,"ics710")
-device(waveform,  INST_IO, ics710DevWf,  "ics710")
+device(waveform,INST_IO,	devWfReadRawData,  			"ics710ReadRawData")
+
+device(longout,	INST_IO,	devLoSetSamples,  			"ics710SetSamples")
+
+device(longin,	INST_IO,	devLiGetSamples,  			"ics710GetSamples")
+device(longin,	INST_IO,	devLiGetReadErrors,  		"ics710GetReadErrors")
+device(longin,	INST_IO,	devLiGetTimeouts,  			"ics710GetTimeouts")
+
+device(mbbo,	INST_IO, 	devMbboSetGain,  			"ics710SetGain")
+device(mbbo,	INST_IO, 	devMbboSetFilter,  			"ics710SetFilter")
+device(mbbo,	INST_IO, 	devMbboSetOsr,  			"ics710SetOsr")
+device(mbbo,	INST_IO, 	devMbboSetTrigMode,  		"ics710SetTrigMode")
+device(mbbo,	INST_IO, 	devMbboSetAcqMode,  		"ics710SetAcqMode")
+device(mbbo,	INST_IO, 	devMbboSetRunning,  		"ics710SetRunning")
+
+device(mbbi,	INST_IO, 	devMbbiGetGain,  			"ics710GetGain")
+device(mbbi,	INST_IO, 	devMbbiGetFilter,  			"ics710GetFilter")
+device(mbbi,	INST_IO, 	devMbbiGetOsr,  			"ics710GetOsr")
+device(mbbi,	INST_IO, 	devMbbiGetTrigMode,  		"ics710GetTrigMode")
+device(mbbi,	INST_IO, 	devMbbiGetAcqMode,  		"ics710GetAcqMode")
+
+device(ao,		INST_IO, 	devAoSetSampleRate,  		"ics710SetSampleRate")
+
+device(ai,		INST_IO, 	devAiGetSampleRate,  	  	"ics710GetSampleRate")
+device(ai,	    INST_IO,	devAiGetTrigRate,  			"ics710GetTrigRate")
+
+
 

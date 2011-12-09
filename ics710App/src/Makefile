@@ -1,7 +1,6 @@
 TOP=../..
 include $(TOP)/configure/CONFIG
 
-#Yong Hu: check out areaDetector/prosilica to use external header files and static library 
 #manually copy them from ics710 Linux SDK to 'src', then install them
 INC += ics710api.h
 LIB_INSTALLS_Linux += ../libics710.a    
@@ -18,7 +17,7 @@ ics710_DBD += base.dbd
 #Yong Hu: include dbd for ics710 driver/device support
 ics710_DBD += ics710Support.dbd
 
-#Yong Hu: include iocStatus and autosave which are installed by epics Debian package
+#include iocStatus and autosave which are installed by epics Debian package
 # /usr/lib/epics/dbd/
 ics710_DBD += devIocStats.dbd
 ics710_DBD += asSupport.dbd
@@ -26,29 +25,18 @@ ics710_DBD += system.dbd
 
 # ics710_registerRecordDeviceDriver.cpp derives from ics710.dbd
 ics710_SRCS += ics710_registerRecordDeviceDriver.cpp
-#Yong Hu: works only if the header file(ics710api.h) is installed in $(TOP)/include
+# works only if the header file(ics710api.h) is installed in $(TOP)/include
 # and the static library(libics710.a) is installed in $(TOP)/lib/linux-x86
 ics710_SRCS += ics710DrvInit.cpp
-ics710_SRCS += ics710Daq.cpp 
-ics710_SRCS += ics710DevInit.cpp
-ics710_SRCS += ics710DrvWf.cpp
-ics710_SRCS += ics710DevWf.cpp 
-ics710_SRCS += ics710DrvMbbo.cpp
-ics710_SRCS += ics710DevMbbo.cpp 
-ics710_SRCS += ics710DrvLongout.cpp
-ics710_SRCS += ics710DevLongout.cpp
+ics710_SRCS += ics710DevSupport.cpp
 ics710_SRCS += ics710ProcessWfAsub.cpp
 # Build the main IOC entry point on workstation OSs.
 ics710_SRCS_DEFAULT += ics710Main.cpp
 
-#Yong Hu: link to ics710 api libarary (Linux SDK)
+#link to ics710 api libarary (Linux SDK)
 ics710_LIBS += ics710
-#Yong Hu: it doesn't work for static library, will get error like undefined reference to `ics710FreeDmaBuffer'
-#USR_CFLAGS += -DREDHAT61 -I../../../ics710/inc
-#USR_CPPFLAGS += -DREDHAT61 -I../../../ics710/inc
-#ics710_LDFLAGS += -L../../../ics710/api -lics710
 
-#Yong Hu: include autosave and devIocStats libraries which are installed by epics Debian
+#include autosave and devIocStats libraries which are installed by epics Debian
 #package: /usr/lib/epics/lib/linux-x86
 ics710_LIBS += autosave
 ics710_LIBS += devIocStats

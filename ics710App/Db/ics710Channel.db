@@ -1,250 +1,429 @@
-## functionality: waveform data of individual channel; waveform data analysis; DC offset of individual channel
-## Yong Hu: ext.3961; 
-## PREFIX	- follows NSLS2 naming: [PSy[:PI]][-SSy[:SI]][-TSy[:TI]]{Dev[:DI]}[SgN[:SgI][-SgD]]
+##data of individual channel:raw data, calibrated voltages, DC offset, etc.
+#MON NSLS2 naming:[PSy[:PI]][-SSy[:SI]][-TSy[:TI]]{Dev[:DI]}[SgN[:SgI][-SgD]]
 #### Psy	-	Primary system
 #### Ssy	-	Secondary system
 #### Dev	-	Device name
 ## CHANNEL  -	device(Dev) instance and #channel of the board(MODULE)  
-## CARD     -	#board / digitizer; "0" refers to the first digitizer found during initialization. \\
-##              For Acqiris crate and Concurrent CPU, it's the top slot(#5) if there's one digitizer in slot 5 
+## CARD     -  "0" refers to the first digitizer found during initialization.
+# For Acqiris system, it's the top slot(#5) if there's one digitizer in slot 5 
 ## NELM     -	max. number of elements of waveform record 
 
 #raw waveform data: 32-bit integer
-record(waveform,"${PREFIX}RawWf-I_")
+record(waveform,"${MON}Raw-Wf")
 {
    field(SCAN,"I/O Intr")
    field(DESC,"raw waveform data")
-   field(DTYP,"ics710")
+   field(DTYP,"ics710ReadRawData")
    field(NELM,"${NELM}")
-   #field(FTVL,"SHORT")
-    field(FTVL,"LONG")
-   field(INP,"@C${CARD} S${CHANNEL} WRAW")
+   field(FTVL,"LONG")
+   field(INP,"@C${CARD} S${CHANNEL}")
+   field(FLNK,"${MON}Raw-aSub_")
 }
 
-record(waveform,"${PREFIX}VoltWf-I")
+record(ao, "${MON}Offset-SP")
 {
-   field(SCAN,"I/O Intr")
-   field(DESC,"voltage waveform data")
-   field(DTYP,"ics710")
-   field(NELM,"${NELM}")
-   field(FTVL,"DOUBLE")
-   field(INP,"@C${CARD} S${CHANNEL} WVOL")
-   field(PREC,"6")
-   field(EGU,"V")
-   #forward link to aSub record to process waveform data: mean, min, max, rms, integral, std, etc. ;
-   field(FLNK,"${PREFIX}VoltWf-aSub_")
+    field(DESC,"DC Offset")
+    field(PINI, "YES")
+    field(PREC,"5")
+    field(EGU,"V")
+    info(autosaveFields_pass0, "VAL")
+}
+ 
+record(ao, "${MON}Coeff-SP")
+{
+    field(DESC,"coefficient of input range")
+    field(PINI, "YES")
+    field(VAL, "1.0")
+    field(PREC,"5")
+    info(autosaveFields_pass0, "VAL")
 }
 
-#see ics710ProcessWfAsub.cpp: process the waveform record: mean, min, max, integral(sum), std(RMS noise), etc. ;
-record(aSub,"${PREFIX}VoltWf-aSub_")
+record(longout,"${MON}StartPoint-SP")
 {
-    field (DESC,"process waveform data")
-    field (INAM,"ics710InitWfAsub")
-    field (SNAM,"ics710ProcessWfAsub")
-    #get CARD and CHANNEL info from the waveform record
-    field (INPA, "${PREFIX}VoltWf-I")
-    field (FTA, "DOUBLE")
+   field(DESC,"start sample point of selected region")
+   field(PINI,"YES")
+   field(DRVH, "${NELM}")
+   field(DRVL, "0")
+   field(VAL, "0")   
+   info(autosaveFields_pass0, "VAL")
+   field(FLNK,"${MON}ROISamples-I")
+}
+
+record(longout,"${MON}EndPoint-SP")
+{
+   field(DESC,"end sample point of selected region")
+   field(PINI,"YES")
+   field(DRVH, "${NELM}")
+   field(DRVL, "1")
+   field(VAL, "${NELM}")    
+   info(autosaveFields_pass0, "VAL")
+   field(FLNK,"${MON}ROISamples-I")
+}
+
+#see ics710ProcessWfAsub.cpp: 
+#data processing: convert raw data to voltages, mean, min, max, integral(sum),
+#std(RMS noise), etc. ;
+record(aSub,"${MON}Raw-aSub_")
+{
+    field (DESC,"process raw data")
+    field (SNAM,"processWf")
+ #get raw waveform data (32-bit == sizeof(long))
+    field (INPA, "${MON}Raw-Wf")
+    field (FTA, "LONG")
     field (NOA, "${NELM}")
-    field (OUTA, "${PREFIX}AveVolt-I PP")
+#get DC offset, input range coefficient    
+    field (INPB, "${MON}Offset-SP")
+    field (FTB, "DOUBLE")
+    field (NOB, "1")
+#get input range coefficient such as 0.9834, 0.9943, 1.00     
+    field (INPC, "${MON}Coeff-SP")
+    field (FTC, "DOUBLE")
+    field (NOC, "1")    
+#get start sample point of selected region   
+    field (INPD, "${MON}StartPoint-SP")
+    field (FTD, "ULONG")
+    field (NOD, "1")    
+#get end sample point of selected region   
+    field (INPE, "${MON}EndPoint-SP")
+    field (FTE, "ULONG")
+    field (NOE, "1")    
+#voltages calibrated against gain, DC offset, gain coefficient      
+    field (OUTA, "${MON}V-Wf PP")
     field (FTVA, "DOUBLE")
-    field (NOVA, "1")
-    field (OUTB, "${PREFIX}MaxVolt-I PP")
+    field (NOVA, "${NELM}")
+#data processing results: mean, max, min, sum, std, etc.   
+#over part of the waveform (selected region) and within the whole waveform
+    field (OUTB, "${MON}AveV-I PP")
     field (FTVB, "DOUBLE")
     field (NOVB, "1")
-    field (OUTC, "${PREFIX}MinVolt-I PP")
+    field (OUTC, "${MON}MaxV-I PP")
     field (FTVC, "DOUBLE")
     field (NOVC, "1")
-    field (OUTD, "${PREFIX}SumVolt-I PP")
+    field (OUTD, "${MON}MinV-I PP")
     field (FTVD, "DOUBLE")
     field (NOVD, "1")
-    field (OUTE, "${PREFIX}StdVolt-I_ PP")
+    field (OUTE, "${MON}SumV-I PP")
     field (FTVE, "DOUBLE")
     field (NOVE, "1")
-    #forward link to another misc. aSub record to get trigger rate, set DC offset, etc.
-    field (FLNK, "${PREFIX}Misc-aSub_")
+    field (OUTF, "${MON}StdV-I_ PP")
+    field (FTVF, "DOUBLE")
+    field (NOVF, "1")
+    field (OUTG, "${MON}AveVROI-I PP")
+    field (FTVG, "DOUBLE")
+    field (NOVG, "1")
+    field (OUTH, "${MON}MaxVROI-I PP")
+    field (FTVH, "DOUBLE")
+    field (NOVH, "1")
+    field (OUTI, "${MON}MinVROI-I PP")
+    field (FTVI, "DOUBLE")
+    field (NOVI, "1")
+    field (OUTJ, "${MON}SumVROI-I PP")
+    field (FTVJ, "DOUBLE")
+    field (NOVJ, "1")
+    field (OUTK, "${MON}StdVROI-I_ PP")
+    field (FTVK, "DOUBLE")
+    field (NOVK, "1")    
+    field (OUTL, "${MON}ROILength-I PP")
+    field (FTVL, "DOUBLE")
+    field (NOVL, "1") 
 }
 
-record(ai,"${PREFIX}AveVolt-I")
+record(waveform,"${MON}V-Wf")
+{
+   field(DESC,"voltage waveform data")
+   field(INP,"${MON}Raw-aSub_.VALA")
+   field(NELM,"${NELM}")
+   field(FTVL,"DOUBLE")
+   field(PREC,"6")
+   field(EGU,"V")
+}
+
+record(ai,"${MON}AveV-I")
 {
    field(DESC,"averaged voltage")
-   field(INP,"${PREFIX}VoltWf-aSub_.VALA")
+   field(INP,"${MON}Raw-aSub_.VALB")
    field(PREC,"6")
    field(EGU,"V")
 }
 
-#average the 1Hz/10Hz/1.2Hz data over 60 samples
-record(compress,"${PREFIX}AveToMin-I")
-{
-	field(DESC, "Average to minutes(60 samples)")
-	field(INP,"${PREFIX}AveVolt-I CP NMS")
-	field(ALG,"N to 1 Average")
-	#NSAM is similar to NELM of wavefor record 
-	field(NSAM,"1")
-	#averaging over 60 samples: for NSLS-2, 60 samples/minute, 1-second for life-time computation
-	field(N,"60")
-	field(PREC,"6")
-	field(EGU,"V")
-	#field(FLNK, "${PREFIX}CirBuffer-aSub_")
-}
-
-#Circular buffer: 60 samples, 1-min data if 1Hz rate
-record(compress,"${PREFIX}CirBuffer-I")
-{
-	field(DESC, "60 Samples buffer")
-	field(INP,"${PREFIX}AveVolt-I CP NMS")
-	field(ALG,"Circular Buffer")
-	field(NSAM,"60")
-	field(PREC,"6")
-	field(EGU,"V")
-	field (FLNK, "${PREFIX}CirBuffer-aSub_")
-}
-
-#see ics710ProcessWfAsbu.cpp: process buffered (1-minute) data: standard deviation(RMS noise), etc.
-record(aSub,"${PREFIX}CirBuffer-aSub_")
-{
-    field (DESC,"process circular buffer data")
-    field (SNAM,"ics710ProcessCirBufferAsub")
-    field (INPA, "${PREFIX}CirBuffer-I")
-    field (FTA, "DOUBLE")
-    field (NOA, "60")
-    field (OUTA, "${PREFIX}StdVoltOverBuffer-I PP")
-    field (FTVA, "DOUBLE")
-    field (NOVA, "1")
-}
-
-record(ai,"${PREFIX}StdVoltOverBuffer-I")
-{
-   field(DESC,"RMS noise over circular buffer")
-   field(INP,"${PREFIX}CirBuffer-aSub_.VALA")
-   field(PREC,"6")
-   field(EGU,"V")
-}
-
-record(ai,"${PREFIX}MaxVolt-I")
+record(ai,"${MON}MaxV-I")
 {
    field(DESC,"max. voltage")
-   field(INP,"${PREFIX}VoltWf-aSub_.VALB")
+   field(INP,"${MON}Raw-aSub_.VALC")
    field(PREC,"6")
    field(EGU,"V")
 }
 
-record(ai,"${PREFIX}MinVolt-I")
+record(ai,"${MON}MinV-I")
 {
    field(DESC,"min. voltage")
-   field(INP,"${PREFIX}VoltWf-aSub_.VALC")
+   field(INP,"${MON}Raw-aSub_.VALD")
    field(PREC,"6")
    field(EGU,"V")
 }
 
-record(ai,"${PREFIX}SumVolt-I")
+record(ai,"${MON}SumV-I")
 {
    field(DESC,"sum voltage")
-   field(INP,"${PREFIX}VoltWf-aSub_.VALD")
+   field(INP,"${MON}Raw-aSub_.VALE")
    field(PREC,"6")
    #field(EGU,"V")
 }
 
-record(ai,"${PREFIX}StdVolt-I_")
+record(ai,"${MON}StdV-I_")
 {
    field(DESC,"std voltage")
-   field(INP,"${PREFIX}VoltWf-aSub_.VALE")
+   field(INP,"${MON}Raw-aSub_.VALF")
    field(PREC,"6")
    field(EGU,"V")
-   field(FLNK,"${PREFIX}StdVolt-I")
+   field(FLNK,"${MON}StdV-I")
 }
 
-record(calc,"${PREFIX}StdVolt-I")
+record(calc,"${MON}StdV-I")
 {
    field(DESC,"std voltage(mV)")
-   field(INPA,"${PREFIX}StdVolt-I_")
+   field(INPA,"${MON}StdV-I_")
    field(CALC,"A*(1e+3)")
    field(PREC,"6")
    field(EGU,"mV")
 }
 
-#see ics710ProcessWfAsbu.cpp: calculate time spent on different operations and setup DC offset for each channel ;
-record(aSub,"${PREFIX}Misc-aSub_")
+#processed data over ROI (region of interest)
+record(ai,"${MON}AveVROI-I")
 {
-    field(DESC,"Misc. data processing")
-    field (SNAM,"ics710ProcessMiscAsub")
-    #get CARD and CHANNEL info from the waveform record
-    field (INPA, "${PREFIX}VoltWf-I")
+   field(DESC,"ROI averaged voltage")
+   field(INP,"${MON}Raw-aSub_.VALG")
+   field(PREC,"6")
+   field(EGU,"V")
+   #averaged volt of ROI is for beam charge Q
+   field(FLNK,"${MON}Q-Calc_")
+}
+
+#limit interested number of shorts (INOS) to 60
+record(longout,"${MON}NbrShots-SP")
+{
+   field(DESC,"interested number of shorts")
+   field(PINI,"YES")
+   field(DRVH, "60")
+   field(DRVL, "1")
+   field(VAL, "1")   
+   info(autosaveFields_pass0, "VAL")
+   field (FLNK, "${MON}CirBuffer-aSub_")
+}
+
+#Circular buffer: 60 samples of AveVROI, 1-min data if 1Hz rate
+record(compress,"${MON}AveVROIBuf-Wf_")
+{
+	field(DESC, "60 Samples buffer")
+	field(INP,"${MON}AveVROI-I CP NMS")
+	field(ALG,"Circular Buffer")
+	field(NSAM,"60")
+	#field(NSAM,"${MON}NbrShots-SP CP NMS")
+	field(PREC,"6")
+	field(EGU,"V")
+	#field (FLNK, "${MON}CirBuffer-aSub_")
+}
+
+#beam charge Q buffer: NSLS-2 injection@10Hz
+record(compress,"${MON}QBuf-Wf_")
+{
+	field(DESC, "beam charge buffer")
+	field(INP,"${MON}Q-I CP NMS")
+	field(ALG,"Circular Buffer")
+	field(NSAM,"10")
+	field(PREC,"6")
+	field(EGU,"nC")
+	field (FLNK, "${MON}CirBuffer-aSub_")
+}
+
+record(longin,"${MON}EvtRate-I")
+{
+   field(DESC,"trigger/event rate")
+   #field(INP,"from EVR")
+   field(VAL,"10")
+   field(EGU, "Hz")
+}
+
+#see ics710ProcessWfAsbu.cpp: process circular buffered data.
+record(aSub,"${MON}CirBuffer-aSub_")
+{
+    field (DESC,"process circular buffer data")
+    field (SNAM,"processCirBuf")
+    field (INPA, "${MON}AveVROIBuf-Wf_")
     field (FTA, "DOUBLE")
-    field (NOA, "${NELM}")
-    #set DC offset and input range coefficient of each channel for calibration in ics710Daq.cpp
-    field (INPB, "${PREFIX}Offset-SP")
-    field (FTB, "DOUBLE")
+    field (NOA, "60")
+    field (INPB, "${MON}NbrShots-SP")
+    field (FTB, "ULONG")
     field (NOB, "1")
-    field (INPC, "${PREFIX}Coeff-SP")
+    #beam charge Q buffer: NSLS-2 injection@10Hz
+    field (INPC, "${MON}QBuf-Wf_")
     field (FTC, "DOUBLE")
-    field (NOC, "1")
-    field (OUTA, "${PREFIX}TrigRate-I PP")
+    field (NOC, "10")
+    #event rate / injection rate
+    field (INPD, "${MON}EvtRate-I")
+    field (FTD, "ULONG")
+    field (NOD, "1")
+    field (OUTA, "${MON}StdVROIOverINOS-I PP")
     field (FTVA, "DOUBLE")
     field (NOVA, "1")
-    field (OUTB, "${PREFIX}RawDataRdTm-I_ PP")
+    field (OUTB, "${MON}AveVROIOverINOS-I PP")
     field (FTVB, "DOUBLE")
     field (NOVB, "1")
-    field (OUTC, "${PREFIX}LoopTm-I_ PP")
+    field (OUTC, "${MON}QRate-I PP")
     field (FTVC, "DOUBLE")
     field (NOVC, "1")
 }
 
-record (ao, "${PREFIX}Offset-SP")
+record(ai,"${MON}StdVROIOverINOS-I")
 {
-    field(DESC,"DC Offset")
-    field(SCAN, "Passive")
-    field(PINI, "YES")
-    #for channle 1
-    #field(VAL, "0.0481")
-    #for channle 2
-    #field(RVAL, "0.1730")
-    field (PREC,"5")
-    field(EGU,"V")
-    #VAL works with autosave
-    info(autosaveFields_pass0, "VAL")
- }
- 
-record (ao, "${PREFIX}Coeff-SP")
+   field(DESC,"std over NOIS")
+   field(INP,"${MON}CirBuffer-aSub_.VALA")
+   field(PREC,"6")
+   field(EGU,"V")
+}
+
+record(ai,"${MON}AveVROIOverINOS-I")
 {
-    field(DESC,"coefficient of input range")
-    field(SCAN, "Passive")
-    field(PINI, "YES")
-    field(VAL, "1.0")
-    field (PREC,"5")
-    #VAL works with autosave
-    info(autosaveFields_pass0, "VAL")
- }
- 
-record (ai, "${PREFIX}TrigRate-I")
+   field(DESC,"ave over NOIS")
+   field(INP,"${MON}CirBuffer-aSub_.VALB")
+   field(PREC,"6")
+   field(EGU,"V")
+}
+
+record(ai,"${MON}MaxVROI-I")
 {
-    field(DESC,"trigger rate or IOC update rate")
-    field(INP,"${PREFIX}Misc-aSub_.VALA")
-    field(PREC,"4")
-    field(EGU,"Hz")
- }
- 
-record (ai, "${PREFIX}RawDataRdTm-I_")
+   field(DESC,"ROI max. voltage")
+   field(INP,"${MON}Raw-aSub_.VALH")
+   field(PREC,"6")
+   field(EGU,"V")
+}
+
+record(ai,"${MON}MinVROI-I")
 {
-    field(DESC,"raw Data Readout Time")
-    field (INP,"${PREFIX}Misc-aSub_.VALB")
-    field (PREC,"6")
-    field(EGU,"ms")
- }
- 
-record (ai, "${PREFIX}LoopTm-I_")
+   field(DESC,"ROI min. voltage")
+   field(INP,"${MON}Raw-aSub_.VALI")
+   field(PREC,"6")
+   field(EGU,"V")
+}
+
+record(ai,"${MON}SumVROI-I")
 {
-    field(DESC,"whole Loop Time")
-    field (INP,"${PREFIX}Misc-aSub_.VALC")
-    field (PREC,"6")
-    field(EGU,"ms")
-    field(FLNK, "${PREFIX}Counter-I")
- }
- 
-record(calc,"${PREFIX}Counter-I")
+   field(DESC,"ROI sum voltage")
+   field(INP,"${MON}Raw-aSub_.VALJ")
+   field(PREC,"6")
+   #field(EGU,"V")
+}
+
+record(ai,"${MON}StdVROI-I_")
 {
-   field(DESC,"trigger counter")
-	field(CALC, "A+1")
-	field(INPA, "${PREFIX}Counter-I.VAL  NPP NMS")
-	#field(TSEL, "${PREFIX}AveVolt-I.TIME")
-	#field(FLNK, "LN{GUN}Trip-Cmd.PROC")
+   field(DESC,"ROI std voltage")
+   field(INP,"${MON}Raw-aSub_.VALK")
+   field(PREC,"6")
+   field(EGU,"V")
+   field(FLNK,"${MON}StdVROI-I")
+}
+
+record(calc,"${MON}StdVROI-I")
+{
+   field(DESC,"ROI std voltage(mV)")
+   field(INPA,"${MON}StdVROI-I_")
+   field(CALC,"A*(1e+3)")
+   field(PREC,"6")
+   field(EGU,"mV")
+}
+
+record(ai,"${MON}ROILength-I")
+{
+   field(DESC,"ROI length: ms")
+   field(INP,"${MON}Raw-aSub_.VALL")
+   field(PREC,"3")
+   field(EGU,"ms")
+}
+
+record(calc,"${MON}ROISamples-I")
+{
+   field(DESC,"Length of ROI")
+   field(INPA,"${MON}StartPoint-SP")
+   field(INPB,"${MON}EndPoint-SP")
+   field(CALC,"B-A")
+   field(PREC,"0")
+   field(EGU,"samples")
+}
+
+#beam charge measurement
+record(ai,"${MON}FullScale-I")
+{
+   field(DESC,"ICT/BCM full scale: nC")
+   #field(INP,"${MON}FullScaleFromPLC-Sel_")
+   field(VAL,"160")
+   field(PREC,"1")
+   field(EGU,"nC")
+}
+
+#Bergoz ICT charge calibrated against BCM gain settings
+record(calc,"${MON}Q-Calc_")
+{
+   field(DESC,"Beam charge measured by ICT")
+   field(INPA,"${MON}AveVROI-I")
+   field(INPB,"${MON}FullScale-I")
+   field(CALC,"B*(A/8.0)")
+   field(PREC,"6")
+   field(EGU,"nC")
+   field(FLNK,"${MON}Q-I")
+}
+
+record(ai,"${MON}Q-I")
+{
+   field(DESC,"Beam charge measured by ICT")
+   field(INP,"${MON}Q-Calc_")
+   field(PREC,"6")
+   field(EGU,"nC")
+   #field(FLNK,"${MON}QRate-I")
+}
+
+record(ai,"${MON}QRate-I")
+{
+   field(DESC,"injected charge rate: nC/s")
+   field(INP,"${MON}CirBuffer-aSub_.VALC")
+   field(PREC,"6")
+   field(EGU,"nC/s")
+}
+
+#INOS: interested number of shots 
+record(calc,"${MON}AveQOverINOS-Calc_")
+{
+   field(DESC,"averaged charge over INOS")
+   field(INPA,"${MON}AveVROIOverINOS-I CP")
+   field(INPB,"${MON}FullScale-I")
+   field(CALC,"B*(A/8.0)")
+   field(PREC,"6")
+   field(EGU,"nC")
+   field(FLNK,"${MON}AveQOverINOS-I")
+}
+
+record(ai,"${MON}AveQOverINOS-I")
+{
+   field(DESC,"average charge over INOS")
+   field(INP,"${MON}AveQOverINOS-Calc_")
+   field(PREC,"6")
+   field(EGU,"nC")
+}
+
+record(calc,"${MON}StdQOverINOS-Calc_")
+{
+   field(DESC,"std charge over INOS")
+   field(INPA,"${MON}StdVROIOverINOS-I CP")
+   field(INPB,"${MON}FullScale-I")
+   field(CALC,"B*(A/8.0)")
+   field(PREC,"6")
+   field(EGU,"nC")
+   field(FLNK,"${MON}StdQOverINOS-I")
+}
+
+record(ai,"${MON}StdQOverINOS-I")
+{
+   field(DESC,"std charge over INOS")
+   field(INP,"${MON}StdQOverINOS-Calc_")
+   field(PREC,"6")
+   field(EGU,"nC")
 }

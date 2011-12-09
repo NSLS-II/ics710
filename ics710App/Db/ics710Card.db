@@ -1,39 +1,33 @@
-## functionality: card setup: run/stop, gain, filter, samples/ch, sampling rate, etc.
-## Yong Hu: ext.3961
-## PREFIX	- follows NSLS2 naming: [PSy[:PI]][-SSy[:SI]][-TSy[:TI]]{Dev[:DI]}[SgN[:SgI][-SgD]]
+## card setup: run/stop, gain, filter, samples/ch, sampling rate
+## DIG - NSLS2: [PSy[:PI]][-SSy[:SI]][-TSy[:TI]]{Dev[:DI]}[SgN[:SgI][-SgD]]
 #### Psy	-	Primary system
 #### Ssy	-	Secondary system
 #### Dev	-	Device name
-## CARD     -	#board / digitizer; "0" refers to the first digitizer found during initialization. \\
-##              For Acqiris crate and Concurrent CPU, it's the top slot(#5) if there's one digitizer in slot 5 
-## NELM     -	max. number of samples 
-## note: initialize records RVAL/VAL in ics710Drv*.cpp instead of using PINI
+## CARD   -	#digitizer; "0" is the first digitizer found during initialization.
+##        For Acqiris crate and CPU, it's the top slot if there's one digitizer 
+## NELM     -	max. number of samples per channel
 
-record(mbbo,"${PREFIX}Run-SP")
+record(mbbo,"${DIG}Run-Sel")
 {   
    field(DESC,"setRunning")
-   field(DTYP,"ics710")
-   field(OUT,"@C${CARD} MRUN")
+   field(DTYP,"ics710SetRunning")
+   field(OUT,"@C${CARD}")
    field(PINI,"YES")
-   field(RVAL, "1")
-   field(SCAN,"Passive")
    field(ZRVL,"0")
    field(ZRST,"Stopped")
    field(ONVL,"1")
    field(ONST,"Running")
-   info(autosaveFields_pass0, "RVAL")   
+   #info(autosaveFields_pass0, "RVAL")   
+   info(autosaveFields_pass0, "VAL")  
 }
 
-## initialize records RVAL/VAL in ics710Drv*.cpp instead of using PINI
-record(mbbo,"${PREFIX}Gain-SP")
+record(mbbo,"${DIG}Gain-Sel")
 {   
    field(DESC,"setGain")
-   field(DTYP,"ics710")
-   field(OUT,"@C${CARD} MGAI")
-   #initialize the RVAL in ics710DrvMbbo.cpp
-   #field(PINI,"YES")
-   #field(RVAL, "0")
-   field(SCAN,"Passive")
+   field(DTYP,"ics710SetGain")
+   field(OUT,"@C${CARD}")
+   field(PINI,"YES")
+   field(UDF,"0")
    field(ZRVL,"0")
    field(ZRST,"10V")
    field(ONVL,"1")
@@ -66,19 +60,42 @@ record(mbbo,"${PREFIX}Gain-SP")
    field(FTST,"0.667V")
    field(FFVL,"15")
    field(FFST,"0.625V")
-   info(autosaveFields_pass0, "RVAL")    
+   info(autosaveFields_pass0, "VAL")  
+   field(FLNK,"${DIG}Gain-RB")  
 }
 
-record(mbbo,"${PREFIX}Filter-SP")
+record(mbbi,"${DIG}Gain-RB")
+{   
+   field(DESC,"getGain")
+   field(DTYP,"ics710GetGain")
+   field(INP,"@C${CARD}")
+   #no need to specify **VL field
+   #field(ONVL,"0")
+   field(ZRST,"10V")
+   field(ONST,"5V")
+   field(TWST,"3.333V")
+   field(THST,"2.5V")
+   field(FRST,"2V")
+   field(FVST,"1.667V")
+   field(SXST,"1.429V")
+   field(SVST,"1.25V")
+   field(EIST,"1.111V")
+   field(NIST,"1V")
+   field(TEST,"0.909V")
+   field(ELST,"0.833V")
+   field(TVST,"0.769V")
+   field(TTST,"0.714V")
+   field(FTST,"0.667V")
+   field(FFST,"0.625V")
+}
+
+record(mbbo,"${DIG}Filter-Sel")
 {   
    field(DESC,"setFilter")
-   field(DTYP,"ics710")
-   field(OUT,"@C${CARD} MFIL")
-   #field(PINI,"YES")
-   #field(RVAL, "10")
-   field(SCAN,"Passive")
-   field(ZRVL,"0")
-   field(ZRST,"0Hz")
+   field(DTYP,"ics710SetFilter")
+   field(OUT,"@C${CARD}")
+   field(PINI,"YES")
+   field(VAL,"1")
    field(ONVL,"1")
    field(ONST,"10KHz")
    field(TWVL,"2")
@@ -109,17 +126,56 @@ record(mbbo,"${PREFIX}Filter-SP")
    field(FTST,"140KHz")
    field(FFVL,"15")
    field(FFST,"150KHz")
-   info(autosaveFields_pass0, "RVAL") 
+   info(autosaveFields_pass0, "VAL") 
+   field(FLNK,"${DIG}Filter-RB")
 }
 
-record(mbbo,"${PREFIX}Osr-SP")
+record(mbbi,"${DIG}Filter-RB")
+{   
+   field(DESC,"getFilter")
+   field(DTYP,"ics710GetFilter")
+   field(INP,"@C${CARD}")
+   #no need to specify **VL field
+   #field(ONVL,"1")
+   field(ONST,"10KHz")
+   field(TWST,"20KHz")
+   field(THST,"30KHz")
+   field(FRST,"40KHz")
+   field(FVST,"50KHz")
+   field(SXST,"60KHz")
+   field(SVST,"70KHz")
+   field(EIST,"80KHz")
+   field(NIST,"90KHz")
+   field(TEST,"100KHz")
+   field(ELST,"110KHz")
+   field(TVST,"120KHz")
+   field(TTST,"130KHz")
+   field(FTST,"140KHz")
+   field(FFST,"150KHz")
+}
+
+record(mbbo,"${DIG}Osr-Sel")
 {   
    field(DESC,"setOverSamplingRatio")
-   field(DTYP,"ics710")
-   field(OUT,"@C${CARD} MOSR")
-   #field(PINI,"YES")
+   field(DTYP,"ics710SetOsr")
+   field(OUT,"@C${CARD}")
+   field(PINI,"YES")
    #field(RVAL, "2")
-   field(SCAN,"Passive")
+   field(ZRVL,"0")
+   field(ZRST,"Normal")
+   field(ONVL,"1")
+   field(ONST,"Double")
+   field(TWVL,"2")
+   field(TWST,"Quad")
+   info(autosaveFields_pass0, "VAL")
+   field(FLNK, "${DIG}Osr-RB")   
+}
+
+record(mbbi,"${DIG}Osr-RB")
+{   
+   field(DESC,"getOverSamplingRatio")
+   field(DTYP,"ics710GetOsr")
+   field(INP,"@C${CARD}")
    field(ZRVL,"0")
    field(ZRST,"Normal")
    field(ONVL,"1")
@@ -127,127 +183,176 @@ record(mbbo,"${PREFIX}Osr-SP")
    field(TWVL,"2")
    field(TWST,"Quad")
    #reconfigure the samplingRate: trigger the record to be processed
-   field(FLNK, "${PREFIX}SampleRate-SP")
-   info(autosaveFields_pass0, "RVAL")
+   field(FLNK, "${DIG}SampleRate-SP")
 }
 
-record(mbbo,"${PREFIX}TrigMode-SP")
+record(mbbo,"${DIG}TrigMode-Sel")
 {   
-   field(DESC,"setTrigger")
-   field(DTYP,"ics710")
-   field(OUT,"@C${CARD} MTRI")
-   #field(PINI,"YES")
-   #field(RVAL, "1")
-   field(SCAN,"Passive")
+   field(DESC,"setTrigMode")
+   field(DTYP,"ics710SetTrigMode")
+   field(OUT,"@C${CARD}")
+   field(PINI,"YES")
+   field(VAL, "1")
    field(ZRVL,"0")
    field(ZRST,"Internal")
    field(ONVL,"1")
    field(ONST,"External")
-   info(autosaveFields_pass0, "RVAL")
+   info(autosaveFields_pass0, "VAL")
+   field(FLNK, "${DIG}TrigMode-RB")
 }
 
-record(mbbo,"${PREFIX}AcqMode-SP")
+record(mbbi,"${DIG}TrigMode-RB")
+{   
+   field(DESC,"getTrigMode")
+   field(DTYP,"ics710GetTrigMode")
+   field(INP,"@C${CARD}")
+   field(ZRVL,"0")
+   field(ZRST,"Internal")
+   field(ONVL,"1")
+   field(ONST,"External")
+}
+
+record(mbbo,"${DIG}AcqMode-Sel")
 {   
    field(DESC,"setAcquisitionMode")
-   field(DTYP,"ics710")
-   field(OUT,"@C${CARD} MACQ")
-   #field(PINI,"YES")
+   field(DTYP,"ics710SetAcqMode")
+   field(OUT,"@C${CARD}")
+   field(PINI,"YES")
    #field(RVAL, "1")
-   field(SCAN,"Passive")
    field(ZRVL,"0")
    field(ZRST,"Continuous")
    field(ONVL,"1")
    field(ONST,"CaptureNoPreTrig")
    field(TWVL,"2")
    field(TWST,"CaptureWithPreTrig")
-   info(autosaveFields_pass0, "RVAL")
-}
-
-record(longout,"${PREFIX}TotalCh-SP")
-{
-   field(DESC,"setTotalChannel")
-   field(DTYP,"ics710")
-   field(OUT,"@C${CARD} LCHA")
-   #initialize the VAL(not DOL) in ics710DrvLongout.cpp
-   #field(PINI,"YES")
-   #field(DOL, "4")
-   field(HOPR, "8")
-   field(LOPR, "2")
-   field(DRVH, "8")
-   field(DRVL, "2")
-   field(EGU, "channel")
    info(autosaveFields_pass0, "VAL")
+   field(FLNK, "${DIG}AcqMode-RB")
 }
 
-record(longout,"${PREFIX}Samples-SP")
+record(mbbi,"${DIG}AcqMode-RB")
+{   
+   field(DESC,"getAcquisitionMode")
+   field(DTYP,"ics710GetAcqMode")
+   field(INP,"@C${CARD}")
+   field(ZRVL,"0")
+   field(ZRST,"Continuous")
+   field(ONVL,"1")
+   field(ONST,"CaptureNoPreTrig")
+   field(TWVL,"2")
+   field(TWST,"CaptureWithPreTrig")
+}
+
+record(longout,"${DIG}Samples-SP")
 {
    field(DESC,"setSamples")
-   field(DTYP,"ics710")
-   field(OUT,"@C${CARD} LSAM")
-#   field(PINI,"YES")
-#   field(DOL, "10000")
+   field(DTYP,"ics710SetSamples")
+   field(OUT,"@C${CARD}")
+   field(PINI,"YES")
+   #field(DOL, "10000")
    field(DRVH, "${NELM}")
    field(DRVL, "1")
-   field(EGU, "sample")
-   #neither RVAL nor VAL works with autosave 
+   field(EGU, "samples")
    info(autosaveFields_pass0, "VAL")
-   field(FLNK,"${PREFIX}TimeAxis-aSub_")
+   field(FLNK, "${DIG}Samples-RB")
 }
 
-record(longout,"${PREFIX}SampleRate-SP")
+record(longin,"${DIG}Samples-RB")
+{
+   field(DESC,"getSamples")
+   field(DTYP,"ics710GetSamples")
+   field(INP,"@C${CARD}")
+   field(EGU, "samples")
+   field(FLNK,"${DIG}SampleLength-I")
+}
+
+record(longin,"${DIG}ReadErrors-I")
+{
+   field(DESC,"ReadErrors")
+   field(SCAN,"I/O Intr")
+   field(DTYP,"ics710GetReadErrors")
+   field(INP,"@C${CARD}")
+}
+
+record(longin,"${DIG}Timeouts-I")
+{
+   field(DESC,"timeouts")
+   field(SCAN,"I/O Intr")
+   field(DTYP,"ics710GetTimeouts")
+   field(INP,"@C${CARD}")
+}
+
+record(ao,"${DIG}SampleRate-SP")
 {
    field(DESC,"setSamplingRate")
-   field(DTYP,"ics710")
-   field(OUT,"@C${CARD} LRAT")
-   #field(PINI,"YES")
+   field(DTYP,"ics710SetSampleRate")
+   field(OUT,"@C${CARD}")
+   field(PINI,"YES")
    #field(DOL, "200")
    field(HOPR, "216")
    field(LOPR, "1")
    field(DRVH, "216")
    field(DRVL, "1")
+   field(PREC,"3")
    field(EGU, "KHz") 
-   #neither RVAL nor VAL works with autosave 
    info(autosaveFields_pass0, "VAL")  
+   field(FLNK,"${DIG}SampleRate-RB")
 }
 
-record(calc,"${PREFIX}SampleLength-I")
+record(ai,"${DIG}SampleRate-RB")
+{
+   field(DESC,"getSamplingRate")
+   field(DTYP,"ics710GetSampleRate")
+   field(INP,"@C${CARD}")
+   field(EGU, "KHz") 
+   field(PREC,"3")
+   field(FLNK,"${DIG}SampleLength-I")
+}
+
+record(calc,"${DIG}SampleLength-I")
 {
    field(DESC,"Sample length:ms")
-   field(SCAN,"Passive")
-   field(INPA,"${PREFIX}SampleRate-SP CP")
-   field(INPB,"${PREFIX}Samples-SP CP")
+   field(INPA,"${DIG}SampleRate-SP")
+   field(INPB,"${DIG}Samples-SP")
    field(CALC, "(B*1.00)/A")  
    field(EGU,"ms")
-   field(FLNK,"${PREFIX}TimeAxis-aSub_")
+   field(FLNK,"${DIG}TimeAxis-aSub_")
 }
 
-record(aSub,"${PREFIX}TimeAxis-aSub_")
+record(aSub,"${DIG}TimeAxis-aSub_")
 {
     field(DESC,"construct time axis")
-    field(INAM,"ics710InitTimeAxisAsub")
-    field(SNAM,"ics710ProcessTimeAxisAsub")
+    #field(INAM,"initTimeAxis")
+    field(SNAM,"createTimeAxis")
     #get samples/data points
-    field (INPA, "${PREFIX}Samples-SP")
+    field (INPA, "${DIG}Samples-SP")
     field (FTA, "ULONG")
     field (NOA, "1")
     #get sample length (ms) 
-    field (INPB, "${PREFIX}SampleLength-I")
+    field (INPB, "${DIG}SampleLength-I")
     field (FTB, "DOUBLE")
     field (NOB, "1")
     #waveform data for time axis             
-    field (OUTA, "${PREFIX}TimeAxis-I PP")
+    field (OUTA, "${DIG}TimeAxis-Wf PP")
     field (FTVA, "DOUBLE")
     field (NOVA, "${NELM}")
 }
 
-record(waveform,"${PREFIX}TimeAxis-I")
+record(waveform,"${DIG}TimeAxis-Wf")
 {
-   field(SCAN,"Passive")
    field(DESC,"Time axis: ms unit")
-   field(PINI,"YES")
    field(NELM,"${NELM}")
    field(FTVL,"DOUBLE")
-   field(INP,"${PREFIX}TimeAxis-aSub_.VALA")
+   field(INP,"${DIG}TimeAxis-aSub_.VALA")
    field(PREC,"3")
    field(EGU,"ms")
+}
+
+record(ai,"${DIG}TrigRate-I")
+{
+    field(DESC,"trigger rate or IOC update rate")
+    field(SCAN,"I/O Intr")
+    field(DTYP,"ics710GetTrigRate")
+    field(INP,"@C${CARD}")
+    field(PREC,"4")
+    field(EGU,"Hz")
 }
