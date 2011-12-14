@@ -1,7 +1,7 @@
 driver(drvIcs710)
 registrar(ics710Registrar)
 function(processWf)
-function(processCirBuf)
+function(processBuf)
 #function(ics710ProcessMiscAsub)
 #function(ics710ProcessCirBufferAsub)
 function(createTimeAxis)

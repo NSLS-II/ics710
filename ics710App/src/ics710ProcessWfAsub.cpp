@@ -24,7 +24,7 @@
 #include "errlog.h"
 
 #include "ics710Drv.h"
-#include "ics710Dev.h" //struct ics710RecPrivate
+#include "ics710Dev.h" //struct ics710RecPrivat
 //basic processing: max, min, sum/integral, mean, std; called by processWf()
 void
 processBasic(const double *pData, unsigned startPoint, unsigned endPoint,
@@ -139,45 +139,70 @@ processWf(aSubRecord *precord)
 }
 
 /*see ics710Channel.db for INP/OUT fields
- * process circular buffer: 60 samples (1-minute data for 1Hz injection)
+ * process buffered data: 60 samples (1-minute data for 1Hz injection)
  * */
 static long
-processCirBuf(aSubRecord *precord)
+processBuf(aSubRecord *precord)
 {
     assert(precord != NULL);
 
-    unsigned int i = 0;
+    unsigned j = 0;
     double sum = 0.0;
     double ave = 0.0;
     double std = 0.0;
 
-    double *pbufAveVROI = (double *) precord->a;
     unsigned int nbrShots = *(unsigned int *) precord->b;
-    //only process part of the circular buffer data: nbrShorts < precord->noa
-    for (i = 0; i < nbrShots; i++)
+    //printf("nbrShots: %d \n", nbrShots);
+    unsigned *pShots = (unsigned *) precord->e;
+    double *pbufV = (double *) precord->valc;
+    if (*pShots < nbrShots)
     {
-        sum += pbufAveVROI[i];
+        //((double *) precord->valc)[*pShots] = *(double *) precord->a;
+        pbufV[*pShots] = *(double *) precord->a;
+        (*pShots)++;
+        //printf("*pShots is %d \n", *pShots);
     }
-    ave = sum / precord->noa;
-    //printf("sum: %f, ave is %f \n",sum, ave);
-    for (i = 0; i < nbrShots; i++)
+    else
     {
-        std += (pbufAveVROI[i] - ave) * (pbufAveVROI[i] - ave);
+        *pShots = 0;
+        for (j = 0; j < nbrShots; j++)
+        {
+            //sum += ((double *) precord->valc)[j];
+            sum += pbufV[j];
+        }
+        ave = sum / nbrShots;
+        //printf("sum: %f, ave is %f \n", sum, ave);
+        for (j = 0; j < nbrShots; j++)
+        {
+            std += (pbufV[j] - ave) * (pbufV[j] - ave);
+        }
+        std = sqrt(std / nbrShots);
+        //printf("rmsNoise is %f \n", std);
+        //OUTA, "${MON}StdVROIOverINOS-I PP"
+        *(double *) precord->vala = std;
     }
-    std = sqrt(std / nbrShots);
-    //printf("rmsNoise is %f \n",std);
-    *(double *) precord->vala = std;
-    *(double *) precord->valb = ave;
 
     //charge rate: nC/s
     double sumQ = 0.0;
-    double *pbufQ = (double *) precord->c;
     unsigned int eventRate = *(unsigned int *) precord->d;
-    for (i = 0; i < eventRate; i++)
+    //printf("eventRate: %d \n", eventRate);
+    unsigned *pEvents = (unsigned *) precord->f;
+    double *pbufQ = (double *) precord->vald;
+    if (*pEvents < eventRate)
     {
-        sumQ += pbufQ[i];
+        pbufQ[*pEvents] = *(double *) precord->c;
+        (*pEvents)++;
     }
-    *(double *) precord->valc = sumQ;
+    else
+    {
+        *pEvents = 0;
+        for (j = 0; j < eventRate; j++)
+        {
+            sumQ += pbufQ[j];
+        }
+        *(double *) precord->valb = sumQ;
+        //printf("sumQ: %f \n", sumQ);
+    }
 
     return (0);
 }
@@ -214,10 +239,9 @@ createTimeAxis(aSubRecord *precord)
     return (0);
 }
 
-/* Register these symbols for use by IOC code: */
-epicsRegisterFunction(processWf)
+/* Register these symbols for use by IOC code: */epicsRegisterFunction(processWf)
 ;
-epicsRegisterFunction(processCirBuf)
+epicsRegisterFunction(processBuf)
 ;
 epicsRegisterFunction(createTimeAxis)
 ;

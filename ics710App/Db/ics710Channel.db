@@ -188,108 +188,6 @@ record(calc,"${MON}StdV-I")
    field(EGU,"mV")
 }
 
-#processed data over ROI (region of interest)
-record(ai,"${MON}AveVROI-I")
-{
-   field(DESC,"ROI averaged voltage")
-   field(INP,"${MON}Raw-aSub_.VALG")
-   field(PREC,"6")
-   field(EGU,"V")
-   #averaged volt of ROI is for beam charge Q
-   field(FLNK,"${MON}Q-Calc_")
-}
-
-#limit interested number of shorts (INOS) to 60
-record(longout,"${MON}NbrShots-SP")
-{
-   field(DESC,"interested number of shorts")
-   field(PINI,"YES")
-   field(DRVH, "60")
-   field(DRVL, "1")
-   field(VAL, "1")   
-   info(autosaveFields_pass0, "VAL")
-   field (FLNK, "${MON}CirBuffer-aSub_")
-}
-
-#Circular buffer: 60 samples of AveVROI, 1-min data if 1Hz rate
-record(compress,"${MON}AveVROIBuf-Wf_")
-{
-	field(DESC, "60 Samples buffer")
-	field(INP,"${MON}AveVROI-I CP NMS")
-	field(ALG,"Circular Buffer")
-	field(NSAM,"60")
-	#field(NSAM,"${MON}NbrShots-SP CP NMS")
-	field(PREC,"6")
-	field(EGU,"V")
-	#field (FLNK, "${MON}CirBuffer-aSub_")
-}
-
-#beam charge Q buffer: NSLS-2 injection@10Hz
-record(compress,"${MON}QBuf-Wf_")
-{
-	field(DESC, "beam charge buffer")
-	field(INP,"${MON}Q-I CP NMS")
-	field(ALG,"Circular Buffer")
-	field(NSAM,"10")
-	field(PREC,"6")
-	field(EGU,"nC")
-	field (FLNK, "${MON}CirBuffer-aSub_")
-}
-
-record(longin,"${MON}EvtRate-I")
-{
-   field(DESC,"trigger/event rate")
-   #field(INP,"from EVR")
-   field(VAL,"10")
-   field(EGU, "Hz")
-}
-
-#see ics710ProcessWfAsbu.cpp: process circular buffered data.
-record(aSub,"${MON}CirBuffer-aSub_")
-{
-    field (DESC,"process circular buffer data")
-    field (SNAM,"processCirBuf")
-    field (INPA, "${MON}AveVROIBuf-Wf_")
-    field (FTA, "DOUBLE")
-    field (NOA, "60")
-    field (INPB, "${MON}NbrShots-SP")
-    field (FTB, "ULONG")
-    field (NOB, "1")
-    #beam charge Q buffer: NSLS-2 injection@10Hz
-    field (INPC, "${MON}QBuf-Wf_")
-    field (FTC, "DOUBLE")
-    field (NOC, "10")
-    #event rate / injection rate
-    field (INPD, "${MON}EvtRate-I")
-    field (FTD, "ULONG")
-    field (NOD, "1")
-    field (OUTA, "${MON}StdVROIOverINOS-I PP")
-    field (FTVA, "DOUBLE")
-    field (NOVA, "1")
-    field (OUTB, "${MON}AveVROIOverINOS-I PP")
-    field (FTVB, "DOUBLE")
-    field (NOVB, "1")
-    field (OUTC, "${MON}QRate-I PP")
-    field (FTVC, "DOUBLE")
-    field (NOVC, "1")
-}
-
-record(ai,"${MON}StdVROIOverINOS-I")
-{
-   field(DESC,"std over NOIS")
-   field(INP,"${MON}CirBuffer-aSub_.VALA")
-   field(PREC,"6")
-   field(EGU,"V")
-}
-
-record(ai,"${MON}AveVROIOverINOS-I")
-{
-   field(DESC,"ave over NOIS")
-   field(INP,"${MON}CirBuffer-aSub_.VALB")
-   field(PREC,"6")
-   field(EGU,"V")
-}
-
 record(ai,"${MON}MaxVROI-I")
 {
    field(DESC,"ROI max. voltage")
@@ -350,6 +248,36 @@ record(calc,"${MON}ROISamples-I")
    field(EGU,"samples")
 }
 
+#processed data over ROI (region of interest)
+#averaged volt of ROI is for beam charge Q
+record(ai,"${MON}AveVROI-I")
+{
+   field(DESC,"ROI averaged voltage")
+   field(INP,"${MON}Raw-aSub_.VALG")
+   field(PREC,"6")
+   field(EGU,"V")
+   #field(FLNK,"${MON}AveVROIOverINOS-I")
+   field(FLNK,"${MON}Q-Calc_")
+}
+
+#averaging every interested number of shots(INOS)
+#averaged Q over INOS is calculated from ${MON}AveVROIOverINOS-I
+record(compress,"${MON}AveVROIOverINOS-I")
+{
+	field(DESC, "average over INOS")
+	#INP is scalar
+	field(INP,"${MON}AveVROI-I CP")
+	field(ALG,"N to 1 Average")
+	field(NSAM,"1")
+	#N can't be DB_LINK, must be constant
+	#field(N,"${MON}NbrShots-SP CP NMS")
+	#N can be changed to the interested number of shots at run-time
+	field(N,"10")
+	field(PREC,"6")
+	field(EGU,"V")
+	info(autosaveFields_pass0, "N")
+}
+
 #beam charge measurement
 record(ai,"${MON}FullScale-I")
 {
@@ -358,6 +286,7 @@ record(ai,"${MON}FullScale-I")
    field(VAL,"160")
    field(PREC,"1")
    field(EGU,"nC")
+   field(FLNK,"${MON}Q-Calc_")
 }
 
 #Bergoz ICT charge calibrated against BCM gain settings
@@ -378,18 +307,109 @@ record(ai,"${MON}Q-I")
    field(INP,"${MON}Q-Calc_")
    field(PREC,"6")
    field(EGU,"nC")
-   #field(FLNK,"${MON}QRate-I")
+   field(FLNK,"${MON}Buffer-aSub_")
+}
+
+
+record(longin,"${MON}EvtRate-I")
+{
+   field(DESC,"trigger/event rate")
+   #field(INP,"from EVR")
+   field(VAL,"10")
+   field(EGU, "Hz")
+}
+
+record(longin,"${MON}Shots-I")
+{
+   field(DESC,"shots changed in aSub")
+   field(VAL,"0")
+   field(INP,"${MON}Buffer-aSub_.E")
+}
+
+record(longin,"${MON}Events-I")
+{
+   field(DESC,"events changed in aSub")
+   field(VAL,"0")
+   field(INP,"${MON}Buffer-aSub_.F")
+}
+
+#see ics710ProcessWfAsbu.cpp: process INOS buffered data.
+record(aSub,"${MON}Buffer-aSub_")
+{
+    field (DESC,"process buffered data")
+    field (SNAM,"processBuf")
+    field (INPA, "${MON}AveVROI-I")
+    field (FTA, "DOUBLE")
+    field (NOA, "1")
+    #N is the interested number of shots
+    field (INPB, "${MON}AveVROIOverINOS-I.N")
+    field (FTB, "ULONG")
+    field (NOB, "1")
+    field (INPC, "${MON}Q-I")
+    field (FTC, "DOUBLE")
+    field (NOC, "1")
+    #event rate / injection rate
+    field (INPD, "${MON}EvtRate-I")
+    field (FTD, "ULONG")
+    field (NOD, "1")
+    field (INPE, "${MON}Shots-I PP")
+    field (FTE, "ULONG")
+    field (NOE, "1")
+    field (INPF, "${MON}Events-I PP")
+    field (FTF, "ULONG")
+    field (NOF, "1")
+    #${MON}StdQOverINOS-I is calculate from ${MON}StdVROIOverINOS-I
+    field (OUTA, "${MON}StdVROIOverINOS-I PP")
+    field (FTVA, "DOUBLE")
+    field (NOVA, "1")
+    field (OUTB, "${MON}QRate-I PP")
+    field (FTVB, "DOUBLE")
+    field (NOVB, "1")
+    field (OUTC, "${MON}AveVROI-Buf_ PP")
+    field (FTVC, "DOUBLE")
+    field (NOVC, "60")
+    field (OUTD, "${MON}Q-Buf_ PP")
+    field (FTVD, "DOUBLE")
+    field (NOVD, "60")
+}
+
+record(ai,"${MON}StdVROIOverINOS-I")
+{
+   field(DESC,"stdVROI over NOIS")
+   field(INP,"${MON}Buffer-aSub_.VALA")
+   field(PREC,"6")
+   field(EGU,"V")
 }
 
 record(ai,"${MON}QRate-I")
 {
    field(DESC,"injected charge rate: nC/s")
-   field(INP,"${MON}CirBuffer-aSub_.VALC")
+   field(INP,"${MON}Buffer-aSub_.VALB")
    field(PREC,"6")
    field(EGU,"nC/s")
 }
 
-#INOS: interested number of shots 
+record(waveform,"${MON}AveVROI-Buf_")
+{
+   field(DESC,"AveVROI buffer")
+   field(INP,"${MON}Buffer-aSub_.VALC")
+   field(NELM,"60")
+   field(FTVL,"DOUBLE")
+   field(PREC,"6")
+   field(EGU,"V")
+}
+
+record(waveform,"${MON}Q-Buf_")
+{
+   field(DESC,"Q buffer")
+   field(INP,"${MON}Buffer-aSub_.VALD")
+   field(NELM,"60")
+   field(FTVL,"DOUBLE")
+   field(PREC,"6")
+   field(EGU,"nC")
+}
+
+#averaged Q over interested number of shots 
 record(calc,"${MON}AveQOverINOS-Calc_")
 {
    field(DESC,"averaged charge over INOS")
@@ -426,4 +446,34 @@ record(ai,"${MON}StdQOverINOS-I")
    field(INP,"${MON}StdQOverINOS-Calc_")
    field(PREC,"6")
    field(EGU,"nC")
+}
+
+#Circular buffer: 60 samples of AveVROI, 1-min data if 1Hz rate
+record(compress,"${MON}AveVROIBuf-Wf_")
+{
+	field(DESC, "60 Samples buffer")
+	field(INP,"${MON}AveVROI-I CP NMS")
+	field(ALG,"Circular Buffer")
+	field(NSAM,"60")
+	#field(NSAM,"${MON}NbrShots-SP CP NMS")
+	field(PREC,"6")
+	field(EGU,"V")
+	#field (FLNK, "${MON}Buffer-aSub_")
+}
+
+#moving average over a window of data
+record(compress,"${MON}AveVROIMovAve-I")
+{
+	field(DESC, "average over INOS")
+	#INP is array/circular buffer
+	field(INP,"${MON}AveVROIBuf-Wf_ CP NMS")
+	field(ALG,"N to 1 Average")
+	field(NSAM,"1")
+	#N can't be DB_LINK, must be constant
+	#field(N,"${MON}NbrShots-SP CP NMS")
+	#N is the data window
+	field(N,"10")
+	field(PREC,"6")
+	field(EGU,"V")
+	info(autosaveFields_pass0, "N")
 }
