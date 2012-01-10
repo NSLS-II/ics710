@@ -1,0 +1,9 @@
+ Allow *. syntax
+#syntax:glob
+O.*
+^db
+^dbd
+^as
+^bin
+^include
+^lib
