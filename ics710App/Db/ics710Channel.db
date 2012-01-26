@@ -3,6 +3,7 @@
 #### Psy	-	Primary system
 #### Ssy	-	Secondary system
 #### Dev	-	Device name
+#### MON	-	LTB-BI{ICT:1}
 ## CHANNEL  -	device(Dev) instance and #channel of the board(MODULE)  
 ## CARD     -  "0" refers to the first digitizer found during initialization.
 # For Acqiris system, it's the top slot(#5) if there's one digitizer in slot 5 
@@ -282,7 +283,8 @@ record(compress,"${MON}AveVROIOverINOS-I")
 record(ai,"${MON}FullScale-I")
 {
    field(DESC,"ICT/BCM full scale: nC")
-   #field(INP,"${MON}FullScaleFromPLC-Sel_")
+   #Full scale is calculated in PLC IOC
+   #field(INP,"${MON}FullScale-Calc_ CP")
    field(VAL,"160")
    field(PREC,"1")
    field(EGU,"nC")

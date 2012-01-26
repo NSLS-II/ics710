@@ -1,4 +1,4 @@
- Allow *. syntax
+Allow *. syntax
 #syntax:glob
 O.*
 ^db

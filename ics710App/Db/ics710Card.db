@@ -3,6 +3,7 @@
 #### Psy	-	Primary system
 #### Ssy	-	Secondary system
 #### Dev	-	Device name
+#### DIG	-	LTB-BI{DIG:ICT}
 ## CARD   -	#digitizer; "0" is the first digitizer found during initialization.
 ##        For Acqiris crate and CPU, it's the top slot if there's one digitizer 
 ## NELM     -	max. number of samples per channel
