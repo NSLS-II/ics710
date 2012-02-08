@@ -59,7 +59,7 @@ record(longout,"${MON}EndPoint-SP")
    field(DRVH, "${NELM}")
    field(DRVL, "1")
    field(HOPR, "${NELM}")
-   field(LOPR, "1"
+   field(LOPR, "1")
    field(VAL, "${NELM}")    
    info(autosaveFields_pass0, "VAL")
    field(FLNK,"${MON}ROISamples-I")
