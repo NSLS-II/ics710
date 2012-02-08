@@ -30,8 +30,10 @@ void
 processBasic(const double *pData, unsigned startPoint, unsigned endPoint,
              double *max, double *min, double *sum, double *ave, double *std)
 {
-    *max = pData[0];
-    *min = pData[0];
+    //*max = pData[0];
+    //*min = pData[0];
+    *max = pData[startPoint];
+    *min = pData[startPoint];
     *sum = 0.0;
     *ave = 0.0;
     *std = 0.0;
