@@ -280,11 +280,11 @@ record(compress,"${MON}AveVROIOverINOS-I")
 }
 
 #beam charge measurement
-record(ai,"${MON}FullScale-I")
+record(ai,"${MON}QFullScale-I")
 {
    field(DESC,"ICT/BCM full scale: nC")
    #Full scale is calculated in PLC IOC
-   #field(INP,"${MON}FullScale-Calc_ CP")
+   field(INP,"${MON}FullScale-I CP")
    field(VAL,"160")
    field(PREC,"1")
    field(EGU,"nC")
@@ -296,7 +296,7 @@ record(calc,"${MON}Q-Calc_")
 {
    field(DESC,"Beam charge measured by ICT")
    field(INPA,"${MON}AveVROI-I")
-   field(INPB,"${MON}FullScale-I")
+   field(INPB,"${MON}QFullScale-I")
    field(CALC,"B*(A/8.0)")
    field(PREC,"6")
    field(EGU,"nC")
@@ -416,7 +416,7 @@ record(calc,"${MON}AveQOverINOS-Calc_")
 {
    field(DESC,"averaged charge over INOS")
    field(INPA,"${MON}AveVROIOverINOS-I CP")
-   field(INPB,"${MON}FullScale-I")
+   field(INPB,"${MON}QFullScale-I")
    field(CALC,"B*(A/8.0)")
    field(PREC,"6")
    field(EGU,"nC")
@@ -435,7 +435,7 @@ record(calc,"${MON}StdQOverINOS-Calc_")
 {
    field(DESC,"std charge over INOS")
    field(INPA,"${MON}StdVROIOverINOS-I CP")
-   field(INPB,"${MON}FullScale-I")
+   field(INPB,"${MON}QFullScale-I")
    field(CALC,"B*(A/8.0)")
    field(PREC,"6")
    field(EGU,"nC")
