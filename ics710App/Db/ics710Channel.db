@@ -483,3 +483,11 @@ record(compress,"${MON}AveVROIMovAve-I")
 	field(EGU,"V")
 	info(autosaveFields_pass0, "N")
 }
+
+record(stringout, "$(MON)FilePath") 
+{
+   field(DESC, "Data log dir path")
+   field(PINI, "YES")
+   field(VAL, "/home/yhu")
+   info(autosaveFields, "VAL")
+}
