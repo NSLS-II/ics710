@@ -39,6 +39,15 @@ record(ao, "${MON}Coeff-SP")
     info(autosaveFields_pass0, "VAL")
 }
 
+#StartPoint and EndPoint are changed in ${MON}Raw-aSub_; 
+#need scanning to get processed again
+record(fanout, "${MON}Scan-Fout_")
+{
+    field(SCAN, "2 second")
+    field(LNK1,"${MON}StartPoint-SP")
+    field(LNK2,"${MON}EndPoint-SP")
+}
+
 record(longout,"${MON}StartPoint-SP")
 {
    field(DESC,"start sample point of selected region")
