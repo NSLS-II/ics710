@@ -112,32 +112,29 @@ processWf(aSubRecord *precord)
     double stdROI;
     unsigned int *startP = (unsigned int *) precord->d;
     unsigned int *endP = (unsigned int *) precord->e;
-
-    if (*startP >= *endP)
-    {
-        *endP = *startP + 1;
-        errlogPrintf("startPoint should < endPoint, reset \n");
-    }
+    //reset starP and endP longout records; plink is INPD/INPE now
+    longoutRecord *plongout;
     if (*endP > pwf->nord)
     {
         *endP = pwf->nord;
-        *startP = 0;
-        errlogPrintf("endPoint should < pwf->nord (%d), reset \n", pwf->nord);
+        plink = &precord->inpe;
+        assert((plink != NULL) && (DB_LINK == plink->type));
+        paddr = (DBADDR *) plink->value.pv_link.pvt;
+        plongout = (longoutRecord *) paddr->precord;
+        plongout->val = *endP;
+        //plongout->proc = 1;//can't cause the record to be processed
+        errlogPrintf("endPoint should <=pwf->nord (%d), reset \n", pwf->nord);
     }
-    //reset starP and endP longout records; plink is INPD/INPE now
-    longoutRecord *plongout;
-    plink = &precord->inpd;
-    assert((plink != NULL) && (DB_LINK == plink->type));
-    paddr = (DBADDR *) plink->value.pv_link.pvt;
-    plongout = (longoutRecord *) paddr->precord;
-    plongout->val = *startP;
-    //plongout->proc = 1;//can't cause the record to be processed
-    plink = &precord->inpe;
-    assert((plink != NULL) && (DB_LINK == plink->type));
-    paddr = (DBADDR *) plink->value.pv_link.pvt;
-    plongout = (longoutRecord *) paddr->precord;
-    plongout->val = *endP;
-    //plongout->proc = 1;
+    if (*startP >= *endP)
+    {
+        *startP = 0;
+        plink = &precord->inpd;
+        assert((plink != NULL) && (DB_LINK == plink->type));
+        paddr = (DBADDR *) plink->value.pv_link.pvt;
+        plongout = (longoutRecord *) paddr->precord;
+        plongout->val = *startP;
+        errlogPrintf("startPoint should < endPoint, reset \n");
+    }
 
     //calculate max, min, sum/integral, mean, std in the whole waveform
     processBasic(pvoltData, 0, pwf->nord, &max, &min, &sum, &ave, &std);
