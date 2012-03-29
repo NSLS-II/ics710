@@ -249,12 +249,12 @@ processBuf(aSubRecord *precord)
 
     for (j = (10 - (*pShotPerSecondCalc)); j < 10; j++)
     {
-        //printf("j=%d, pCircularQ[j]: %f \n", j, pCircularQ[j]);
+        printf("j=%d, pCircularQ[j]: %f \n", j, pCircularQ[j]);
         qRate += pCircularQ[j];
-        *pQRate = qRate;
-        qRate = 0.0;
-        //printf("QRate: %f \n", *pQRate);
     }
+    *pQRate = qRate;
+    qRate = 0.0;
+    printf("QRate: %f \n", *pQRate);
 
     if (*pSumTime < 1.2)
     {
@@ -263,7 +263,11 @@ processBuf(aSubRecord *precord)
     else
     {
         //*pNSAMofCircularQ = *pShotPerSecondCalc;
-        //printf("shotPerSecondCalc is: %d \n", shotPerSecondCalc);
+        printf("shotPerSecondCalc is: %d \n", shotPerSecondCalc);
+        if (shotPerSecondCalc > 10)
+        {
+            shotPerSecondCalc = 10;
+        }
         *pShotPerSecondCalc = shotPerSecondCalc;
         shotPerSecondCalc = 0;
         *pSumTime = 0.0;
