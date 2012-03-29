@@ -305,6 +305,7 @@ record(ai,"${MON}QFullScale-I")
 }
 
 #Bergoz ICT charge calibrated against BCM gain settings
+#${MON}AveVROI-I --> FLNK to ${MON}Q-Calc_
 record(calc,"${MON}Q-Calc_")
 {
    field(DESC,"Beam charge measured by ICT")
@@ -322,16 +323,19 @@ record(ai,"${MON}Q-I")
    field(INP,"${MON}Q-Calc_")
    field(PREC,"6")
    field(EGU,"nC")
-   field(FLNK,"${MON}Buffer-aSub_")
+   #field(FLNK,"${MON}Buffer-aSub_")
+   field(FLNK,"${MON}CircularQ-com_")
 }
 
-
-record(longin,"${MON}EvtRate-I")
+#record(longin,"${MON}EvtRate-I")
+record(longin,"${MON}ShotPerSecond-SP")
 {
-   field(DESC,"trigger/event rate")
+   #field(DESC,"trigger/event rate")
+   field(DESC,"injections per second")
    #field(INP,"from EVR")
-   field(VAL,"10")
-   field(EGU, "Hz")
+   field(VAL,"2")
+   #field(EGU, "Hz")
+   field(EGU, "Shots")
 }
 
 record(longin,"${MON}Shots-I")
@@ -348,7 +352,15 @@ record(longin,"${MON}Events-I")
    field(INP,"${MON}Buffer-aSub_.F")
 }
 
+record(ai,"${MON}SumTime-I")
+{
+   field(DESC,"sumTime changed in aSub")
+   field(VAL,"0.0")
+   field(INP,"${MON}Buffer-aSub_.G")
+}
+
 #see ics710ProcessWfAsbu.cpp: process INOS buffered data.
+#FLNKed by ${MON}CircularQ-com_ 
 record(aSub,"${MON}Buffer-aSub_")
 {
     field (DESC,"process buffered data")
@@ -364,7 +376,7 @@ record(aSub,"${MON}Buffer-aSub_")
     field (FTC, "DOUBLE")
     field (NOC, "1")
     #event rate / injection rate
-    field (INPD, "${MON}EvtRate-I")
+    field (INPD, "${MON}ShotPerSecond-SP")
     field (FTD, "ULONG")
     field (NOD, "1")
     field (INPE, "${MON}Shots-I PP")
@@ -373,11 +385,17 @@ record(aSub,"${MON}Buffer-aSub_")
     field (INPF, "${MON}Events-I PP")
     field (FTF, "ULONG")
     field (NOF, "1")
+    field (INPG, "${MON}SumTime-I PP")
+    field (FTG, "DOUBLE")
+    field (NOG, "1")
+    field (INPH, "${MON}CircularQ-com_")
+    field (FTH, "DOUBLE")
+    field (NOH, "10")
     #${MON}StdQOverINOS-I is calculate from ${MON}StdVROIOverINOS-I
     field (OUTA, "${MON}StdVROIOverINOS-I PP")
     field (FTVA, "DOUBLE")
     field (NOVA, "1")
-    field (OUTB, "${MON}QRate-I PP")
+    field (OUTB, "${MON}QRateNoMovingAve-I PP")
     field (FTVB, "DOUBLE")
     field (NOVB, "1")
     field (OUTC, "${MON}AveVROI-Buf_ PP")
@@ -386,6 +404,12 @@ record(aSub,"${MON}Buffer-aSub_")
     field (OUTD, "${MON}Q-Buf_ PP")
     field (FTVD, "DOUBLE")
     field (NOVD, "60")
+    field (OUTE, "${MON}ShotPerSecond-Calc_ PP")
+    field (FTVE, "ULONG")
+    field (NOVE, "1")
+    field (OUTF, "${MON}QRate-I PP")
+    field (FTVF, "DOUBLE")
+    field (NOVF, "1")
 }
 
 record(ai,"${MON}StdVROIOverINOS-I")
@@ -396,9 +420,9 @@ record(ai,"${MON}StdVROIOverINOS-I")
    field(EGU,"V")
 }
 
-record(ai,"${MON}QRate-I")
+record(ai,"${MON}QRateNoMovingAve-I")
 {
-   field(DESC,"injected charge rate: nC/s")
+   field(DESC,"QRate without moving average")
    field(INP,"${MON}Buffer-aSub_.VALB")
    field(PREC,"6")
    field(EGU,"nC/s")
@@ -422,6 +446,44 @@ record(waveform,"${MON}Q-Buf_")
    field(FTVL,"DOUBLE")
    field(PREC,"6")
    field(EGU,"nC")
+}
+
+record(longin,"${MON}ShotPerSecond-Calc_")
+{
+   field(DESC,"calculated ShotPerSecond")
+   field(INP,"${MON}Buffer-aSub_.VALE")
+   field(VAL,"2")
+   field(EGU,"shots")
+}
+
+#record(calcout,"${MON}NSAMofCircularQ-Calc_")
+#{
+   #field(DESC,"set NSAM of CircularQ")
+   #field(INPA,"${MON}Buffer-aSub_.VALF")
+   #field(CALC, "A")
+   #field()
+#}
+
+#circular buffer of charge Q
+#FLNKed by ${MON}Q-I
+record(compress,"${MON}CircularQ-com_")
+{
+	field(DESC, "circular buffer Q")
+	#INP is scalar
+	field(INP,"${MON}Q-I")
+	field(ALG,"Circular Buffer")
+	field(NSAM,"10")
+	#NSAM can't be changed to the interested number of shots at run-time
+	#N can be changed by caput
+    field(FLNK,"${MON}Buffer-aSub_")
+}
+
+record(ai,"${MON}QRate-I")
+{
+   field(DESC,"QRate with moving sum")
+   field(INP,"${MON}Buffer-aSub_.VALF")
+   field(PREC,"6")
+   field(EGU,"nC/s")
 }
 
 #averaged Q over interested number of shots 

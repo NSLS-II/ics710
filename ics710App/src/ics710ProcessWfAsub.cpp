@@ -23,6 +23,7 @@
 #include "waveformRecord.h"
 #include "longoutRecord.h"
 #include "errlog.h"
+#include "epicsTime.h"
 
 #include "ics710Drv.h"
 #include "ics710Dev.h" //struct ics710RecPrivat
@@ -172,6 +173,10 @@ processBuf(aSubRecord *precord)
     double sum = 0.0;
     double ave = 0.0;
     double std = 0.0;
+    static double curTime = 0.0;
+    static double preTime = 0.0;
+    static int shotPerSecondCalc = 0;
+    double qRate = 0.0;
 
     unsigned int nbrShots = *(unsigned int *) precord->b;
     //printf("nbrShots: %d \n", nbrShots);
@@ -204,26 +209,64 @@ processBuf(aSubRecord *precord)
         *(double *) precord->vala = std;
     }
 
-    //charge rate: nC/s
+    //charge rate: nC/s, without moving average
     double sumQ = 0.0;
-    unsigned int eventRate = *(unsigned int *) precord->d;
-    //printf("eventRate: %d \n", eventRate);
+    unsigned int shotsPerSecond = *(unsigned int *) precord->d;
+    //printf("shotsPerSecond: %d \n", shotsPerSecond);
     unsigned *pEvents = (unsigned *) precord->f;
     double *pbufQ = (double *) precord->vald;
-    if (*pEvents < eventRate)
-    {
-        pbufQ[*pEvents] = *(double *) precord->c;
-        (*pEvents)++;
-    }
-    else
+    pbufQ[*pEvents] = *(double *) precord->c;
+    (*pEvents)++;
+    if (*pEvents >= shotsPerSecond)
     {
         *pEvents = 0;
-        for (j = 0; j < eventRate; j++)
+        for (j = 0; j < shotsPerSecond; j++)
         {
             sumQ += pbufQ[j];
         }
         *(double *) precord->valb = sumQ;
         //printf("sumQ: %f \n", sumQ);
+    }
+
+    //charge rate: moving summing Q in one second
+    double *pSumTime = (double *) precord->g; // pSumTime seems global variable
+    double *pCircularQ = (double *) precord->h;
+    int *pShotPerSecondCalc = (int *) precord->vale;
+    double *pQRate = (double *) precord->valf;
+
+    curTime = precord->time.secPastEpoch + precord->time.nsec / 1000000000.0;
+    //printf("cur/pre time is: %f, %f \n", curTime, preTime);
+    if ((curTime - preTime) > 2)//discard the first delta time
+    {
+        preTime = curTime;
+        printf("discard the first delta time \n");
+        return (0);
+    }
+
+    *pSumTime += (curTime - preTime); //Summing injection interval;
+    preTime = curTime;
+    //printf("sumTime is: %f \n", *pSumTime);
+
+    for (j = (10 - (*pShotPerSecondCalc)); j < 10; j++)
+    {
+        printf("j=%d, pCircularQ[j]: %f \n", j, pCircularQ[j]);
+        qRate += pCircularQ[j];
+        *pQRate = qRate;
+        qRate = 0.0;
+        printf("QRate: %f \n", *pQRate);
+    }
+
+    if (*pSumTime < 1.2)
+    {
+        shotPerSecondCalc++;
+    }
+    else
+    {
+        //*pNSAMofCircularQ = *pShotPerSecondCalc;
+        printf("shotPerSecondCalc is: %d \n", shotPerSecondCalc);
+        *pShotPerSecondCalc = shotPerSecondCalc;
+        shotPerSecondCalc = 0;
+        *pSumTime = 0.0;
     }
 
     return (0);
