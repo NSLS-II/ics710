@@ -304,15 +304,26 @@ record(ai,"${MON}QFullScale-I")
    field(FLNK,"${MON}Q-Calc_")
 }
 
-#Bergoz ICT charge calibrated against BCM gain settings
+#Bergoz ICT charge calibrated against BCM gain settings 
+#and Q offset (background noise)
 #${MON}AveVROI-I --> FLNK to ${MON}Q-Calc_
+record(ao,"${MON}QOffset-SP")
+{
+   field(DESC,"ICT offset")
+   field(PREC,"3")
+   field(EGU,"nC")
+   field(FLNK,"${MON}Q-Calc_")
+   info(autosaveFields_pass0, "VAL")
+}
+
 record(calc,"${MON}Q-Calc_")
 {
    field(DESC,"Beam charge measured by ICT")
    field(INPA,"${MON}AveVROI-I")
    field(INPB,"${MON}QFullScale-I")
-   field(CALC,"ABS(B*(A/8.0))")
-   field(PREC,"6")
+   field(INPC,"${MON}QOffset-SP")
+   field(CALC,"(ABS(B*(A/8.0)))-C")
+   field(PREC,"3")
    field(EGU,"nC")
    field(FLNK,"${MON}Q-I")
 }
@@ -321,7 +332,7 @@ record(ai,"${MON}Q-I")
 {
    field(DESC,"Beam charge measured by ICT")
    field(INP,"${MON}Q-Calc_")
-   field(PREC,"6")
+   field(PREC,"3")
    field(EGU,"nC")
    #field(FLNK,"${MON}Buffer-aSub_")
    field(FLNK,"${MON}CircularQ-com_")
@@ -424,7 +435,7 @@ record(ai,"${MON}QRateNoMovingAve-I")
 {
    field(DESC,"QRate without moving average")
    field(INP,"${MON}Buffer-aSub_.VALB")
-   field(PREC,"6")
+   field(PREC,"3")
    field(EGU,"nC/s")
 }
 
@@ -444,7 +455,7 @@ record(waveform,"${MON}Q-Buf_")
    field(INP,"${MON}Buffer-aSub_.VALD")
    field(NELM,"60")
    field(FTVL,"DOUBLE")
-   field(PREC,"6")
+   field(PREC,"3")
    field(EGU,"nC")
 }
 
@@ -482,7 +493,7 @@ record(ai,"${MON}QRate-I")
 {
    field(DESC,"QRate with moving sum")
    field(INP,"${MON}Buffer-aSub_.VALF")
-   field(PREC,"6")
+   field(PREC,"3")
    field(EGU,"nC/s")
 }
 
@@ -492,7 +503,9 @@ record(calc,"${MON}AveQOverINOS-Calc_")
    field(DESC,"averaged charge over INOS")
    field(INPA,"${MON}AveVROIOverINOS-I CP")
    field(INPB,"${MON}QFullScale-I")
-   field(CALC,"ABS(B*(A/8.0))")
+   field(INPC,"${MON}QOffset-SP")
+   field(CALC,"(ABS(B*(A/8.0)))-C")
+   #field(CALC,"ABS(B*(A/8.0))")
    field(PREC,"6")
    field(EGU,"nC")
    field(FLNK,"${MON}AveQOverINOS-I")
@@ -502,7 +515,7 @@ record(ai,"${MON}AveQOverINOS-I")
 {
    field(DESC,"average charge over INOS")
    field(INP,"${MON}AveQOverINOS-Calc_")
-   field(PREC,"6")
+   field(PREC,"3")
    field(EGU,"nC")
 }
 
@@ -521,7 +534,7 @@ record(ai,"${MON}StdQOverINOS-I")
 {
    field(DESC,"std charge over INOS")
    field(INP,"${MON}StdQOverINOS-Calc_")
-   field(PREC,"6")
+   field(PREC,"3")
    field(EGU,"nC")
 }
 
