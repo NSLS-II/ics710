@@ -169,6 +169,8 @@ processBuf(aSubRecord *precord)
 {
     assert(precord != NULL);
 
+    static unsigned shot = 0;
+    static unsigned event = 0;
     unsigned j = 0;
     double sum = 0.0;
     double ave = 0.0;
@@ -178,76 +180,63 @@ processBuf(aSubRecord *precord)
     static int shotPerSecondCalc = 0;
     double qRate = 0.0;
 
-    unsigned int nbrShots = *(unsigned int *) precord->b;
+    //get StdVROIOverINOS, this is not moving average
+    unsigned int interstedShots = *(unsigned int *) precord->b;
     //printf("nbrShots: %d \n", nbrShots);
-    unsigned *pShots = (unsigned *) precord->e;
+    //unsigned *pShots = (unsigned *) precord->e;
     double *pbufV = (double *) precord->valc;
-    if (*pShots < nbrShots)
+    if (shot < interstedShots)
     {
         //((double *) precord->valc)[*pShots] = *(double *) precord->a;
-        pbufV[*pShots] = *(double *) precord->a;
-        (*pShots)++;
-        //printf("*pShots is %d \n", *pShots);
+        pbufV[shot] = *(double *) precord->a;
+        shot++;
+        //printf("shot is %d \n", shot);
     }
     else
     {
-        *pShots = 0;
-        for (j = 0; j < nbrShots; j++)
+        shot = 0;
+        for (j = 0; j < interstedShots; j++)
         {
             //sum += ((double *) precord->valc)[j];
             sum += pbufV[j];
         }
-        ave = sum / nbrShots;
+        ave = sum / interstedShots;
         //printf("sum: %f, ave is %f \n", sum, ave);
-        for (j = 0; j < nbrShots; j++)
+        for (j = 0; j < interstedShots; j++)
         {
             std += (pbufV[j] - ave) * (pbufV[j] - ave);
         }
-        std = sqrt(std / nbrShots);
+        std = sqrt(std / interstedShots);
         //printf("rmsNoise is %f \n", std);
         //OUTA, "${MON}StdVROIOverINOS-I PP"
         *(double *) precord->vala = std;
     }
 
-    //charge rate: nC/s, without moving average
-    double sumQ = 0.0;
+    //charge rate: nC/s, no-moving sum and moving sum
+    double noMovingSumQ = 0.0;
     unsigned int shotsPerSecond = *(unsigned int *) precord->d;
     //printf("shotsPerSecond: %d \n", shotsPerSecond);
-    unsigned *pEvents = (unsigned *) precord->f;
+    //unsigned *pEvents = (unsigned *) precord->f;
     double *pbufQ = (double *) precord->vald;
-    pbufQ[*pEvents] = *(double *) precord->c;
-    (*pEvents)++;
-    if (*pEvents >= shotsPerSecond)
+    pbufQ[event] = *(double *) precord->c;
+    event++;
+    if (event >= shotsPerSecond)
     {
-        *pEvents = 0;
+        event = 0;
         for (j = 0; j < shotsPerSecond; j++)
         {
-            sumQ += pbufQ[j];
+            noMovingSumQ += pbufQ[j];
         }
-        *(double *) precord->valb = sumQ;
+        *(double *) precord->valb = noMovingSumQ;
         //printf("sumQ: %f \n", sumQ);
     }
 
     //charge rate: moving summing Q in one second
-    double *pSumTime = (double *) precord->g; // pSumTime seems global variable
-    double *pCircularQ = (double *) precord->h;
-    int *pShotPerSecondCalc = (int *) precord->vale;
-    double *pQRate = (double *) precord->valf;
-
-    curTime = precord->time.secPastEpoch + precord->time.nsec / 1000000000.0;
-    //printf("cur/pre time is: %f, %f \n", curTime, preTime);
-    if ((curTime - preTime) > 2)//discard the first delta time
-    {
-        preTime = curTime;
-        //printf("discard the first delta time \n");
-        return (0);
-    }
-
-    *pSumTime += (curTime - preTime); //Summing injection interval;
-    preTime = curTime;
-    //printf("sumTime is: %f \n", *pSumTime);
-
-    for (j = (10 - (*pShotPerSecondCalc)); j < 10; j++)
+    //double *pSumTime = (double *) precord->g; // pSumTime seems global variable
+    double *pCircularQ = (double *) precord->e;
+    //int *pShotPerSecond = (int *) precord->vale;
+    double *pQRate = (double *) precord->vale;
+    for (j = (10 - (shotsPerSecond)); j < 10; j++)
     {
         //printf("j=%d, pCircularQ[j]: %f \n", j, pCircularQ[j]);
         qRate += pCircularQ[j];
@@ -255,24 +244,6 @@ processBuf(aSubRecord *precord)
     *pQRate = qRate;
     qRate = 0.0;
     //printf("QRate: %f \n", *pQRate);
-
-    if (*pSumTime < 1.2)
-    {
-        shotPerSecondCalc++;
-    }
-    else
-    {
-        //*pNSAMofCircularQ = *pShotPerSecondCalc;
-        //printf("shotPerSecondCalc is: %d \n", shotPerSecondCalc);
-        if (shotPerSecondCalc > 10)
-        {
-            shotPerSecondCalc = 10;
-        }
-        *pShotPerSecondCalc = shotPerSecondCalc;
-        shotPerSecondCalc = 0;
-        *pSumTime = 0.0;
-    }
-
     return (0);
 }
 
