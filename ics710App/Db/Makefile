@@ -22,6 +22,8 @@ include $(TOP)/configure/CONFIG
 DB += ics710Channel.db
 DB += ics710Card.db
 DB += ictQ.db
+DB += dcct.db
+DB += dcctBR.db
 DB_INSTALLS += $(EPICS_BASE)/db/iocAdminSoft.db
 DB_INSTALLS += $(EPICS_BASE)/db/save_restoreStatus.db
 #----------------------------------------------------

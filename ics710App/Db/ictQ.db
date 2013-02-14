@@ -1,4 +1,4 @@
-## Process digitizer data to get the beam charge measured Bergoz ICT & BCM 
+## Process digitizer data to get the beam charge measured by Bergoz ICT & BCM 
 #MON NSLS2 naming:[PSy[:PI]][-SSy[:SI]][-TSy[:TI]]{Dev[:DI]}[SgN[:SgI][-SgD]]
 #### Psy	-	Primary system
 #### Ssy	-	Secondary system
@@ -66,11 +66,33 @@ record(compress,"${MON}CircularQ-com_")
 }
 
 #injection rate calculated from LN-TS{}Mode-Sel
-record(calc,"LN-TS{}ShotsPerSecond-Calc_")
+#record(calc,"LN-TS{}ShotsPerSecond-Calc_")
+record(calc,"LTB-BI{ICT:1}ShotsPerSecond-Calc_")
 {
    field(DESC,"injections per second")
    field(INPA,"LN-TS{}Mode-Sel CP")
    field(CALC,"A=3?(2:(A=4?(5:(A=5?10:A))))")
+   field(EGU, "Shots")
+}
+
+record(calc,"LTB-BI{ICT:2}ShotsPerSecond-Calc_")
+{
+   field(DESC,"injections per second")
+   field(INPA,"LN-TS{}Mode-Sel CP")
+   field(CALC,"A=3?(2:(A=4?(5:(A=5?10:A))))")
+   field(EGU, "Shots")
+}
+
+record(ai,"BTS-BI{ICT:1}ShotsPerSecond-Calc_")
+{
+   field(DESC,"only one shot per second")
+   field(VAL,"1")
+   field(EGU, "Shots")
+}
+
+record(ai,"BTS-BI{ICT:2}ShotsPerSecond-Calc_")
+{
+   field(DESC,"only one shot per second")
    field(VAL,"1")
    field(EGU, "Shots")
 }
@@ -92,7 +114,8 @@ record(aSub,"${MON}Buffer-aSub_")
     field (FTC, "DOUBLE")
     field (NOC, "1")
     #event rate / injection rate from LN-TS{}Mode-Sel
-    field (INPD, "LN-TS{}ShotsPerSecond-Calc_")
+    #field (INPD, "LN-TS{}ShotsPerSecond-Calc_")
+    field (INPD, "${MON}ShotsPerSecond-Calc_")
     field (FTD, "ULONG")
     field (NOD, "1")
     field (INPE, "${MON}CircularQ-com_")

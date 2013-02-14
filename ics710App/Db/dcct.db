@@ -1,0 +1,118 @@
+## Process digitizer data to get the beam current measured by Bergoz DCCT
+#MON NSLS2 naming:[PSy[:PI]][-SSy[:SI]][-TSy[:TI]]{Dev[:DI]}[SgN[:SgI][-SgD]]
+#### Psy	-	Primary system
+#### Ssy	-	Secondary system
+#### Dev	-	Device name
+#### MON	-	BR-BI{DCCT:1}
+
+#stored beam current at Booster and Ring
+#Bergoz DCCT current is calibrated against gain settings 
+#and Q offset (background noise)
+#The RVAL and VAL of mbbi: [0, 15]; 
+#use mbbo here: VAL--[0,15], RVAL--[0,65535] 
+#record(mbbi, "${MON}FullScale-I")
+record(mbbo, "${MON}FullScale-I")
+{
+  field(DESC,"scale: 20mA ~ 20000mA")
+  field(DTYP,"Raw Soft Channel")
+  #must use closed_loop
+  field(OMSL, "closed_loop")
+  #${MON}Range-Sel is in the ltb-plc IOC 
+  field(DOL, "${MON}Range-Sel CP")
+  field(ZRVL, "20000")
+  field(ONVL, "2000")
+  field(TWVL, "200")
+  field(THVL, "20")
+  field(ZRST, "20A")
+  field(ONST, "2A")
+  field(TWST, "200mA")
+  field(THST, "20mA")
+  field(FLNK, "${MON}IVSlope-Calc_")
+}
+
+record(calc,"${MON}IVSlope-Calc_")
+{
+   field(DESC,"slope:beam current/V")
+   field(INPA,"${MON}FullScale-I.RVAL")
+   field(INPB,"10.0")
+   field(CALC,"A/B")
+   field(PREC,"5")
+   field(EGU,"mA/V")
+   field(FLNK, "${MON}QVSlope-Calc_.PROC")
+}
+
+record(ao,"${MON}IOffset-SP")
+{
+   field(DESC,"beam current offset")
+   field(PINI,"1")
+   field(PREC,"3")
+   field(EGU,"mA")
+   info(autosaveFields_pass0, "VAL")
+   field(FLNK,"BR-BI{DCCT:1}QOffset-I.PROC")
+}
+
+#${MON}IOffset-SP is based on AveI
+record(calc,"${MON}AveI-I")
+{
+   field(DESC,"average current")
+   field(INPA,"${MON}AveV-I CP")
+   field(INPB,"${MON}IVSlope-Calc_")
+   field(CALC,"A*B")
+   field(PREC,"5")
+   field(EGU,"mA")
+}
+
+record(acalcout,"${MON}I-aCalc_")
+{
+   field(DESC,"Beam current by DCCT")
+   field(NELM,"100000")
+   field(INAA,"${MON}V-Wf CP")
+   field(INPA,"${MON}IVSlope-Calc_")
+   field(INPB,"${MON}IOffset-SP")
+   field(CALC,"ABS((A*AA)-B)")
+   field(PREC,"3")
+   field(EGU,"mA")
+   field(OUT,"${MON}I-Wf PP")
+}
+
+record(waveform,"${MON}I-Wf")
+{
+   field(DESC,"beam current waveform data")
+   field(NELM,"1000000")
+   field(FTVL,"DOUBLE")
+   field(PREC,"3")
+   field(EGU,"mA")
+}
+
+record(calc,"${MON}AveQ-I")
+{
+   field(DESC,"average charge")
+   field(INPA,"${MON}AveV-I CP")
+   field(INPB,"${MON}QVSlope-Calc_")
+   field(CALC,"A*B")
+   field(PREC,"5")
+   field(EGU,"nC")
+}
+
+record(acalcout,"${MON}Q-aCalc_")
+{
+   field(DESC,"Beam charge by DCCT")
+   field(NELM,"100000")
+   field(INAA,"${MON}V-Wf CP")
+   field(INPA,"${MON}QVSlope-Calc_")
+   field(INPB,"${MON}QOffset-SP")
+   field(CALC,"ABS((A*AA)-B)")
+   field(PREC,"3")
+   field(EGU,"nC")
+   field(OUT,"${MON}Q-Wf PP")
+}
+
+record(waveform,"${MON}Q-Wf")
+{
+   field(DESC,"beam charge waveform data")
+   field(NELM,"1000000")
+   field(FTVL,"DOUBLE")
+   field(PREC,"3")
+   field(EGU,"nC")
+}
+
