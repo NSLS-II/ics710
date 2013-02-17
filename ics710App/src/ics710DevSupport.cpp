@@ -338,11 +338,15 @@ setGain(mbboRecord *precord)
     //global variable:ics710Drivers[]
     ics710Driver *pics710Driver = &ics710Drivers[module];
 
-    unsigned long long val = (unsigned long long) precord->val;
-    if (val == pics710Driver->gainControl.input_voltage_range)
+    //RVAL can be used only if ZRVL, ONVL,...,FFVL have values rather than all zeros
+    //unsigned long long val = (unsigned long long) precord->val;
+    unsigned long long rval = (unsigned long long) precord->rval;
+    //if (val == pics710Driver->gainControl.input_voltage_range)
+    if (rval == pics710Driver->gainControl.input_voltage_range)
         return 0;
 
-    pics710Driver->gainControl.input_voltage_range = val;
+    //pics710Driver->gainControl.input_voltage_range = val;
+    pics710Driver->gainControl.input_voltage_range = rval;
     if (ICS710_OK != (errorCode = ics710GainSet(pics710Driver->hDevice,
             &(pics710Driver->gainControl))))
     {
