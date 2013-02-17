@@ -306,6 +306,12 @@ epicsExportAddress(dset, devAiGetTrigRate)
  * */
 
 //returns: (0,2)=>(success,success no convert)
+/*must return 2 here so that the VAL is not modified by RVAL
+**RVAL is default to 0 here. If return 0, conversion will be 
+**performed during record initialization so that VAL is reset
+**to zero even if autosave (with pass0) is used for the VAL field
+*/ 
+
 static long
 init_mbbo(mbboRecord *precord)
 {
@@ -316,9 +322,11 @@ init_mbbo(mbboRecord *precord)
         status = 2;
     }
     return (status);
+    //return 0;
 }
 
 //returns: (0,2)=>(success,success no convert)
+//any return status (0,2,-1) of write_mbbo is OK for output records such as mbbo 
 static long
 setGain(mbboRecord *precord)
 {
@@ -344,7 +352,9 @@ setGain(mbboRecord *precord)
 
     printf("reconfigure gain/input voltage range to: %.3fV \n", 10.00 / (1
             + pics710Driver->gainControl.input_voltage_range));
-    return 2;
+    //return 2;
+    //return 0;
+    return -1;
 }
 
 dsetCommon devMbboSetGain =
