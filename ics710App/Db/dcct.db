@@ -257,16 +257,6 @@ record(waveform,"${MON}CalInput-Wf")
    field(EGU,"mA")
 }
 
-record(acalcout,"${MON}ShiftCalInput-acalc_")
-{
-   field(DESC,"Right-shift of CalInput-Wf_")
-   field(NELM,"19")
-   field(INAA,"${MON}CalInput-Wf CP")
-   field(INBB,"${MON}CalOutput-Wf")
-   field(CALC,"AA>>1")
-   field(OUT,"${MON}CalInput-Wf PP")
-}
-
 record(calcout,"${MON}Iterate-Calc_")
 {
 	field(DESC, "iterate 19 times")
