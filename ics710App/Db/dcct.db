@@ -139,7 +139,7 @@ record(bi, "${MON}CalStatus-Sts")
 record(mbbo, "${MON}StartCal-Sel")
 {
 	field(DESC, "start calibration")
-	field(OUT,  "${MON}Sweep-Calc_.DISA")
+	#field(OUT,  "${MON}Sweep-Calc_.DISA")
 	field(ZRST, "Start")
 	field(ONST, "Stop")
 	field(VAL,  "1")
@@ -148,18 +148,20 @@ record(mbbo, "${MON}StartCal-Sel")
 
 record(seq, "$(MON)Reset-Seq")
 {
-  #DLY* of seq seems asynchronous, be careful  
+  #Pay attention to the processing sequence of LNKn
+  #DLY* of seq seems asynchronous;  
   field(DESC, "reset PVs")
   field(LNK1, "SR:C30-DI{KH526}Out-SP CA")
-  #delay 4 seconds, then reset compress records
-  field(DLY2, "4")
-  field(LNK2, "${MON}CalOutput-Wf.RES PP")
-  field(LNK3, "${MON}CalInput-Wf.RES PP")
-  field(LNK4, "${MON}Iterate-Calc_")
-  field(LNK5, "${MON}Iterate-Calc_.DISA")
-  #if DLY6 is N, then ${MON}Sweep-Calc_ is processed (N+4) seconds afer ${MON}StartCal-Sel
-  field(DLY6, "2")
-  field(LNK6, "${MON}Sweep-Calc_ PP")
+  field(LNK2, "${MON}Iterate-Calc_")
+  field(LNK3, "${MON}Iterate-Calc_.DISA")
+  field(LNK4, "${MON}Sweep-Calc_")
+  #don't use PP for ${MON}CalInput-Wf.RES, otherwise,
+  #${MON}CalInput-Wf gets processed twice at the beginning  
+  field(LNK5, "${MON}CalInput-Wf.RES")
+  #delay 4 seconds, then reset and process compress record
+  #then, processing-loop starts
+  field(DLY6, "4")
+  field(LNK6, "${MON}CalOutput-Wf.RES PP")
 }
 
 #sweep step size: FullScale*0.1/20; steps: 19 (0~18) 
@@ -167,43 +169,40 @@ record(seq, "$(MON)Reset-Seq")
 record(calcout,"${MON}Sweep-Calc_")
 {
 	field(DESC, "sweeping DC source")
-	#must set DISA, otherwise calibration starts immediately after IOC startup
-	field(DISA, "1")
-	#field(SDIS, "${MON}StartCal-Sel")
+	field(SDIS, "${MON}StartCal-Sel")
 	field(INPA, "${MON}FullScale-I.RVAL")
 	field(INPB, "20")
-	field(INPC, "${MON}Sweep-Calc_")	
-	#field(CALC, "C<=A*0.09?C+A*0.1/B:0")
-	field(CALC, "C+A*0.1/B")
-	field(OUT, "SR:C30-DI{KH526}Out-SP CA")
-    	field(FLNK, "${MON}Delay-Calc_")
+	field(INPC, "${MON}Sweep-Calc_")
+	#INPD just for triggering record processing
+	#It's OK to use any record type including waveform, compress	
+	field(INPD, "${MON}CalOutput-Wf CP")
+	field(CALC, "C<A*0.09?C+A*0.1/B:0")
+	#field(CALC, "C+A*0.1/B")
+	field(OOPT, "When Non-zero")
+	#don't need PP for record.PROC
+	field(OUT, "${MON}Delay-Calc_.PROC")
+    field(FLNK, "${MON}SetCalibrator-SP")
 }
 
+record(ao, "${MON}SetCalibrator-SP")
+{
+	field(DESC, "write to DC Calibrator")
+	field(OMSL, "closed_loop")
+	field(DOL,	"${MON}Sweep-Calc_")
+	field(OUT,  "SR:C30-DI{KH526}Out-SP CA")
+}
+
+#implementation of synchronous delay using calcout with ODLY and OUT to .PROC
 record(calcout,"${MON}Delay-Calc_")
 {
 	field(DESC, "wait for the source stable")
 	field(INPA, "${MON}Delay-Calc_")
 	field(CALC, "!A")
 	field(ODLY, "5")
-	field(OUT, "${MON}Delay-fanout_.PROC")
-	#field(OUT, "${MON}Iterate-Calc_.PROC")
-	#field(OUT, "${MON}CalOutput-Wf.PROC")
-	#field(OUT, "${MON}Delay-Calc_.B")
 	#be careful: ODLY doesn't delay the processing of FLNK
+	#it's better to use OUT pointing to recordA.PROC to trigger recordA processed 
+	field(OUT, "${MON}CalOutput-Wf.PROC")
  	#field(FLNK, "${MON}CalOutput-Wf")
-}
-
-record(fanout, "${MON}Delay-fanout_")
-{
-	field(LNK1, "${MON}CalOutput-Wf")
-	field(LNK2, "${MON}DelayFan-Calc_")
-	#field(LNK2, "${MON}Iterate-Calc_")
-}
-
-record(calc,"${MON}DelayFan-Calc_")
-{
-        field(INPA, "${MON}DelayFan-Calc_")
-        field(CALC, "A+1")
 }
 
 record(compress,"${MON}CalOutput-Wf")
@@ -212,23 +211,8 @@ record(compress,"${MON}CalOutput-Wf")
 	field(INP,"${MON}AveI-I")
 	field(ALG,"Circular Buffer")
 	field(NSAM,"19")
-	#don't use FLNK now to break the processing lock-set
-       #field(FLNK,"${MON}Iterate-Calc_")
-}
-
-record(calcout,"${MON}Iterate-Calc_")
-{
-	field(DESC, "iterate 19 times")
-	field(DISV, "17")
-	field(INPA, "${MON}Iterate-Calc_")
-	#INPB just for triggering record processing; CP breaks lock-set
-	field(INPB, "${MON}DelayFan-Calc_ CP")
-	#field(INPB, "${MON}Delay-Calc_ CP")
-	field(CALC, "A+1")
-	#field(ODLY, "3")
-	field(OUT,  "${MON}Iterate-Calc_.DISA")
-	field(FLNK, "${MON}Sweep-Calc_")
-	#field(FLNK, "${MON}Wait-Calc_")
+	#FLNK seems not working for automatic loop-processing
+	#field(FLNK,"${MON}Sweep-Calc_.PROC")
 }
 
 record(calc,"${MON}CalInput-Calc_")
@@ -247,4 +231,17 @@ record(compress,"${MON}CalInput-Wf")
 	field(NSAM,"19")
 }
 
+record(calcout,"${MON}Iterate-Calc_")
+{
+	field(DESC, "iterate 19 times")
+	field(DISV, "17")
+	field(INPA, "${MON}Iterate-Calc_")
+	#INPB just for triggering record processing; CP breaks lock-set
+	field(INPB, "${MON}DelayFan-Calc_ CP")
+	#field(INPB, "${MON}Delay-Calc_ CP")
+	field(CALC, "A+1")
+	#field(ODLY, "3")
+	field(OUT,  "${MON}Iterate-Calc_.DISA")
+	#field(FLNK, "${MON}Sweep-Calc_")
+}
 
