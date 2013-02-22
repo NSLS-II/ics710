@@ -144,47 +144,22 @@ record(mbbo, "${MON}StartCal-Sel")
 	field(ONST, "Stop")
 	field(VAL,  "1")
 	field(FLNK, "$(MON)Reset-Seq")
-	#field(FLNK, "$(MON)ResetSource-Calc_")
 }
-
-#record(calcout,"$(MON)ResetSource-Calc_")
-#{
-	#field(DESC, "reset DC calibrator")
-	#field(INPA, "0")
-	#field(CALC, "A")
-	#field(OUT, "SR:C30-DI{KH526}Out-SP CA")
-    #field(FLNK, "${MON}Wait-Calc_")
-#}
-
-#use calcout to implement synchronous delay
-#record(calcout,"${MON}Wait-Calc_")
-#{
-	#field(DESC, "wait for the source stable")
-	#field(INPA, "${MON}Wait-Calc_")
-	#field(CALC, "A+1")
-	#field(ODLY, "5")
-	#field(OUT, "${MON}Wait-Calc_.B")
- 	#field(FLNK, "$(MON)Reset-Seq")
-#}
 
 record(seq, "$(MON)Reset-Seq")
 {
   #DLY* of seq seems asynchronous, be careful  
   field(DESC, "reset PVs")
   field(LNK1, "SR:C30-DI{KH526}Out-SP CA")
+  #delay 4 seconds, then reset compress records
   field(DLY2, "4")
   field(LNK2, "${MON}CalOutput-Wf.RES PP")
-  #field(DOL3, "1")
   field(LNK3, "${MON}CalInput-Wf.RES PP")
   field(LNK4, "${MON}Iterate-Calc_")
   field(LNK5, "${MON}Iterate-Calc_.DISA")
-  #field(LNK6, "${MON}Delay-Calc_")
-  #must have delay for ${MON}Sweep-Calc_, why?
-  field(DLY7, "6")
-  field(LNK7, "${MON}Sweep-Calc_")
-  #field(DLY8, "6")
-  #field(LNK8, "${MON}Sweep-Calc_.PROC")
-  field(FLNK, "${MON}Sweep-Calc_")
+  #if DLY6 is N, then ${MON}Sweep-Calc_ is processed (N+4) seconds afer ${MON}StartCal-Sel
+  field(DLY6, "2")
+  field(LNK6, "${MON}Sweep-Calc_ PP")
 }
 
 #sweep step size: FullScale*0.1/20; steps: 19 (0~18) 
@@ -213,6 +188,8 @@ record(calcout,"${MON}Delay-Calc_")
 	field(OUT, "${MON}Delay-fanout_.PROC")
 	#field(OUT, "${MON}Iterate-Calc_.PROC")
 	#field(OUT, "${MON}CalOutput-Wf.PROC")
+	#field(OUT, "${MON}Delay-Calc_.B")
+	#be careful: ODLY doesn't delay the processing of FLNK
  	#field(FLNK, "${MON}CalOutput-Wf")
 }
 
@@ -244,23 +221,14 @@ record(calcout,"${MON}Iterate-Calc_")
 	field(DESC, "iterate 19 times")
 	field(DISV, "17")
 	field(INPA, "${MON}Iterate-Calc_")
-	#INPB just for triggering record processing
+	#INPB just for triggering record processing; CP breaks lock-set
 	field(INPB, "${MON}DelayFan-Calc_ CP")
+	#field(INPB, "${MON}Delay-Calc_ CP")
 	field(CALC, "A+1")
 	#field(ODLY, "3")
 	field(OUT,  "${MON}Iterate-Calc_.DISA")
-	field(FLNK, "${MON}Sweep-Calc_.PROC")
+	field(FLNK, "${MON}Sweep-Calc_")
 	#field(FLNK, "${MON}Wait-Calc_")
-}
-
-record(calcout,"${MON}Wait-Calc_")
-{
-        field(DESC, "wait")
-        field(INPA, "${MON}Wait-Calc_")
-        field(CALC, "!A")
-        field(ODLY, "5")
-        #field(OUT, "${MON}CalOutput-Wf.PROC PP")
-        #field(FLNK, "${MON}CalOutput-Wf")
 }
 
 record(calc,"${MON}CalInput-Calc_")
