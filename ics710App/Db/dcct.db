@@ -100,7 +100,7 @@ record(acalcout,"${MON}Q-aCalc_")
    field(NELM,"100000")
    field(INAA,"${MON}V-Wf CP")
    field(INPA,"${MON}QVSlope-Calc_")
-   field(INPB,"${MON}QOffset-SP")
+   field(INPB,"${MON}QOffset-I")
    field(CALC,"ABS((A*AA)-B)")
    field(PREC,"3")
    field(EGU,"nC")
@@ -155,9 +155,9 @@ record(seq, "$(MON)Reset-Seq")
   field(LNK2, "${MON}Iterate-Calc_")
   field(LNK3, "${MON}Iterate-Calc_.DISA")
   field(LNK4, "${MON}Sweep-Calc_")
-  #don't use PP for ${MON}CalInput-Wf.RES, otherwise,
-  #${MON}CalInput-Wf gets processed twice at the beginning  
-  field(LNK5, "${MON}CalInput-Wf.RES")
+  #don't use PP for ${MON}CalInput-Wf_.RES, otherwise,
+  #${MON}CalInput-Wf_ gets processed twice at the beginning  
+  field(LNK5, "${MON}CalInput-Wf_.RES")
   #delay 4 seconds, then reset and process compress record
   #then, processing-loop starts
   field(DLY6, "4")
@@ -220,15 +220,51 @@ record(calc,"${MON}CalInput-Calc_")
 	field(DESC, "DC source input")
 	field(INPA, "${MON}Sweep-Calc_ CP")
 	field(CALC, "A*10")
-	field(FLNK, "${MON}CalInput-Wf")
+	field(FLNK, "${MON}CalInput-Wf_")
 }
 
-record(compress,"${MON}CalInput-Wf")
+record(compress,"${MON}CalInput-Wf_")
 {
 	field(DESC, "DC source input")
 	field(INP,"${MON}CalInput-Calc_")
 	field(ALG,"Circular Buffer")
 	field(NSAM,"19")
+}
+
+record(bo, "${MON}StartFit-Cmd")
+{
+	field(DESC, "start polyfit")
+	field(ZNAM, "StopFit")
+	field(ONAM, "StartFit")
+	field(FLNK, "${MON}ShiftCalInput-acalc_")
+}
+
+record(acalcout,"${MON}ShiftCalInput-acalc_")
+{
+   field(DESC,"Right-shift of CalInput-Wf_")
+   field(NELM,"19")
+   field(INAA,"${MON}CalInput-Wf_")
+   field(CALC,"AA>>1")
+   field(OUT,"${MON}CalInput-Wf PP")
+}
+
+record(waveform,"${MON}CalInput-Wf")
+{
+   field(DESC,"DC source input")
+   field(NELM,"19")
+   field(FTVL,"DOUBLE")
+   field(PREC,"1")
+   field(EGU,"mA")
+}
+
+record(acalcout,"${MON}ShiftCalInput-acalc_")
+{
+   field(DESC,"Right-shift of CalInput-Wf_")
+   field(NELM,"19")
+   field(INAA,"${MON}CalInput-Wf CP")
+   field(INBB,"${MON}CalOutput-Wf")
+   field(CALC,"AA>>1")
+   field(OUT,"${MON}CalInput-Wf PP")
 }
 
 record(calcout,"${MON}Iterate-Calc_")
