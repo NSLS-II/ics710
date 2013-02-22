@@ -295,7 +295,7 @@ record(aSub,"BR-BI{DCCT:1}Buffer-aSub_")
 record(ai,"BR-BI{DCCT:1}StdQOverINOS-I")
 {
    field(DESC,"stdQ over NOIS")
-   field(INP,"${MON}Buffer-aSub_.VALA")
+   field(INP,"BR-BI{DCCT:1}Buffer-aSub_.VALA")
    field(PREC,"3")
    field(EGU,"nC")
    field(FLNK,"BR-BI{DCCT:1}StdIOverINOS-I")

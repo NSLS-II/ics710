@@ -116,3 +116,167 @@ record(waveform,"${MON}Q-Wf")
    field(EGU,"nC")
 }
 
+
+#DCCT calibration current source is DC calibrator KH526 
+record(calcout,"${MON}CalStatus-Calc_")
+{
+	field(DESC, "Is DC calibrator connected?")
+	field(SCAN, "10 second")
+	#4: 10mA; 5: 100mA
+	field(INPA, "SR:C30-DI{KH526}Range-Sel")
+	field(INPB, "${MON}CalStatus-Calc_.STAT")
+	field(CALC, "A>3&&B==0")
+	field(OUT, "${MON}CalStatus-Sts PP")
+}
+
+record(bi, "${MON}CalStatus-Sts")
+{
+	field(DESC, "system status")
+	field(ZNAM, "Not Ready")
+	field(ONAM, "Ready")
+}
+
+record(mbbo, "${MON}StartCal-Sel")
+{
+	field(DESC, "start calibration")
+	field(OUT,  "${MON}Sweep-Calc_.DISA")
+	field(ZRST, "Start")
+	field(ONST, "Stop")
+	field(VAL,  "1")
+	field(FLNK, "$(MON)Reset-Seq")
+	#field(FLNK, "$(MON)ResetSource-Calc_")
+}
+
+#record(calcout,"$(MON)ResetSource-Calc_")
+#{
+	#field(DESC, "reset DC calibrator")
+	#field(INPA, "0")
+	#field(CALC, "A")
+	#field(OUT, "SR:C30-DI{KH526}Out-SP CA")
+    #field(FLNK, "${MON}Wait-Calc_")
+#}
+
+#use calcout to implement synchronous delay
+#record(calcout,"${MON}Wait-Calc_")
+#{
+	#field(DESC, "wait for the source stable")
+	#field(INPA, "${MON}Wait-Calc_")
+	#field(CALC, "A+1")
+	#field(ODLY, "5")
+	#field(OUT, "${MON}Wait-Calc_.B")
+ 	#field(FLNK, "$(MON)Reset-Seq")
+#}
+
+record(seq, "$(MON)Reset-Seq")
+{
+  #DLY* of seq seems asynchronous, be careful  
+  field(DESC, "reset PVs")
+  field(LNK1, "SR:C30-DI{KH526}Out-SP CA")
+  field(DLY2, "4")
+  field(LNK2, "${MON}CalOutput-Wf.RES PP")
+  #field(DOL3, "1")
+  field(LNK3, "${MON}CalInput-Wf.RES PP")
+  field(LNK4, "${MON}Iterate-Calc_")
+  field(LNK5, "${MON}Iterate-Calc_.DISA")
+  #field(LNK6, "${MON}Delay-Calc_")
+  #must have delay for ${MON}Sweep-Calc_, why?
+  field(DLY7, "6")
+  field(LNK7, "${MON}Sweep-Calc_")
+  #field(DLY8, "6")
+  #field(LNK8, "${MON}Sweep-Calc_.PROC")
+  field(FLNK, "${MON}Sweep-Calc_")
+}
+
+#sweep step size: FullScale*0.1/20; steps: 19 (0~18) 
+#max. output value: 90%*0.1(due to DCCT windings)*FullScale
+record(calcout,"${MON}Sweep-Calc_")
+{
+	field(DESC, "sweeping DC source")
+	#must set DISA, otherwise calibration starts immediately after IOC startup
+	field(DISA, "1")
+	#field(SDIS, "${MON}StartCal-Sel")
+	field(INPA, "${MON}FullScale-I.RVAL")
+	field(INPB, "20")
+	field(INPC, "${MON}Sweep-Calc_")	
+	#field(CALC, "C<=A*0.09?C+A*0.1/B:0")
+	field(CALC, "C+A*0.1/B")
+	field(OUT, "SR:C30-DI{KH526}Out-SP CA")
+    	field(FLNK, "${MON}Delay-Calc_")
+}
+
+record(calcout,"${MON}Delay-Calc_")
+{
+	field(DESC, "wait for the source stable")
+	field(INPA, "${MON}Delay-Calc_")
+	field(CALC, "!A")
+	field(ODLY, "5")
+	field(OUT, "${MON}Delay-fanout_.PROC")
+	#field(OUT, "${MON}Iterate-Calc_.PROC")
+	#field(OUT, "${MON}CalOutput-Wf.PROC")
+ 	#field(FLNK, "${MON}CalOutput-Wf")
+}
+
+record(fanout, "${MON}Delay-fanout_")
+{
+	field(LNK1, "${MON}CalOutput-Wf")
+	field(LNK2, "${MON}DelayFan-Calc_")
+	#field(LNK2, "${MON}Iterate-Calc_")
+}
+
+record(calc,"${MON}DelayFan-Calc_")
+{
+        field(INPA, "${MON}DelayFan-Calc_")
+        field(CALC, "A+1")
+}
+
+record(compress,"${MON}CalOutput-Wf")
+{
+	field(DESC, "output data")
+	field(INP,"${MON}AveI-I")
+	field(ALG,"Circular Buffer")
+	field(NSAM,"19")
+	#don't use FLNK now to break the processing lock-set
+       #field(FLNK,"${MON}Iterate-Calc_")
+}
+
+record(calcout,"${MON}Iterate-Calc_")
+{
+	field(DESC, "iterate 19 times")
+	field(DISV, "17")
+	field(INPA, "${MON}Iterate-Calc_")
+	#INPB just for triggering record processing
+	field(INPB, "${MON}DelayFan-Calc_ CP")
+	field(CALC, "A+1")
+	#field(ODLY, "3")
+	field(OUT,  "${MON}Iterate-Calc_.DISA")
+	field(FLNK, "${MON}Sweep-Calc_.PROC")
+	#field(FLNK, "${MON}Wait-Calc_")
+}
+
+record(calcout,"${MON}Wait-Calc_")
+{
+        field(DESC, "wait")
+        field(INPA, "${MON}Wait-Calc_")
+        field(CALC, "!A")
+        field(ODLY, "5")
+        #field(OUT, "${MON}CalOutput-Wf.PROC PP")
+        #field(FLNK, "${MON}CalOutput-Wf")
+}
+
+record(calc,"${MON}CalInput-Calc_")
+{
+	field(DESC, "DC source input")
+	field(INPA, "${MON}Sweep-Calc_ CP")
+	field(CALC, "A*10")
+	field(FLNK, "${MON}CalInput-Wf")
+}
+
+record(compress,"${MON}CalInput-Wf")
+{
+	field(DESC, "DC source input")
+	field(INP,"${MON}CalInput-Calc_")
+	field(ALG,"Circular Buffer")
+	field(NSAM,"19")
+}
+
+
