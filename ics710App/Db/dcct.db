@@ -184,7 +184,7 @@ record(seq, "$(MON)Reset-Seq")
   #delay 4 seconds, then reset and process compress record
   #then, processing-loop starts
   field(DLY6, "4")
-  field(LNK6, "${MON}CalOutput-Wf.RES PP")
+  field(LNK6, "${MON}CalOutput-Wf_.RES PP")
 }
 
 #sweep step size: FullScale*0.1/20; steps: 19 (0~18) 
@@ -198,7 +198,7 @@ record(calcout,"${MON}Sweep-Calc_")
 	field(INPC, "${MON}Sweep-Calc_")
 	#INPD just for triggering record processing
 	#It's OK to use any record type including waveform, compress	
-	field(INPD, "${MON}CalOutput-Wf CP")
+	field(INPD, "${MON}CalOutput-Wf_ CP")
 	field(CALC, "C<A*0.09?C+A*0.1/B:0")
 	#field(CALC, "C+A*0.1/B")
 	field(OOPT, "When Non-zero")
@@ -224,11 +224,11 @@ record(calcout,"${MON}Delay-Calc_")
 	field(ODLY, "5")
 	#be careful: ODLY doesn't delay the processing of FLNK
 	#it's better to use OUT pointing to recordA.PROC to trigger recordA processed 
-	field(OUT, "${MON}CalOutput-Wf.PROC")
+	field(OUT, "${MON}CalOutput-Wf_.PROC")
  	#field(FLNK, "${MON}CalOutput-Wf")
 }
 
-record(compress,"${MON}CalOutput-Wf")
+record(compress,"${MON}CalOutput-Wf_")
 {
 	field(DESC, "output data")
 	field(INP,"${MON}AveI-I")
@@ -278,6 +278,17 @@ record(waveform,"${MON}CalInput-Wf")
    field(FTVL,"DOUBLE")
    field(PREC,"1")
    field(EGU,"mA")
+   field(FLNK,"${MON}CalOutput-Wf")
+}
+
+record(waveform,"${MON}CalOutput-Wf")
+{
+   field(DESC,"Readback data")
+   field(NELM,"19")
+   field(FTVL,"DOUBLE")
+   field(PREC,"1")
+   field(EGU,"mA")
+   field(INP,"${MON}CalOutput-Wf_")
 }
 
 record(calcout,"${MON}Iterate-Calc_")
