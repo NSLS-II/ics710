@@ -291,6 +291,17 @@ record(waveform,"${MON}CalOutput-Wf")
    field(INP,"${MON}CalOutput-Wf_")
 }
 
+#First-order coefficients by python-based polyfit
+record(ai, "${MON}CalP0-I")
+{
+    field(PREC, "6")
+}
+
+record(ai, "${MON}CalP1-I")
+{ 
+    field(PREC, "6")
+}
+
 record(calcout,"${MON}Iterate-Calc_")
 {
 	field(DESC, "iterate 19 times")
