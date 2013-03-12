@@ -147,8 +147,18 @@ record(calcout,"${MON}CalStatus-Calc_")
 	field(SCAN, "10 second")
 	#4: 10mA; 5: 100mA
 	field(INPA, "SR:C30-DI{KH526}Range-Sel")
-	field(INPB, "${MON}CalStatus-Calc_.STAT")
-	field(CALC, "A>3&&B==0")
+	#field(INPB, "${MON}CalStatus-Calc_.STAT")
+	#field(CALC, "A>3&&B==0")
+	field(CALC, "A>3")
+	field(OUT, "${MON}CalStatus-Sts PP")
+	field(FLNK, "${MON}CalStatus-Calc2_")
+}
+
+record(calcout,"${MON}CalStatus-Calc2_")
+{
+	field(DESC, "Is DC calibrator connected?")
+	field(INPA, "${MON}CalStatus-Calc_.STAT")
+	field(CALC, "!(A>0)")
 	field(OUT, "${MON}CalStatus-Sts PP")
 }
 

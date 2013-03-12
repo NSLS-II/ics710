@@ -169,8 +169,8 @@ processBuf(aSubRecord *precord)
 {
     assert(precord != NULL);
 
-    static unsigned shot = 0;
-    static unsigned event = 0;
+    //static unsigned shot = 0;
+    //static unsigned event = 0;
     unsigned j = 0;
     double sum = 0.0;
     double ave = 0.0;
@@ -182,32 +182,33 @@ processBuf(aSubRecord *precord)
 
     //get StdVROIOverINOS, this is not moving average
     unsigned int interstedShots = *(unsigned int *) precord->b;
-    //printf("nbrShots: %d \n", nbrShots);
+    printf("interstedShots: %d \n", interstedShots);
     //unsigned *pShots = (unsigned *) precord->e;
     double *pbufV = (double *) precord->valc;
-    if (shot < interstedShots)
+    unsigned *pshot = (unsigned *) precord->f;
+    if (*pshot < interstedShots)
     {
         //((double *) precord->valc)[*pShots] = *(double *) precord->a;
-        pbufV[shot] = *(double *) precord->a;
-        shot++;
-        //printf("shot is %d \n", shot);
+        pbufV[*pshot] = *(double *) precord->a;
+        (*pshot)++;
+        printf("shot is %d \n", *pshot);
     }
     else
     {
-        shot = 0;
+        *pshot = 0;
         for (j = 0; j < interstedShots; j++)
         {
             //sum += ((double *) precord->valc)[j];
             sum += pbufV[j];
         }
         ave = sum / interstedShots;
-        //printf("sum: %f, ave is %f \n", sum, ave);
+        printf("sum: %f, ave is %f \n", sum, ave);
         for (j = 0; j < interstedShots; j++)
         {
             std += (pbufV[j] - ave) * (pbufV[j] - ave);
         }
         std = sqrt(std / interstedShots);
-        //printf("rmsNoise is %f \n", std);
+        printf("rmsNoise is %f \n", std);
         //OUTA, "${MON}StdVROIOverINOS-I PP"
         *(double *) precord->vala = std;
     }
@@ -216,13 +217,13 @@ processBuf(aSubRecord *precord)
     double noMovingSumQ = 0.0;
     unsigned int shotsPerSecond = *(unsigned int *) precord->d;
     //printf("shotsPerSecond: %d \n", shotsPerSecond);
-    //unsigned *pEvents = (unsigned *) precord->f;
+    unsigned *pevent = (unsigned *) precord->g;
     double *pbufQ = (double *) precord->vald;
-    pbufQ[event] = *(double *) precord->c;
-    event++;
-    if (event >= shotsPerSecond)
+    pbufQ[*pevent] = *(double *) precord->c;
+    (pevent)++;
+    if (*pevent >= shotsPerSecond)
     {
-        event = 0;
+        *pevent = 0;
         for (j = 0; j < shotsPerSecond; j++)
         {
             noMovingSumQ += pbufQ[j];

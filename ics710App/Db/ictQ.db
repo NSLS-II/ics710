@@ -97,6 +97,20 @@ record(ai,"BTS-BI{ICT:2}ShotsPerSecond-Calc_")
    field(EGU, "Shots")
 }
 
+record(longin,"${MON}Shots-I")
+{
+	field(DESC,"shots changed in aSub")
+	field(VAL,"0")
+	field(INP,"${MON}Buffer-aSub_.F")
+}
+
+record(longin,"${MON}Events-I")
+{
+	field(DESC,"Events changed in aSub")
+	field(VAL,"0")
+	field(INP,"${MON}Buffer-aSub_.G")
+}
+   
 #see ics710ProcessWfAsbu.cpp: process INOS buffered data.
 #FLNKed by ${MON}CircularQ-com_ 
 record(aSub,"${MON}Buffer-aSub_")
@@ -121,6 +135,13 @@ record(aSub,"${MON}Buffer-aSub_")
     field (INPE, "${MON}CircularQ-com_")
     field (FTE, "DOUBLE")
     field (NOE, "10")
+    #${MON}Shots-I is needed for each ${MON}
+    field (INPF, "${MON}Shots-I PP")
+    field (FTF, "ULONG")
+    field (NOF, "1")
+    field (INPG, "${MON}Events-I PP")
+    field (FTG, "ULONG")
+    field (NOG, "1")
     field (OUTA, "${MON}StdVROIOverINOS-I PP")
     field (FTVA, "DOUBLE")
     field (NOVA, "1")
