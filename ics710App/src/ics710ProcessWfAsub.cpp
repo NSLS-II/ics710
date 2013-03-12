@@ -182,36 +182,35 @@ processBuf(aSubRecord *precord)
 
     //get StdVROIOverINOS, this is not moving average
     unsigned int interstedShots = *(unsigned int *) precord->b;
-    printf("interstedShots: %d \n", interstedShots);
+    //printf("interstedShots: %d \n", interstedShots);
     //unsigned *pShots = (unsigned *) precord->e;
     double *pbufV = (double *) precord->valc;
     unsigned *pshot = (unsigned *) precord->f;
-    if (*pshot < interstedShots)
+    if (*pshot >= interstedShots)
     {
-        //((double *) precord->valc)[*pShots] = *(double *) precord->a;
-        pbufV[*pshot] = *(double *) precord->a;
-        (*pshot)++;
-        printf("shot is %d \n", *pshot);
-    }
-    else
-    {
-        *pshot = 0;
         for (j = 0; j < interstedShots; j++)
         {
             //sum += ((double *) precord->valc)[j];
             sum += pbufV[j];
         }
         ave = sum / interstedShots;
-        printf("sum: %f, ave is %f \n", sum, ave);
+        //printf("sum: %f, ave is %f \n", sum, ave);
         for (j = 0; j < interstedShots; j++)
         {
             std += (pbufV[j] - ave) * (pbufV[j] - ave);
         }
         std = sqrt(std / interstedShots);
-        printf("rmsNoise is %f \n", std);
+        //printf("rmsNoise is %f \n", std);
         //OUTA, "${MON}StdVROIOverINOS-I PP"
         *(double *) precord->vala = std;
+        *pshot = 0;
     }
+
+    //((double *) precord->valc)[*pShots] = *(double *) precord->a;
+    pbufV[*pshot] = *(double *) precord->a;
+    (*pshot)++;
+    //printf("shot is %d \n", *pshot);
+
 
     //charge rate: nC/s, no-moving sum and moving sum
     double noMovingSumQ = 0.0;
