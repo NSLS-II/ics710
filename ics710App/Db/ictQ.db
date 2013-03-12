@@ -17,6 +17,37 @@ record(ai,"${MON}QFullScale-I")
    field(FLNK,"${MON}Q-Calc_")
 }
 
+#each BCM has varied max. output voltage, not exactly 8.0V
+#8.104V(BCM1-SN172),7.664V(BCM2-SN169),7.532V(BCM3-SN173),7.444V(BCM4-SN174)
+record(ai,"LTB-BI{ICT:1}VFullScale-I")
+{
+   field(DESC,"BCM max.output voltage")
+   field(VAL,"8.104")
+   field(PREC,"3")
+   field(EGU,"V")
+}
+record(ai,"LTB-BI{ICT:2}VFullScale-I")
+{
+   field(DESC,"BCM max.output voltage")
+   field(VAL,"7.664")
+   field(PREC,"3")
+   field(EGU,"V")
+}
+record(ai,"BTS-BI{ICT:1}VFullScale-I")
+{
+   field(DESC,"BCM max.output voltage")
+   field(VAL,"7.532")
+   field(PREC,"3")
+   field(EGU,"V")
+}
+record(ai,"BTS-BI{ICT:2}VFullScale-I")
+{
+   field(DESC,"BCM max.output voltage")
+   field(VAL,"7.444")
+   field(PREC,"3")
+   field(EGU,"V")
+}
+
 #Bergoz ICT charge calibrated against BCM gain settings 
 #and Q offset (background noise)
 record(ao,"${MON}QOffset-SP")
@@ -35,7 +66,7 @@ record(calc,"${MON}Q-Calc_")
    field(INPA,"${MON}AveVROI-I CP")
    field(INPB,"${MON}QFullScale-I")
    field(INPC,"${MON}QOffset-SP")
-   field(INPD,"8.0")
+   field(INPD,"${MON}VFullScale-I")
    field(CALC,"(ABS(B*(A/D)))-C")
    field(PREC,"3")
    field(EGU,"nC")
@@ -181,7 +212,7 @@ record(calc,"${MON}StdQOverINOS-Calc_")
    field(DESC,"std charge over INOS")
    field(INPA,"${MON}StdVROIOverINOS-I CP")
    field(INPB,"${MON}QFullScale-I")
-   field(INPC,"8.0")
+   field(INPC,"${MON}VFullScale-I")
    field(CALC,"B*(A/C)")
    field(PREC,"6")
    field(EGU,"nC")
@@ -204,7 +235,7 @@ record(calc,"${MON}AveQOverINOS-Calc_")
    field(INPA,"${MON}AveVROIOverINOS-I CP")
    field(INPB,"${MON}QFullScale-I")
    field(INPC,"${MON}QOffset-SP")
-   field(INPD,"8.0")
+   field(INPD,"${MON}VFullScale-I")
    field(CALC,"(ABS(B*(A/D)))-C")
    #field(CALC,"ABS(B*(A/8.0))")
    field(PREC,"6")
