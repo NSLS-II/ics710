@@ -1,0 +1,74 @@
+## Process digitizer data to get the beam charge measured by Bergoz ICT & BCM 
+#MON NSLS2 naming:[PSy[:PI]][-SSy[:SI]][-TSy[:TI]]{Dev[:DI]}[SgN[:SgI][-SgD]]
+#### Psy	-	Primary system
+#### Ssy	-	Secondary system
+#### Dev	-	Device name
+#### MON	-	LTB-BI{ICT:1}
+
+#each BCM has varied max. output voltage, not exactly 8.0V
+#8.104V(BCM1-SN172),7.664V(BCM2-SN169),7.532V(BCM3-SN173),7.444V(BCM4-SN174)
+record(ai,"LTB-BI{ICT:1}VFullScale-I")
+{
+   field(DESC,"BCM max.output voltage")
+   field(VAL,"8.104")
+   field(PREC,"3")
+   field(EGU,"V")
+   info(autosaveFields_pass0, "VAL")  
+}
+record(ai,"LTB-BI{ICT:2}VFullScale-I")
+{
+   field(DESC,"BCM max.output voltage")
+   field(VAL,"7.664")
+   field(PREC,"3")
+   field(EGU,"V")
+   info(autosaveFields_pass0, "VAL")
+}
+record(ai,"BTS-BI{ICT:1}VFullScale-I")
+{
+   field(DESC,"BCM max.output voltage")
+   field(VAL,"7.532")
+   field(PREC,"3")
+   field(EGU,"V")
+   info(autosaveFields_pass0, "VAL")
+}
+record(ai,"BTS-BI{ICT:2}VFullScale-I")
+{
+   field(DESC,"BCM max.output voltage")
+   field(VAL,"7.444")
+   field(PREC,"3")
+   field(EGU,"V")
+   info(autosaveFields_pass0, "VAL")
+}
+
+
+#injection rate calculated from LN-TS{}Mode-Sel
+#record(calc,"LN-TS{}ShotsPerSecond-Calc_")
+record(calc,"LTB-BI{ICT:1}ShotsPerSecond-Calc_")
+{
+   field(DESC,"injections per second")
+   field(INPA,"LN-TS{}Mode-Sel CP")
+   field(CALC,"A=3?(2:(A=4?(5:(A=5?10:A))))")
+   field(EGU, "Shots")
+}
+
+record(calc,"LTB-BI{ICT:2}ShotsPerSecond-Calc_")
+{
+   field(DESC,"injections per second")
+   field(INPA,"LN-TS{}Mode-Sel CP")
+   field(CALC,"A=3?(2:(A=4?(5:(A=5?10:A))))")
+   field(EGU, "Shots")
+}
+
+record(ai,"BTS-BI{ICT:1}ShotsPerSecond-Calc_")
+{
+   field(DESC,"only one shot per second")
+   field(VAL,"1")
+   field(EGU, "Shots")
+}
+
+record(ai,"BTS-BI{ICT:2}ShotsPerSecond-Calc_")
+{
+   field(DESC,"only one shot per second")
+   field(VAL,"1")
+   field(EGU, "Shots")
+}
