@@ -1,4 +1,4 @@
-## Process digitizer data to get the beam charge measured by Bergoz ICT & BCM 
+## BCM output voltage; ICT data rate; LN ICT interlock test 
 #MON NSLS2 naming:[PSy[:PI]][-SSy[:SI]][-TSy[:TI]]{Dev[:DI]}[SgN[:SgI][-SgD]]
 #### Psy	-	Primary system
 #### Ssy	-	Secondary system
@@ -41,12 +41,12 @@ record(ai,"BTS-BI{ICT:2}VFullScale-I")
 }
 
 
-#injection rate calculated from LN-TS{}Mode-Sel
+#injection rate calculated from LN-TS{}Mode-Sts
 #record(calc,"LN-TS{}ShotsPerSecond-Calc_")
 record(calc,"LTB-BI{ICT:1}ShotsPerSecond-Calc_")
 {
    field(DESC,"injections per second")
-   field(INPA,"LN-TS{}Mode-Sel CP")
+   field(INPA,"LN-TS{}Mode-Sts CP")
    field(CALC,"A=3?(2:(A=4?(5:(A=5?10:A))))")
    field(EGU, "Shots")
 }
@@ -54,7 +54,7 @@ record(calc,"LTB-BI{ICT:1}ShotsPerSecond-Calc_")
 record(calc,"LTB-BI{ICT:2}ShotsPerSecond-Calc_")
 {
    field(DESC,"injections per second")
-   field(INPA,"LN-TS{}Mode-Sel CP")
+   field(INPA,"LN-TS{}Mode-Sts CP")
    field(CALC,"A=3?(2:(A=4?(5:(A=5?10:A))))")
    field(EGU, "Shots")
 }
@@ -72,3 +72,132 @@ record(ai,"BTS-BI{ICT:2}ShotsPerSecond-Calc_")
    field(VAL,"1")
    field(EGU, "Shots")
 }
+
+
+#LN ICT interlock test: done in 8 seconds
+#CSS sets the record to 1, but it's back to 0 after 5 seconds
+#be aware that if someone caput LTB-BI{ICT:1}InterlockTest-Cmd 0 during the 5-second period,
+## LTB-BI{ICT:1}InterlockTest-Cmd will be 0 immediatly 
+record(bo, "LTB-BI{ICT:1}InterlockTest-Cmd")
+{
+    field(DESC,"ICT interlock test")
+    field(HIGH,"5")
+    field(FLNK,"LTB-BI{ICT:1}ClearSystem-Seq_")
+}
+
+record(seq, "LTB-BI{ICT:1}ClearSystem-Seq_")
+{
+  field(DESC, "disable calibration & clear TestStarted-Sts")
+  field(DOL1, "1")
+  field(LNK1, "LTB-BI{ICT:1}CalEna-Sel PP")
+  field(DOL2, "0")
+  field(LNK2, "LTB-BI{ICT:1}TestStarted-Sts PP")
+}
+
+record(calcout, "LTB-BI{ICT:1}Delay-Calc_")
+{
+  field(DESC, "Delay processing")
+  field(INPA, "1")
+  field(INPB, "LTB-BI{ICT:1}InterlockTest-Cmd CP")
+  field(CALC, "A")
+  field(ODLY, "2")
+  field(OUT,  "LTB-BI{ICT:1}Delay-Fanout_.PROC")
+}
+
+record(fanout, "LTB-BI{ICT:1}Delay-Fanout_")
+{
+  field(LNK1, "LTB-BI{ICT:1}CalEna-Calc_")
+  field(LNK2, "LTB-BI{ICT:1}TestResult-Calc_")
+}
+
+#enable calibration output (CalEna-Sel == 0) only if there is beam (Q>0.2)
+#disable calibration output (CalEna-Sel== 1) after the test
+record(calcout, "LTB-BI{ICT:1}CalEna-Calc_")
+{
+  field(DESC, "Enable calibration output?")
+  field(INPA, "LTB-BI{ICT:1}InterlockTest-Cmd")
+  field(INPB, "LTB-BI{ICT:1}Q-I")
+  field(CALC, "A=1&&B>0.2?1:A=0?1:0")
+  field(OOPT, "When Non-zero")
+  field(DOPT, "Use OCAL")
+  field(OCAL, "!A")
+  field(OUT, "LTB-BI{ICT:1}CalEna-Sel PP")
+  #field(FLNK,"LTB-BI{ICT:1}TestResult-Calc_")
+}
+
+#it's a real test if calibration output is enabled and then later disabled again (1-->0-->1)
+record(calcout, "LTB-BI{ICT:1}TestStarted-Calc_")
+{
+  field(DESC, "is test really started?")
+  field(INPA, "LTB-BI{ICT:1}CalEna-Sel CP")
+  #field(INPB, "LTB-BI{ICT:1}InterlockTest-Cmd CP")
+  field(INPC, "1")
+  #field(CALC, "A&B")
+  field(CALC, "A")
+  field(OOPT, "Transition To Zero")
+  field(DOPT, "Use OCAL")
+  field(OCAL, "C")
+  #field(ODLY, "1")
+  field(OUT,  "LTB-BI{ICT:1}TestStarted-Sts PP")
+}
+
+#TestStarted-Sts should be cleared (0) if test passed
+record(bi, "LTB-BI{ICT:1}TestStarted-Sts")
+{
+}
+
+record(calcout, "LTB-BI{ICT:1}TestResult-Calc_")
+{
+  field(DESC, "test result:pass or fail?")
+  field(INPA, "LTB-BI{ICT:1}InterlockTest-Cmd")
+  field(INPB, "LTB-BI{ICT:1}Q-I")
+  field(INPC, "LTB-BI{ICT:1}TestStarted-Sts")
+  field(CALC, "A=1&&B<0.2?0:A=1&&B>0.2?1:A=0&&B>0.2?3:A=0&&B<0.2&&C=1?2:0")
+  field(OUT,  "LTB-BI{ICT:1}InterlockTest-Sts PP")
+}
+
+record(mbbi, "LTB-BI{ICT:1}InterlockTest-Sts")
+{
+  field(DESC, "Interlock test result")
+  field(ZRVL, "0")
+  field(ONVL, "1")
+  field(TWVL, "2")
+  field(THVL, "3")
+  field(FRVL, "4")
+  field(ZRST, "No beam, test aborted!")
+  field(ONST, "Testing,drink coffee ...")
+  field(TWST, "Test passed!")
+  field(THST, "Test failed!")
+  field(FRST, "No test performed")
+  field(ZRSV, "MINOR")
+  field(ONSV, "NO_ALARM")
+  field(TWSV, "NO_ALARM")
+  field(THSV, "MAJOR")
+  field(FRSV, "NO_ALARM")
+  field(VAL, "4")
+  field(FLNK,"LTB-BI{ICT:1}ClearTestStartedSt-Calc_")
+}
+
+record(calcout, "LTB-BI{ICT:1}ClearTestStartedSt-Calc_")
+{
+  field(DESC, "clear TestStarted if test passed")
+  field(INPA, "LTB-BI{ICT:1}InterlockTest-Sts")
+  field(CALC, "A=2?0:1")
+  field(OOPT, "When Zero")
+  field(DOPT, "Use OCAL")
+  field(OVAL, "0")
+  field(OUT, "LTB-BI{ICT:1}TestStarted-Sts PP")
+}
+
+record(calcout, "LTB-BI{ICT:1}CalQ-Calc_")
+{
+  field(DESC, "Calibration charge should be 40 nC")
+  field(INPA, "LTB-BI{ICT:1}InterlockTest-Cmd CP")
+  field(INPB, "3")
+  field(CALC, "A")
+  field(OOPT, "When Non-zero")
+  field(DOPT, "Use OCAL")
+  field(OCAL, "B")
+  field(OUT, "LTB-BI{ICT:1}CalQ-Sel PP")
+}
+
