@@ -74,85 +74,105 @@ record(ai,"BTS-BI{ICT:2}ShotsPerSecond-Calc_")
 }
 
 
-#LN ICT interlock test: done in 8 seconds
+#LN ICT interlock test: the most challenging or tricky part is
+##enabling / diableing the BCM calibration output,
+##which is controlled by the PLC scanning at 1 Hz and not synchronized with any device
+##using calcout record to implement delay and determine when to write output
+
 #CSS sets the record to 1, but it's back to 0 after 5 seconds
 #be aware that if someone caput LTB-BI{ICT:1}InterlockTest-Cmd 0 during the 5-second period,
 ## LTB-BI{ICT:1}InterlockTest-Cmd will be 0 immediatly 
 record(bo, "LTB-BI{ICT:1}InterlockTest-Cmd")
 {
     field(DESC,"ICT interlock test")
-    field(HIGH,"5")
-    field(FLNK,"LTB-BI{ICT:1}ClearSystem-Seq_")
+    #field(HIGH,"5")
+    field(FLNK,"LTB-BI{ICT:1}SysPrepare-Seq_")
 }
 
-record(seq, "LTB-BI{ICT:1}ClearSystem-Seq_")
+#the BCM calibration charge should be 40 nC; Linac Timing to 1Hz
+#LNK* are CA links: the same effect using PP or CA
+record(seq, "LTB-BI{ICT:1}SysPrepare-Seq_")
 {
-  field(DESC, "disable calibration & clear TestStarted-Sts")
-  field(DOL1, "1")
-  field(LNK1, "LTB-BI{ICT:1}CalEna-Sel PP")
-  field(DOL2, "0")
-  field(LNK2, "LTB-BI{ICT:1}TestStarted-Sts PP")
+  field(DESC, "System reset/prepare")
+  field(DOL1, "3")
+  field(LNK1, "LTB-BI{ICT:1}CalQ-Sel PP")
+  field(DOL2, "1")
+  field(LNK2, "LN-TS{}Mode-Sel PP")
+  field(DOL3, "1")
+  field(LNK3, "ACC-TS{}Mode:Commit-Cmd PP")
+  field(DOL4, "1")
+  field(LNK4, "LTB-BI{ICT:1}CalEna-Sel PP")
+  field(FLNK, "LTB-BI{ICT:1}Delay1-Calc_")
 }
 
-record(calcout, "LTB-BI{ICT:1}Delay-Calc_")
+#wait for 3 seconds: it takes time for the PLC to disable the BCM calibration output    
+record(calcout, "LTB-BI{ICT:1}Delay1-Calc_")
 {
-  field(DESC, "Delay processing")
+  field(DESC, "Delay / Wait")
   field(INPA, "1")
-  field(INPB, "LTB-BI{ICT:1}InterlockTest-Cmd CP")
   field(CALC, "A")
-  field(ODLY, "2")
-  field(OUT,  "LTB-BI{ICT:1}Delay-Fanout_.PROC")
+  field(ODLY, "3")
+  field(OUT,  "LTB-BI{ICT:1}TestResult1-Calc_.PROC")
 }
 
-record(fanout, "LTB-BI{ICT:1}Delay-Fanout_")
+#get the first test result: "no beam, aborted" or continue...
+record(calcout, "LTB-BI{ICT:1}TestResult1-Calc_")
 {
-  field(LNK1, "LTB-BI{ICT:1}CalEna-Calc_")
-  field(LNK2, "LTB-BI{ICT:1}TestResult-Calc_")
+  field(DESC, "aborted or continue?")
+  field(INPA, "LTB-BI{ICT:1}QRate-I")
+  field(CALC, "A<0.2?0:1")
+  field(OUT,  "LTB-BI{ICT:1}InterlockTest-Sts PP")
+  field(FLNK, "LTB-BI{ICT:1}TestContinue-Calc_")
 }
 
-#enable calibration output (CalEna-Sel == 0) only if there is beam (Q>0.2)
-#disable calibration output (CalEna-Sel== 1) after the test
-record(calcout, "LTB-BI{ICT:1}CalEna-Calc_")
+record(calcout, "LTB-BI{ICT:1}TestContinue-Calc_")
 {
-  field(DESC, "Enable calibration output?")
-  field(INPA, "LTB-BI{ICT:1}InterlockTest-Cmd")
-  field(INPB, "LTB-BI{ICT:1}Q-I")
-  field(CALC, "A=1&&B>0.2?1:A=0?1:0")
-  field(OOPT, "When Non-zero")
-  field(DOPT, "Use OCAL")
-  field(OCAL, "!A")
+  field(DESC, "test continue?")
+  field(INPA, "LTB-BI{ICT:1}TestResult1-Calc_")
+  field(CALC, "!A")
+  field(OOPT, "When Zero")
+  field(OUT,  "LTB-BI{ICT:1}EnableCal-Cmd_ PP")
+}
+
+#generate big pulse signal from BCM to trip the e-gun 
+##enable the BCM calibration, then disable it 3 seconds later
+record(bo, "LTB-BI{ICT:1}EnableCal-Cmd_")
+{
   field(OUT, "LTB-BI{ICT:1}CalEna-Sel PP")
-  #field(FLNK,"LTB-BI{ICT:1}TestResult-Calc_")
+  field(FLNK,"LTB-BI{ICT:1}Delay2-Calc_") 
 }
 
-#it's a real test if calibration output is enabled and then later disabled again (1-->0-->1)
-record(calcout, "LTB-BI{ICT:1}TestStarted-Calc_")
+record(calcout, "LTB-BI{ICT:1}Delay2-Calc_")
 {
-  field(DESC, "is test really started?")
-  field(INPA, "LTB-BI{ICT:1}CalEna-Sel CP")
-  #field(INPB, "LTB-BI{ICT:1}InterlockTest-Cmd CP")
-  field(INPC, "1")
-  #field(CALC, "A&B")
+  field(DESC, "Delay / Wait")
+  field(INPA, "1")
   field(CALC, "A")
-  field(OOPT, "Transition To Zero")
-  field(DOPT, "Use OCAL")
-  field(OCAL, "C")
-  #field(ODLY, "1")
-  field(OUT,  "LTB-BI{ICT:1}TestStarted-Sts PP")
+  field(ODLY, "3")
+  field(OUT,  "LTB-BI{ICT:1}DisableCal-Cmd_.PROC")
 }
 
-#TestStarted-Sts should be cleared (0) if test passed
-record(bi, "LTB-BI{ICT:1}TestStarted-Sts")
+record(bo, "LTB-BI{ICT:1}DisableCal-Cmd_")
 {
+  field(VAL, "1")
+  field(OUT, "LTB-BI{ICT:1}CalEna-Sel PP")
+  field(FLNK,"LTB-BI{ICT:1}Delay3-Calc_")
 }
 
-record(calcout, "LTB-BI{ICT:1}TestResult-Calc_")
+record(calcout, "LTB-BI{ICT:1}Delay3-Calc_")
 {
-  field(DESC, "test result:pass or fail?")
-  field(INPA, "LTB-BI{ICT:1}InterlockTest-Cmd")
-  field(INPB, "LTB-BI{ICT:1}Q-I")
-  field(INPC, "LTB-BI{ICT:1}TestStarted-Sts")
-  field(CALC, "A=1&&B<0.2?0:A=1&&B>0.2?1:A=0&&B>0.2?3:A=0&&B<0.2&&C=1?2:0")
+  field(DESC, "Delay / Wait")
+  field(INPA, "1")
+  field(CALC, "A")
+  field(ODLY, "3")
+  field(OUT,  "LTB-BI{ICT:1}TestResult2-Calc_.PROC")
+}
+
+#get the second test result: test passed or failed
+record(calcout, "LTB-BI{ICT:1}TestResult2-Calc_")
+{
+  field(DESC, "passed or failed?")
+  field(INPA, "LTB-BI{ICT:1}QRate-I")
+  field(CALC, "A<0.2?2:3")
   field(OUT,  "LTB-BI{ICT:1}InterlockTest-Sts PP")
 }
 
@@ -165,7 +185,7 @@ record(mbbi, "LTB-BI{ICT:1}InterlockTest-Sts")
   field(THVL, "3")
   field(FRVL, "4")
   field(ZRST, "No beam, test aborted!")
-  field(ONST, "Testing,drink coffee ...")
+  field(ONST, "Test in progress,wait...")
   field(TWST, "Test passed!")
   field(THST, "Test failed!")
   field(FRST, "No test performed")
@@ -175,29 +195,6 @@ record(mbbi, "LTB-BI{ICT:1}InterlockTest-Sts")
   field(THSV, "MAJOR")
   field(FRSV, "NO_ALARM")
   field(VAL, "4")
-  field(FLNK,"LTB-BI{ICT:1}ClearTestStartedSt-Calc_")
 }
 
-record(calcout, "LTB-BI{ICT:1}ClearTestStartedSt-Calc_")
-{
-  field(DESC, "clear TestStarted if test passed")
-  field(INPA, "LTB-BI{ICT:1}InterlockTest-Sts")
-  field(CALC, "A=2?0:1")
-  field(OOPT, "When Zero")
-  field(DOPT, "Use OCAL")
-  field(OVAL, "0")
-  field(OUT, "LTB-BI{ICT:1}TestStarted-Sts PP")
-}
-
-record(calcout, "LTB-BI{ICT:1}CalQ-Calc_")
-{
-  field(DESC, "Calibration charge should be 40 nC")
-  field(INPA, "LTB-BI{ICT:1}InterlockTest-Cmd CP")
-  field(INPB, "3")
-  field(CALC, "A")
-  field(OOPT, "When Non-zero")
-  field(DOPT, "Use OCAL")
-  field(OCAL, "B")
-  field(OUT, "LTB-BI{ICT:1}CalQ-Sel PP")
-}
 
