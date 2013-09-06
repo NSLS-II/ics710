@@ -129,6 +129,7 @@ record(ai,"BR-BI{DCCT:1}I:1stShot-I")
    field(DESC,"first shot current")
    field(INP,"BR-BI{DCCT:1}I:Point1-I")
    field(PREC,"3")
+   field(MDEL,"-1")
    field(EGU,"mA")
    field(FLNK,"BR-BI{DCCT:1}I:2ndShot-I")
 }
@@ -143,6 +144,7 @@ record(calc,"BR-BI{DCCT:1}I:2ndShot-I")
    field(CALC,"(A-B>C)?(A-B):0")   
    field(PREC,"3")
    field(EGU,"mA")
+   field(MDEL,"-1")
    field(FLNK,"BR-BI{DCCT:1}I:Total-I")
 }
 
@@ -154,6 +156,7 @@ record(calc,"BR-BI{DCCT:1}I:Total-I")
    field(CALC,"A+B")   
    field(PREC,"3")
    field(EGU,"mA")
+   field(MDEL,"-1")
    field(FLNK,"BR-BI{DCCT:1}Q:1stShot-I")
 }
 
@@ -163,6 +166,7 @@ record(ai,"BR-BI{DCCT:1}Q:1stShot-I")
    field(INP,"BR-BI{DCCT:1}Q:Point1-I")
    field(PREC,"3")
    field(EGU,"nC")
+   field(MDEL,"-1")
    field(FLNK,"BR-BI{DCCT:1}Q:2ndShot-I")
 }
 
@@ -176,6 +180,7 @@ record(calc,"BR-BI{DCCT:1}Q:2ndShot-I")
    field(CALC,"(A-B>C)?(A-B):0")   
    field(PREC,"3")
    field(EGU,"nC")
+   field(MDEL,"-1")
    field(FLNK,"BR-BI{DCCT:1}Q:Total-I")
 }
 
@@ -187,6 +192,7 @@ record(calc,"BR-BI{DCCT:1}Q:Total-I")
    field(CALC,"A+B")   
    field(PREC,"3")
    field(EGU,"nC")
+   field(MDEL,"-1")
    field(FLNK,"BR-BI{DCCT:1}I:Extracted-I")
 }
 
@@ -196,6 +202,7 @@ record(ai,"BR-BI{DCCT:1}I:Extracted-I")
    field(INP,"BR-BI{DCCT:1}I:Point4-I")
    field(PREC,"3")
    field(EGU,"mA")
+   field(MDEL,"-1")
    field(FLNK,"BR-BI{DCCT:1}Efficiency-I")
 }
 
@@ -204,7 +211,9 @@ record(calc,"BR-BI{DCCT:1}Efficiency-I")
    field(DESC,"efficiency:charge loss")
    field(INPA,"BR-BI{DCCT:1}Q:Total-I")
    field(INPB,"BR-BI{DCCT:1}Q:Point4-I")
-   field(CALC,"A<0.1||A<B?0:100*B/A")   
+   field(INPC,"-1")
+   field(CALC,"A<0.1||A<B?C:100*B/A")   
+   field(MDEL,"-1")
    field(PREC,"1")
    field(EGU,"%")
 }

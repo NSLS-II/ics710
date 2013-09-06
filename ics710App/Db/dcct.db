@@ -73,10 +73,11 @@ record(compress,"${MON}AveI-Com_")
 
 record(acalcout, "${MON}StdOverAveI-acalc_")
 {
-	field(DESC, "std of AveI")
-	field(NELM, "10")
-	field(INAA, "${MON}AveI-Com_ CP")
+    field(DESC, "std of AveI")
+    field(NELM, "10")
+    field(INAA, "${MON}AveI-Com_ CP")
     field(CALC, "STD(AA)")
+    field(NUSE, "10")
     field(OUT,  "${MON}StdOverAveI-I PP")
 }
 
@@ -95,13 +96,14 @@ record(acalcout,"${MON}I-aCalc_")
    field(CALC,"ABS((A*AA)-B)")
    field(PREC,"3")
    field(EGU,"mA")
+   field(NUSE,"100000")
    field(OUT,"${MON}I-Wf PP")
 }
 
 record(waveform,"${MON}I-Wf")
 {
    field(DESC,"beam current waveform data")
-   field(NELM,"1000000")
+   field(NELM,"100000")
    field(FTVL,"DOUBLE")
    field(PREC,"3")
    field(EGU,"mA")
@@ -127,13 +129,14 @@ record(acalcout,"${MON}Q-aCalc_")
    field(CALC,"ABS((A*AA)-B)")
    field(PREC,"3")
    field(EGU,"nC")
+   field(NUSE,"100000")
    field(OUT,"${MON}Q-Wf PP")
 }
 
 record(waveform,"${MON}Q-Wf")
 {
    field(DESC,"beam charge waveform data")
-   field(NELM,"1000000")
+   field(NELM,"100000")
    field(FTVL,"DOUBLE")
    field(PREC,"3")
    field(EGU,"nC")
@@ -278,6 +281,7 @@ record(acalcout,"${MON}ShiftCalInput-acalc_")
    field(NELM,"19")
    field(INAA,"${MON}CalInput-Wf_")
    field(CALC,"AA>>1")
+   field(NUSE,"19")
    field(OUT,"${MON}CalInput-Wf PP")
 }
 
