@@ -196,6 +196,34 @@ record(calc,"BR-BI{DCCT:1}Q:Total-I")
    field(FLNK,"BR-BI{DCCT:1}I:Extracted-I")
 }
 
+#QSum:1h-I: one-hour integrated charge
+record(compress, "BR-BI{DCCT:1}QSum:1h-Com_")
+{
+    field(DESC, "one-hour buffer of QRate data")
+    field(INP,  "BR-BI{DCCT:1}Q:Total-I CP")
+    field(ALG,  "Circular Buffer")
+    field(NSAM, "3600")
+    field(FLNK,"BR-BI{DCCT:1}QSum:1h-Acalc_")
+}
+
+record(acalcout, "BR-BI{DCCT:1}QSum:1h-Acalc_")
+{
+    field(DESC, "one-hour integrated charge")
+    field(NELM, "3600")
+    field(INAA, "BR-BI{DCCT:1}QSum:1h-Com_")
+    field(CALC, "SUM(AA)/1000.0")
+    field(NUSE, "3600")
+    field(OUT,  "BR-BI{DCCT:1}QSum:1h-I PP")
+}
+
+record(ai, "BR-BI{DCCT:1}QSum:1h-I")
+{
+    field(DESC, "one-hour integrated charge")
+    field(PREC, "3")
+    field(EGU, "uC")
+}
+
+
 record(ai,"BR-BI{DCCT:1}I:Extracted-I")
 {
    field(DESC,"beam charge at extraction")
