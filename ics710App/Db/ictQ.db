@@ -140,7 +140,36 @@ record(ai,"${MON}QRate-I")
    field(DESC,"QRate with moving sum")
    field(INP,"${MON}Buffer-aSub_.VALE")
    field(PREC,"3")
+   field(MDEL,"-1")
    field(EGU,"nC/s")
+   field(FLNK,"${MON}QSum:1h-Com_")
+}
+
+#QSum:1h-I: one-hour integrated charge
+record(compress, "${MON}QSum:1h-Com_")
+{
+    field(DESC, "one-hour buffer of QRate data")
+    field(INP,  "${MON}QRate-I")
+    field(ALG,  "Circular Buffer")
+    field(NSAM, "3600")
+    field(FLNK,"${MON}QSum:1h-Acalc_")
+}
+
+record(acalcout, "${MON}QSum:1h-Acalc_")
+{
+    field(DESC, "one-hour integrated charge")
+    field(NELM, "3600")
+    field(INAA, "${MON}QSum:1h-Com_")
+    field(CALC, "SUM(AA)/1000.0")
+    field(NUSE, "3600")
+    field(OUT,  "${MON}QSum:1h-I PP")
+}
+
+record(ai, "${MON}QSum:1h-I")
+{
+    field(DESC, "one-hour integrated charge")
+    field(PREC, "3")
+    field(EGU, "uC")
 }
 
 #std Q over interested number of shots (INOS)
