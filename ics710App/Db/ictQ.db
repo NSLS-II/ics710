@@ -162,15 +162,54 @@ record(acalcout, "${MON}QSum:1h-Acalc_")
     field(INAA, "${MON}QSum:1h-Com_")
     field(CALC, "SUM(AA)/1000.0")
     field(NUSE, "3600")
-    field(OUT,  "${MON}QSum:1h-I PP")
+    field(OUT,  "${MON}QSum:1h-I_ PP")
 }
 
-record(ai, "${MON}QSum:1h-I")
+record(ai, "${MON}QSum:1h-I_")
 {
     field(DESC, "one-hour integrated charge")
     field(PREC, "3")
     field(EGU, "uC")
 }
+
+#QSum:1h-I: one-hour integrated charge calculated by aSub
+record(aSub, "$(MON)calc-ASub_") {
+  field(INAM, "InitTimedBuffer")
+  field(SNAM, "ProcTimedBuffer")
+  field(FTA , "DOUBLE") # Input value
+  field(FTB , "DOUBLE") # Time interval (sec)
+  field(FTC , "UCHAR")  # 1==Reset
+  field(FTVA, "DOUBLE") # Sum
+  field(FTVB, "ULONG")  # Invalid Count
+  field(FTVC, "ULONG")  # Total Count
+  field(INPA, "$(MON)Q-I CP")
+  field(INPB, "3600")
+  field(INPC, "0")
+  field(OUTA, "$(MON)QSum:1h-Calc_.A PP MSS")
+  #field(OUTA, "$(MON)QSum:1h-I PP MSS")
+  field(OUTB, "$(MON)Cnt:bad-I PP MSS")
+  field(OUTC, "$(MON)Cnt:total-I PP MSS")
+}
+
+record(calcout, "$(MON)QSum:1h-Calc_")
+{
+    field(DESC, "one-hour integrated charge")
+    field(CALC, "A/1000.0")
+    field(OUT,  "${MON}QSum:1h-I PP MSS")
+}
+
+record(ai, "$(MON)QSum:1h-I") {
+    field(DESC, "one-hour integrated charge")
+    field(PREC, "3")
+    field(EGU, "uC")
+}
+
+record(longin, "$(MON)Cnt:bad-I") {
+}
+
+record(longin, "$(MON)Cnt:total-I") {
+}
+
 
 #std Q over interested number of shots (INOS)
 record(ai,"${MON}StdVROIOverINOS-I")

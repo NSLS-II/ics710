@@ -1,5 +1,6 @@
 driver(drvIcs710)
 registrar(ics710Registrar)
+registrar(timedbufferRegister)
 function(processWf)
 function(processBuf)
 #function(ics710ProcessMiscAsub)
