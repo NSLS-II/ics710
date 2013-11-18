@@ -38,19 +38,22 @@ Sample *allocSample(Priv *priv)
     Sample *samp;
     
     node = ellGet(&priv->unused);
-    if(node)
-        return CONTAINER(node, Sample, node);
-
+    if(node){
+        printf("use unused node's memory instead of allocating new memory\n");
+        return CONTAINER(node, Sample, node);}
+    printf("No unused node, allocate new memory: %d\n",node);
     return mallocMustSucceed(sizeof(*samp), "timedbuffer allocate Sample");
 }
 
 static
 void freeSample(Priv *priv, Sample *samp)
 {
-    if(ellCount(&priv->unused)<20)
-        ellInsert(&priv->unused, NULL, &samp->node);
-    else
-        free(samp);
+    if(ellCount(&priv->unused)<20){
+        printf("insert unused list, total count: %d\n",ellCount(&priv->unused));
+        ellInsert(&priv->unused, NULL, &samp->node);}
+    else{
+        printf("total counts of unused elllist is too big: %d\n",ellCount(&priv->unused));
+        free(samp);}
 }
 
 static
@@ -106,6 +109,7 @@ static long init_buffer(aSubRecord *prec)
     priv->invalidCount = 0;
     
     prec->dpvt = priv;
+    //printf("init_buffer is done\n");
     return 0;
 }
 
@@ -127,15 +131,18 @@ static long proc_buffer(aSubRecord *prec)
         epicsEnum16 stat, sevr;
         
         next.value = *value;
+        next.isValid = 1;
         
-        if(dbGetAlarm(&prec->inpa, &stat, &sevr)==0)
-            next.isValid = sevr<INVALID_ALARM;
-        else
+        if(dbGetAlarm(&prec->inpa, &stat, &sevr)!=0)
+            //next.isValid = sevr<INVALID_ALARM;
+            //next.isValid = 1;
+        //else
             next.isValid = 0; /* dbGetAlarm()!=0 means disconnected CA link */
-
         if(!mustGetTime(&next.stamp, &prec->inpa))
             next.isValid = 0;
-        
+
+        printf("\nFill in the newest (valid= %d) sample: %f\n",next.isValid,next.value);
+
         if(ellCount(&priv->data)) {
             ELLNODE *node = ellFirst(&priv->data);
             Sample *prev = CONTAINER(node, Sample, node);
@@ -149,10 +156,10 @@ static long proc_buffer(aSubRecord *prec)
     
     if(*reset || forceReset) {
         ELLNODE *node;
-        
+        printf("forceReset \n");
         while((node=ellGet(&priv->data))!=NULL)
             freeSample(priv, CONTAINER(node, Sample, node));
-        
+        *reset = 0; // reset is back to zero
         priv->sum = 0.0;
         priv->invalidCount = 0;
         (void)recGblSetSevr(prec, UDF_ALARM, INVALID_ALARM);
@@ -163,42 +170,52 @@ static long proc_buffer(aSubRecord *prec)
     while(1) {
         Sample *prev = 0;
         ELLNODE *node = ellFirst(&priv->data);
-        
+
         if(!node) /* if empty then nothing to do here */
             break;
         
         prev = CONTAINER(node, Sample, node);
-        
-        priv->sum -= prev->value;
-        if(!prev->isValid)
+        //priv->sum -= prev->value;
+        printf("the oldest value in the buffer:   %f \n", prev->value);
+        printf("sum of all samples in the buffer: %f \n", priv->sum);
+        if(!prev->isValid){
             priv->invalidCount--;
-        
+            printf("invalid counts in pop off: %d/%d\n",priv->invalidCount,prev->isValid);}
+
+        printf("time-stamp of the newest data: %d.%d\n",next.stamp.secPastEpoch,next.stamp.nsec);
+        printf("time-stamp of the oldest data: %d.%d\n",prev->stamp.secPastEpoch,prev->stamp.nsec);
         if(epicsTimeDiffInSeconds(&next.stamp, &prev->stamp) > *interval) {
+            priv->sum -= prev->value;
             ellDelete(&priv->data, node);
             freeSample(priv, prev);
+            printf("pop off the oldest data, %d samples in the buffer now\n",ellCount(&priv->data));
+            printf("sum of all samples after popping off the oldest value: %f \n", priv->sum);
         } else
             break; /* all data within the interval */
     }
 
     /* push on the next sample */
     {
+        printf("push on the next sample\n");
         Sample *samp = allocSample(priv);
         *samp = next;
         
         priv->sum += next.value;
-        if(!next.isValid)
+
+        if(!next.isValid){
             priv->invalidCount++;
-        
+            printf("invalid counts in push on: %d\n",priv->invalidCount);}
         
         ellAdd(&priv->data, &samp->node);
     }
     
 report:
     /* fill out results */
+    printf("fill out results\n");
     *sum = priv->sum;
     *invlCnt = priv->invalidCount;
     *totCnt = ellCount(&priv->data);
-    
+    printf("sum value: %f\n",priv->sum);
     if(priv->invalidCount>=ellCount(&priv->data))
         (void)recGblSetSevr(prec, UDF_ALARM, INVALID_ALARM);
     
