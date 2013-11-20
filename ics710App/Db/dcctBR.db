@@ -240,10 +240,51 @@ record(calc,"BR-BI{DCCT:1}Efficiency-I")
    field(INPA,"BR-BI{DCCT:1}Q:Total-I")
    field(INPB,"BR-BI{DCCT:1}Q:Point4-I")
    field(INPC,"-1")
-   field(CALC,"A<0.1||A<B?C:100*B/A")   
+   field(INPD,"0.1")
+   field(CALC,"A<D||A<B?C:100*B/A")   
    field(MDEL,"-1")
    field(PREC,"1")
    field(EGU,"%")
+   field(FLNK,"BR-BI{DCCT:1}QLoss-I")
+}
+
+record(calc,"BR-BI{DCCT:1}QLoss-I")
+{
+   field(DESC,"charge loss")
+   field(INPA,"BR-BI{DCCT:1}Q:Total-I")
+   field(INPB,"BR-BI{DCCT:1}Q:Point4-I")
+   field(CALC,"A>B?A-B:0")   
+   field(PREC,"4")
+   field(EGU,"nC")
+   field(MDEL,"-1")
+   field(FLNK,"BR-BI{DCCT:1}QLossSum:1h-Com_")
+}
+
+#QLossSum:1h-I: one-hour integrated charge
+record(compress, "BR-BI{DCCT:1}QLossSum:1h-Com_")
+{
+    field(DESC, "one-hour buffer of QLoss data")
+    field(INP,  "BR-BI{DCCT:1}QLoss-I")
+    field(ALG,  "Circular Buffer")
+    field(NSAM, "3600")
+    field(FLNK,"BR-BI{DCCT:1}QLossSum:1h-Acalc_")
+}
+
+record(acalcout, "BR-BI{DCCT:1}QLossSum:1h-Acalc_")
+{
+    field(DESC, "one-hour integrated charge")
+    field(NELM, "3600")
+    field(INAA, "BR-BI{DCCT:1}QLossSum:1h-Com_")
+    field(CALC, "SUM(AA)/1000.0")
+    field(NUSE, "3600")
+    field(OUT,  "BR-BI{DCCT:1}QLossSum:1h-I PP")
+}
+
+record(ai, "BR-BI{DCCT:1}QLossSum:1h-I")
+{
+    field(DESC, "one-hour integrated charge")
+    field(PREC, "3")
+    field(EGU, "uC")
 }
 
 #averaging extraction charge Q over interested number of shots(INOS)
