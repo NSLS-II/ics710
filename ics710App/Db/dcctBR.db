@@ -253,11 +253,24 @@ record(calc,"BR-BI{DCCT:1}QLoss-I")
    field(DESC,"charge loss")
    field(INPA,"BR-BI{DCCT:1}Q:Total-I")
    field(INPB,"BR-BI{DCCT:1}Q:Point4-I")
-   field(CALC,"A>B?A-B:0")   
+   field(INPC,"-1")
+   field(INPD,"0.1")
+   field(CALC,"A<B?0:A-B")   
    field(PREC,"4")
    field(EGU,"nC")
    field(MDEL,"-1")
    field(FLNK,"BR-BI{DCCT:1}QLossSum:1h-Com_")
+}
+
+record(calc,"BR-BI{DCCT:1}ILoss-I")
+{
+   field(DESC,"charge loss")
+   field(INPA,"BR-BI{DCCT:1}QLoss-I CP")
+   field(INPB,"528.0")
+   field(CALC,"1000*A/B")
+   field(PREC,"3")
+   field(EGU,"mA")
+   field(MDEL,"-1")
 }
 
 #QLossSum:1h-I: one-hour integrated charge
