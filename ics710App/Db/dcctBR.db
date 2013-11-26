@@ -298,6 +298,7 @@ record(ai, "BR-BI{DCCT:1}QLossSum:1h-I")
     field(DESC, "one-hour integrated charge")
     field(PREC, "3")
     field(EGU, "uC")
+    field(MDEL,"-1")
 }
 
 #averaging extraction charge Q over interested number of shots(INOS)
