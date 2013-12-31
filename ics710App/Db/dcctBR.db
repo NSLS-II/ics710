@@ -26,58 +26,73 @@ record(calc,"BR-BI{DCCT:1}QOffset-I")
    field(EGU,"nC")
 }
 
-#four samples/points/locations for Booster stack mode
+#four samples/points/locations to support Booster stack mode
+#P1: the first spike, the first shot
+#P2: ~ 100 ms beam decay
+#P3: the second jump/spike if it is in stack mode, ~100 ms after the first shot
+#P4: beam extracted, down to near zero 
+
 record(subArray,"BR-BI{DCCT:1}I:Point1-I")
 {
-   field(DESC,"Booster current at point 1")
+   field(DESC,"the fist spike")
    field(INP,"BR-BI{DCCT:1}I-Wf CPP")
    field(MALM,"1000000")
    #INDX can be changed by caput
-   field(INDX,"20")
+   #50 us * 266 = 13.3 ms
+   field(INDX,"266")
    field(NELM,"1")
    field(FTVL,"DOUBLE")
    field(PREC,"3")
    field(EGU,"mA")
    field(FLNK,"BR-BI{DCCT:1}I:Point2-I")
+   field(PINI,"YES")
+   info(autosaveFields_pass0, INDX)
 }
 
+#100 ms / 0.05ms = 2000
 record(subArray,"BR-BI{DCCT:1}I:Point2-I")
 {
-   field(DESC,"beam current at point 2")
+   field(DESC,"100ms beam decay")
    field(INP,"BR-BI{DCCT:1}I-Wf")
    field(MALM,"1000000")
-   field(INDX,"1997")
+   field(INDX,"2266")
    field(NELM,"1")
    field(FTVL,"DOUBLE")
    field(PREC,"3")
    field(EGU,"mA")
    field(FLNK,"BR-BI{DCCT:1}I:Point3-I")
+   field(PINI,"YES")
+   info(autosaveFields_pass0, INDX)
 }
 
 record(subArray,"BR-BI{DCCT:1}I:Point3-I")
 {
-   field(DESC,"beam current at point 3")
+   field(DESC,"the second spike")
    field(INP,"BR-BI{DCCT:1}I-Wf")
    field(MALM,"1000000")
-   field(INDX,"2003")
+   field(INDX,"2268")
    field(NELM,"1")
    field(FTVL,"DOUBLE")
    field(PREC,"3")
    field(EGU,"mA")
    field(FLNK,"BR-BI{DCCT:1}I:Point4-I")
+   field(PINI,"YES")
+   info(autosaveFields_pass0, INDX)
 }
 
 record(subArray,"BR-BI{DCCT:1}I:Point4-I")
 {
-   field(DESC,"beam current at point 4")
+   field(DESC,"beam extracted")
    field(INP,"BR-BI{DCCT:1}I-Wf")
    field(MALM,"1000000")
-   field(INDX,"7998")
+   field(INDX,"8266")
    field(NELM,"1")
    field(FTVL,"DOUBLE")
    field(PREC,"3")
    field(EGU,"mA")
    field(FLNK,"BR-BI{DCCT:1}Q:Point1-I")
+   field(PINI,"YES")
+   info(autosaveFields_pass0, INDX)
 }
 
 record(calc,"BR-BI{DCCT:1}Q:Point1-I")
