@@ -103,8 +103,8 @@ ics710Init(int card, int totalChannel)
     else
     {
         //blocking I/O: easy implementation, seems efficient for 10Hz IOC update
-        fcntl(pics710Driver->hDevice, F_SETFL, fcntl(pics710Driver->hDevice,
-                F_GETFL) & ~O_NONBLOCK);
+        fcntl(pics710Driver->hDevice, F_SETFL,
+                fcntl(pics710Driver->hDevice, F_GETFL) & ~O_NONBLOCK);
 
         //default parameters: currently fixed in ics710 IOC
         pics710Driver->module = card;
@@ -313,39 +313,43 @@ ics710DaqThread(void *arg)
 					errorCode: %d\n",
                         pics710Driver->module, timeout, errorCode);
                 pics710Driver->timeouts++;
+                pics710Driver->trigRate = 0.0;
             }
-
-            //trigger rate / IOC update rate
-            epicsTimeGetCurrent(&now);
-            curTimeAfterADCInt = now.secPastEpoch + now.nsec / 1000000000.0;
-            pics710Driver->trigRate = 1.0 / (curTimeAfterADCInt
-                    - preTimeAfterADCInt);
-            preTimeAfterADCInt = curTimeAfterADCInt;
-
-            //Read out data via DMA
-            epicsMutexLock(pics710Driver->daqMutex);
-            errorCode = read(pics710Driver->hDevice, pics710Driver->pAcqData,
-                    pics710Driver->bytesToRead);
-            if (0 > errorCode)
+            else
             {
-                errlogPrintf("can't read data from card#%d, errorCode: %d\n",
-                        pics710Driver->module, errorCode);
-                pics710Driver->readErrors++;
-            }
-            epicsMutexUnlock(pics710Driver->daqMutex);
+                //trigger rate / IOC update rate
+                epicsTimeGetCurrent(&now);
+                curTimeAfterADCInt = now.secPastEpoch + now.nsec / 1000000000.0;
+                pics710Driver->trigRate = 1.0 / (curTimeAfterADCInt
+                        - preTimeAfterADCInt);
+                preTimeAfterADCInt = curTimeAfterADCInt;
 
-            //split the raw DMA buffer data into the data of individual channel
-            if (splitUnpackedData710(pics710Driver) != 0)
-            {
-                errlogPrintf("can't split DMA buffer data of card#%d \n",
-                        pics710Driver->module);
-            }
+                //Read out data via DMA
+                epicsMutexLock(pics710Driver->daqMutex);
+                errorCode = read(pics710Driver->hDevice,
+                        pics710Driver->pAcqData, pics710Driver->bytesToRead);
+                if (0 > errorCode)
+                {
+                    errlogPrintf(
+                            "can't read data from card#%d, errorCode: %d\n",
+                            pics710Driver->module, errorCode);
+                    pics710Driver->readErrors++;
+                }
+                epicsMutexUnlock(pics710Driver->daqMutex);
 
+                //split the raw DMA buffer data into the data of individual channel
+                if (splitUnpackedData710(pics710Driver) != 0)
+                {
+                    errlogPrintf("can't split DMA buffer data of card#%d \n",
+                            pics710Driver->module);
+                }
+
+                pics710Driver->count++;
+            }//if (ICS710_OK != errorCode)
             scanIoRequest(pics710Driver->ioscanpvt);
             ics710Debug("send interrupt to waveform records of card#%d \n",
                     pics710Driver->module);
 
-            pics710Driver->count++;
             epicsEventSignal(pics710Driver->runSemaphore);
         } //while (pics710Driver->running);
     }//while(1)
