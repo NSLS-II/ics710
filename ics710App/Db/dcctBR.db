@@ -31,6 +31,62 @@ record(calc,"BR-BI{DCCT:1}QOffset-I")
 #P2: ~ 100 ms beam decay
 #P3: the second jump/spike if it is in stack mode, ~100 ms after the first shot
 #P4: beam extracted, down to near zero 
+#PX: user selected point in the unit of ms
+
+record(ao, "BR-BI{DCCT:1}PointXTime-SP")
+{
+    field(DESC, "time after BR injection in ms")
+    field(OUT,  "BR-BI{DCCT:1}PointXTime-Calc_ PP")
+    field(PREC, "1")
+    field(EGU,  "ms")
+    field(PINI, "YES")
+    field(DRVL, "0")
+    field(DRVH, "900")
+    info(autosaveFields_pass0, VAL)
+}
+
+record(calcout, "BR-BI{DCCT:1}PointXTime-Calc_")
+{
+    field(INPA, "BR-BI{DCCT:1}PointXTime-SP")
+    field(INPB, "BR-BI{DCCT:1}I:Point1-I.INDX CP")
+    field(INPC, "BR-BI{DIG:DCCT}SampleRate-SP CP")
+    field(CALC, "FLOOR(A*C+B)")
+    field(OUT,  "BR-BI{DCCT:1}I:PointX-Sub_.INDX")
+    field(FLNK, "BR-BI{DCCT:1}I:PointX-Sub_")    
+}
+
+record(subArray,"BR-BI{DCCT:1}I:PointX-Sub_")
+{
+   field(DESC,"user selected pointX")
+   field(INP,"BR-BI{DCCT:1}I-Wf CPP")
+   field(MALM,"1000000")
+   #INDX can be changed by caput
+   field(INDX,"266")
+   field(NELM,"1")
+   field(FTVL,"DOUBLE")
+   field(PREC,"3")
+   field(EGU,"mA")
+   field(FLNK,"BR-BI{DCCT:1}I:PointX-I")
+}
+
+record(ai, "BR-BI{DCCT:1}I:PointX-I")
+{
+    field(DESC, "current at time X ms")
+    field(INP, "BR-BI{DCCT:1}I:PointX-Sub_")
+    field(PREC,"3")
+    field(EGU,"mA")
+    field(FLNK, "BR-BI{DCCT:1}Q:PointX-I")
+}
+
+record(calc,"BR-BI{DCCT:1}Q:PointX-I")
+{
+   field(DESC,"Q at point X")
+   field(INPA,"BR-BI{DCCT:1}I:PointX-I")
+   field(INPB,"528.0")
+   field(CALC,"A*B*0.001")
+   field(PREC,"3")
+   field(EGU,"nC")
+}
 
 record(subArray,"BR-BI{DCCT:1}I:Point1-I")
 {
