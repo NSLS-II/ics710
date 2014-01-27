@@ -99,13 +99,26 @@ record(acalcout,"${MON}I-aCalc_")
    field(PREC,"3")
    field(EGU,"mA")
    field(NUSE,"100000")
-   field(OUT,"${MON}I-Wf PP")
+   field(OUT,"${MON}I-Wf_ PP")
 }
 
-record(waveform,"${MON}I-Wf")
+record(waveform,"${MON}I-Wf_")
 {
    field(DESC,"beam current waveform data")
    field(NELM,"100000")
+   field(FTVL,"DOUBLE")
+   field(PREC,"3")
+   field(EGU,"mA")
+   field(FLNK, "${MON}I-Wf")
+}
+
+record(subArray,"${MON}I-Wf")
+{
+   field(DESC,"reduced waveform data")
+   field(INP, "${MON}I-Wf_")
+   field(MALM,"100000")
+   field(INDX,"63")
+   field(NELM,"99937")
    field(FTVL,"DOUBLE")
    field(PREC,"3")
    field(EGU,"mA")
@@ -133,18 +146,30 @@ record(acalcout,"${MON}Q-aCalc_")
    field(PREC,"3")
    field(EGU,"nC")
    field(NUSE,"100000")
-   field(OUT,"${MON}Q-Wf PP")
+   field(OUT,"${MON}Q-Wf_ PP")
 }
 
-record(waveform,"${MON}Q-Wf")
+record(waveform,"${MON}Q-Wf_")
 {
    field(DESC,"beam charge waveform data")
    field(NELM,"100000")
    field(FTVL,"DOUBLE")
    field(PREC,"3")
    field(EGU,"nC")
+   field(FLNK, "${MON}Q-Wf")
 }
 
+record(subArray,"${MON}Q-Wf")
+{
+   field(DESC,"reduced waveform data")
+   field(INP, "${MON}Q-Wf_")
+   field(MALM,"100000")
+   field(INDX,"63")
+   field(NELM,"99937")
+   field(FTVL,"DOUBLE")
+   field(PREC,"3")
+   field(EGU,"nC")
+}
 
 #DCCT calibration current source is DC calibrator KH526 
 record(calcout,"${MON}CalStatus-Calc_")
