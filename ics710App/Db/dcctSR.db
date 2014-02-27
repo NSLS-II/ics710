@@ -86,6 +86,76 @@ record(calc,"SR:C03-BI{DCCT:1}Q:PointX-I")
    field(EGU,"nC")
 }
 
+record(subArray,"SR:C03-BI{DCCT:1}I:Point3-Wf")
+{
+   field(DESC,"for lifetime calc")
+   field(INP,"SR:C03-BI{DCCT:1}I-Wf CP")
+   field(MALM,"1000000")
+   #INDX can be changed by caput
+   field(INDX,"100")
+   field(NELM,"3000")
+   field(FTVL,"DOUBLE")
+   field(PREC,"3")
+   field(EGU,"mA")
+   field(PINI,"YES")
+   info(autosaveFields_pass0, INDX)
+   field(FLNK,"SR:C03-BI{DCCT:1}I:Mean-aCalc_")
+}
+
+record(acalcout,"SR:C03-BI{DCCT:1}I:Mean-aCalc_")
+{
+   field(DESC,"averaged beam current")
+   field(NELM,"3000")
+   field(NUSE,"3000")
+   field(INAA,"SR:C03-BI{DCCT:1}I:Point3-Wf")
+   field(CALC,"AVG(AA)")
+   field(OUT,"SR:C03-BI{DCCT:1}I:Mean-I PP")
+}
+
+record(ai, "SR:C03-BI{DCCT:1}I:Mean-I")
+{
+   field(DESC, "averaged beam current")
+   field(PREC, "3")
+   field(EGU,  "mA")
+   field(FLNK, "SR:C03-BI{DCCT:1}I:Mean-Com_")
+}
+
+record(compress, "SR:C03-BI{DCCT:1}I:Mean-Com_")
+{
+    field(DESC, "data for lifetime calc")
+    field(INP,  "SR:C03-BI{DCCT:1}I:Mean-I")
+    field(ALG,  "Circular Buffer")
+    field(NSAM, "600")
+}
+
+record(ao, "SR:C03-BI{DCCT:1}I:Threshold-SP")
+{
+   field(DESC, "noise level for lf calc")
+   field(PREC, "3")
+   field(EGU,  "mA")
+   field(VAL,  "0.1")
+   field(PINI, "1")
+   info(autosaveFields_pass0, VAL)
+}
+
+record(ai, "SR:C03-BI{DCCT:1}Lifetime-I")
+{ 
+   field(DESC, "beam lifetime")
+   field(PREC, "3")
+   field(EGU,  "hour")
+   #field(TSEL, "")
+}
+
+record(longout, "SR:C03-BI{DCCT:1}SamplesForLf-SP")
+{
+   field(DESC, "number of samples")
+   field(DRVH, "600")
+   field(DRVL, "2")
+   field(VAL,  "60")
+   field(PINI, "1")
+   info(autosaveFields_pass0, VAL)
+}
+
 record(subArray,"SR:C03-BI{DCCT:1}I:Point1-I")
 {
    field(DESC,"the stored beam")
