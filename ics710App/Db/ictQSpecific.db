@@ -74,6 +74,34 @@ record(ai,"BTS-BI{ICT:2}ShotsPerSecond-Calc_")
 }
 
 
+#Ray's request on LTB ICT1 cross-checking 
+record(calcout, "LTB-BI{ICT:1}CrossCheck-Calc_")
+{
+  field(DESC, "Calibration cross-check")
+  field(INPA, "LTB-BI{ICT:1}Q-I")
+  field(INPB, "LTB-BI{FC:1}Q-I")
+  field(INPC, "LTB-BI{FC:2}Q-I CP")
+  field(INPD, "LTB-BI{ICT:2}Q-I")
+  field(INPE, "0.08")
+  field(CALC, "ABS(A)<E?0:(A>=B*0.9&&A>=C*0.9&&A>=D*0.9)?1:2")
+  field(OUT,  "LTB-BI{ICT:1}CrossCheck-Sts PP")
+}
+
+record(mbbi, "LTB-BI{ICT:1}CrossCheck-Sts")
+{
+  field(DESC, "Cross check result")
+  field(ZRVL, "0")
+  field(ONVL, "1")
+  field(TWVL, "2")
+  field(ZRST, "No beam, no check")
+  field(ONST, "Cross-check passed")
+  field(TWST, "Cross-check failed")
+  field(ZRSV, "NO_ALARM")
+  field(ONSV, "NO_ALARM")
+  field(TWSV, "MAJOR")
+}
+
+
 #LN ICT interlock test: the most challenging or tricky part is
 ##enabling / diableing the BCM calibration output,
 ##which is controlled by the PLC scanning at 1 Hz and not synchronized with any device
