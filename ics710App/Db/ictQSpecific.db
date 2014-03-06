@@ -83,7 +83,7 @@ record(calcout, "LTB-BI{ICT:1}CrossCheck-Calc_")
   field(INPC, "LTB-BI{FC:2}Q-I CP")
   field(INPD, "LTB-BI{ICT:2}Q-I")
   field(INPE, "0.08")
-  field(CALC, "ABS(A)<E?0:(A>=B*0.9&&A>=C*0.9&&A>=D*0.9)?1:2")
+  field(CALC, "(A<E&&B<E&&C<E&&D<E)?0:(A>=B*0.9&&A>=C*0.9&&A>=D*0.9)?1:2")
   field(OUT,  "LTB-BI{ICT:1}CrossCheck-Sts PP")
 }
 
