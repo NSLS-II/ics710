@@ -74,6 +74,25 @@ record(ai,"BTS-BI{ICT:2}ShotsPerSecond-Calc_")
 }
 
 
+#Upon Tasha's request
+record(calcout, "LTB-BI{ICT:1}QSum-LBSSOpn:1h-I_")
+{
+    field(DESC, "integrated Q when shutter open")
+    field(INPA, "LTB-BI{ICT:1}QSum:1h-I CP")
+    field(INPB, "LTB-PPS{Sh}Pos:Opn-Sts")
+    field(INPC, "LTB-BI{ICT:1}Q-I")
+    field(CALC, "B?A:A-C/1000.0")
+    field(OUT,  "LTB-BI{ICT:1}QSum-LBSSOpn:1h-I PP MSS")
+}
+
+record(ai, "LTB-BI{ICT:1}QSum-LBSSOpn:1h-I") {
+    field(DESC, "integrated Q when shutter open")
+    field(PREC, "3")
+    field(EGU, "uC")
+    field(MDEL,"-1")
+}
+
+
 #Ray's request on LTB ICT1 cross-checking 
 record(calcout, "LTB-BI{ICT:1}CrossCheck-Calc_")
 {

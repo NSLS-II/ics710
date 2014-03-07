@@ -206,23 +206,6 @@ record(ai, "$(MON)QSum:1h-I") {
     field(MDEL,"-1")
 }
 
-record(calcout, "LTB-BI{ICT:1}QSum-LBSSOpn:1h-I_")
-{
-    field(DESC, "integrated Q when shutter open")
-    field(INPA, "LTB-BI{ICT:1}QSum:1h-I CP")
-    field(INPB, "LTB-PPS{Sh}Pos:Opn-Sts")
-    field(INPC, "LTB-BI{ICT:1}Q-I")
-    field(CALC, "B?A:A-C/1000.0")
-    field(OUT,  "LTB-BI{ICT:1}QSum-LBSSOpn:1h-I PP MSS")
-}
-
-record(ai, "LTB-BI{ICT:1}QSum-LBSSOpn:1h-I") {
-    field(DESC, "integrated Q when shutter open")
-    field(PREC, "3")
-    field(EGU, "uC")
-    field(MDEL,"-1")
-}
-
 record(longin, "$(MON)Cnt:bad-I") {
 }
 
