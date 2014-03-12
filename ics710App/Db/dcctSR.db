@@ -3,7 +3,7 @@
 #### Psy	-	Primary system
 #### Ssy	-	Secondary system
 #### Dev	-	Device name
-#### MON	-	BR-BI{DCCT:1}
+#### MON	-	SR:C03-BI{DCCT:1}
 
 #for NSLS-2 SR, Trev=528*5 = 2640 ns
 record(calc,"SR:C03-BI{DCCT:1}QVSlope-Calc_")
@@ -29,6 +29,7 @@ record(calc,"SR:C03-BI{DCCT:1}QOffset-I")
 #two samples/points/locations to get total stored beam and injected beam
 #P1: stored beam
 #P2: spike, beam injected
+#P3: for averaging waveform data to get the mean/averaged beam current
 #PX: user selected point in the unit of ms
 
 record(ao, "SR:C03-BI{DCCT:1}PointXTime-SP")
@@ -329,6 +330,69 @@ record(ai, "SR:C03-BI{DCCT:1}QLossSum:1h-I")
     field(MDEL,"-1")
 }
 
+
+#Beam dosage (mAh) related to vacumm system
+record(compress,"SR:C03-BI{DCCT:1}Dosage:1h-Com_")
+{
+        field(DESC, "average I over 1-hour")
+        #INP is scalar
+        field(INP,"SR:C03-BI{DCCT:1}I:Total-I CP")
+        field(ALG,"N to 1 Average")
+        field(NSAM,"1")
+        field(N,"3600")
+        field(PREC,"3")
+        field(EGU,"mA")
+        info(autosaveFields_pass0, "N")
+        field(FLNK,"SR:C03-BI{DCCT:1}Dosage:1h-Calc_")
+}
+
+record(calcout, "SR:C03-BI{DCCT:1}Dosage:1h-Calc_")
+{
+	field(INPA, "SR:C03-BI{DCCT:1}Dosage:1h-Com_")
+	field(CALC, "A*3600")
+        field(PREC, "3")
+        field(EGU,  "mA")
+	field(OUT,  "SR:C03-BI{DCCT:1}Dosage:1h-I PP" )
+}
+
+record(ai, "SR:C03-BI{DCCT:1}Dosage:1h-I")
+{
+	field(DESC, "average I over 1-hour")
+	field(PREC, "3")
+        field(EGU,  "mAh")
+}
+
+record(compress,"SR:C03-BI{DCCT:1}Dosage:1d-Com_")
+{
+        field(DESC, "average I over 1-day")
+        #INP is scalar
+        field(INP,"SR:C03-BI{DCCT:1}Dosage:1h-I CP")
+        field(ALG,"N to 1 Average")
+        field(NSAM,"1")
+        field(N,"24")
+        field(PREC,"3")
+        field(EGU,"mA")
+        info(autosaveFields_pass0, "N")
+        field(FLNK,"SR:C03-BI{DCCT:1}Dosage:1d-Calc_")
+}
+
+record(calcout, "SR:C03-BI{DCCT:1}Dosage:1d-Calc_")
+{ 
+        field(INPA, "SR:C03-BI{DCCT:1}Dosage:1d-Com_")
+        field(CALC, "A*24")
+        field(PREC, "3")
+        field(EGU,  "mA")
+        field(OUT,  "SR:C03-BI{DCCT:1}Dosage:1d-I PP" )
+}
+
+record(ai, "SR:C03-BI{DCCT:1}Dosage:1d-I")
+{ 
+        field(DESC, "average I over 1-day")
+        field(PREC, "3")
+        field(EGU,  "mAh")
+}
+
+
 #averaging injected charge Q over interested number of shots(INOS)
 record(compress,"SR:C03-BI{DCCT:1}AveQOverINOS-I")
 {
@@ -344,7 +408,7 @@ record(compress,"SR:C03-BI{DCCT:1}AveQOverINOS-I")
 	field(PREC,"3")
 	field(EGU,"nC")
 	info(autosaveFields_pass0, "N")
-	field(FLNK,"BR-BI{DCCT:1}AveIOverINOS-I")
+	field(FLNK,"SR:C03-BI{DCCT:1}AveIOverINOS-I")
 }
 
 record(calc,"SR:C03-BI{DCCT:1}AveIOverINOS-I")
