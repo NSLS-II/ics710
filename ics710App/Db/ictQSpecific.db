@@ -90,8 +90,32 @@ record(ai, "LTB-BI{ICT:1}QSum-LBSSOpn:1h-I") {
     field(PREC, "3")
     field(EGU, "uC")
     field(MDEL,"-1")
+    field(HIGH,"90")
+    field(HIHI,"81")
+    field(HSV ,"MINOR")
+    field(HHSV,"MAJOR")
 }
 
+record(calcout, "BTS-BI{ICT:2}QSum-LBSSOpn:1h-I_")
+{
+    field(DESC, "integrated Q when shutter open")
+    field(INPA, "BTS-BI{ICT:2}QSum:1h-I CP")
+    field(INPB, "BTS-PPS{Sh}Pos:Opn-Sts")
+    field(INPC, "BTS-BI{ICT:2}Q-I")
+    field(CALC, "B?A:A-C/1000.0")
+    field(OUT,  "BTS-BI{ICT:2}QSum-LBSSOpn:1h-I PP MSS")
+}
+
+record(ai, "BTS-BI{ICT:2}QSum-LBSSOpn:1h-I") {
+    field(DESC, "integrated Q when shutter open")
+    field(PREC, "3")
+    field(EGU, "uC")
+    field(MDEL,"-1")
+    field(HIGH,"10")
+    field(HIHI,"9")
+    field(HSV ,"MINOR")
+    field(HHSV,"MAJOR")
+}
 
 #Ray's request on LTB ICT1 cross-checking 
 record(calcout, "LTB-BI{ICT:1}CrossCheck-Calc_")

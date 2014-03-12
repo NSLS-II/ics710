@@ -204,6 +204,10 @@ record(ai, "$(MON)QSum:1h-I") {
     field(PREC, "3")
     field(EGU, "uC")
     field(MDEL,"-1")
+    field(HIGH,"324")
+    field(HIHI,"360")
+    field(HSV ,"MINOR")
+    field(HHSV,"MAJOR")
 }
 
 record(longin, "$(MON)Cnt:bad-I") {
