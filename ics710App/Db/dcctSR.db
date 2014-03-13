@@ -392,6 +392,55 @@ record(ai, "SR:C03-BI{DCCT:1}Dosage:1d-I")
         field(EGU,  "mAh")
 }
 
+record(compress,"SR:C03-BI{DCCT:1}Dosage:1w-Com")
+{
+        field(DESC, "1-week dosage")
+        #INP is scalar
+        field(INP,"SR:C03-BI{DCCT:1}Dosage:1h-I CP")
+        field(ALG,"Circular Buffer")
+        field(NSAM,"168")
+        field(PREC,"3")
+        field(EGU,"mAh")
+}
+
+record(stringin, "SR:C03-BI{DCCT:1}Dosage:ST-Str")
+{
+	field(DESC, "Start time")
+	field(PINI, "1")
+	field(VAL,  "2014-03-10 00:00:00")
+	info(autosaveFields_pass0, "N")
+}
+
+record(stringin, "SR:C03-BI{DCCT:1}Dosage:ET-Str")
+{ 
+        field(DESC, "End Time")
+        field(PINI, "1")
+        field(VAL,  "2014-03-12 00:00:00")
+        info(autosaveFields_pass0, "N")
+}
+
+record(calc, "SR:C03-BI{DCCT:1}Dosage-Cmd")
+{
+	field(INPA, "SR:C03-BI{DCCT:1}Dosage-Cmd")
+	field(CALC, "A+1")
+}
+
+record(mbbi, "SR:C03-BI{DCCT:1}Dosage-Sts")
+{
+	field(ZRST, "Done")
+	field(ONST, "time input error")
+	field(TWST, "Retrieving data, wait...")
+	field(THST, "Failed to retrieve data")
+}
+
+record(ai, "SR:C03-BI{DCCT:1}Dosage:Total-I")
+{ 
+        field(DESC, "Total beam dosage")
+        field(EGU,  "mAh")
+	field(PREC, "3")
+	field(MDEL, "-1")
+}
+
 
 #averaging injected charge Q over interested number of shots(INOS)
 record(compress,"SR:C03-BI{DCCT:1}AveQOverINOS-I")
