@@ -172,165 +172,69 @@ record(subArray,"${MON}Q-Wf")
 }
 
 #DCCT calibration current source is DC calibrator KH526 
-record(calcout,"${MON}CalStatus-Calc_")
+#calibration is implemented in Python
+record(bo, "${MON}StartCal-Sel")
 {
-	field(DESC, "Is DC calibrator connected?")
-	field(SCAN, "10 second")
-	#4: 10mA; 5: 100mA
-	field(INPA, "SR:C30-DI{KH526}Range-Sel")
-	#field(INPB, "${MON}CalStatus-Calc_.STAT")
-	#field(CALC, "A>3&&B==0")
-	field(CALC, "A>3")
-	field(OUT, "${MON}CalStatus-Sts PP")
-	field(FLNK, "${MON}CalStatus-Calc2_")
+        field(DESC, "start calibration")
+        field(ZNAM, "Started")
+        field(ONAM, "Stopped")
+	field(VAL,  "1")
+	field(OUT, "${MON}StartCal-Calc.PROC")
 }
 
-record(calcout,"${MON}CalStatus-Calc2_")
+record(calc, "${MON}StartCal-Calc")
 {
-	field(DESC, "Is DC calibrator connected?")
-	field(INPA, "${MON}CalStatus-Calc_.STAT")
-	field(CALC, "!(A>0)")
-	field(OUT, "${MON}CalStatus-Sts PP")
+        field(DESC, "counter")
+	field(SDIS, "${MON}StartCal-Sel")
+        field(INPA, "${MON}StartCal-Calc")
+        field(CALC,  "A+1")
 }
 
-record(bi, "${MON}CalStatus-Sts")
+record(mbbi, "${MON}CalStatus-Sts")
 {
 	field(DESC, "system status")
-	field(ZNAM, "Not Ready")
-	field(ONAM, "Ready")
+	field(ZRST, "Done")
+	field(ONST, "DC source disconnected")
+	field(TWST, "In process, wait...")
+	field(THST, "Adjust cal Max. input")
+	field(FRST, "Adjust cal step size")
+	field(FVST, "Only 100 steps performed")
 }
 
-record(mbbo, "${MON}StartCal-Sel")
+record(ao, "${MON}CalStepSize-SP")
 {
-	field(DESC, "start calibration")
-	#field(OUT,  "${MON}Sweep-Calc_.DISA")
-	field(ZRST, "Start")
-	field(ONST, "Stop")
-	field(VAL,  "1")
-	field(FLNK, "$(MON)Reset-Seq")
+	field(EGU,  "mA")
+	field(PREC, "1")
+	field(VAL,  "10")
+	field(PINI, "YES")
+        info(autosaveFields_pass0, "VAL")
 }
 
-record(seq, "$(MON)Reset-Seq")
+record(ao, "${MON}CalMaxInput-SP")
 {
-  #Pay attention to the processing sequence of LNKn
-  #DLY* of seq seems asynchronous;  
-  field(DESC, "reset PVs")
-  field(LNK1, "SR:C30-DI{KH526}Out-SP CA")
-  field(LNK2, "${MON}Iterate-Calc_")
-  field(LNK3, "${MON}Iterate-Calc_.DISA")
-  field(LNK4, "${MON}Sweep-Calc_")
-  #don't use PP for ${MON}CalInput-Wf_.RES, otherwise,
-  #${MON}CalInput-Wf_ gets processed twice at the beginning  
-  field(LNK5, "${MON}CalInput-Wf_.RES")
-  #delay 4 seconds, then reset and process compress record
-  #then, processing-loop starts
-  field(DLY6, "4")
-  field(LNK6, "${MON}CalOutput-Wf_.RES PP")
-}
-
-#sweep step size: FullScale*0.1/20; steps: 19 (0~18) 
-#max. output value: 90%*0.1(due to DCCT windings)*FullScale
-record(calcout,"${MON}Sweep-Calc_")
-{
-	field(DESC, "sweeping DC source")
-	field(SDIS, "${MON}StartCal-Sel")
-	field(INPA, "${MON}FullScale-I.RVAL")
-	field(INPB, "20")
-	field(INPC, "${MON}Sweep-Calc_")
-	#INPD just for triggering record processing
-	#It's OK to use any record type including waveform, compress	
-	field(INPD, "${MON}CalOutput-Wf_ CP")
-	field(CALC, "C<A*0.09?C+A*0.1/B:0")
-	#field(CALC, "C+A*0.1/B")
-	field(OOPT, "When Non-zero")
-	#don't need PP for record.PROC
-	field(OUT, "${MON}Delay-Calc_.PROC")
-    field(FLNK, "${MON}SetCalibrator-SP")
-}
-
-record(ao, "${MON}SetCalibrator-SP")
-{
-	field(DESC, "write to DC Calibrator")
-	field(OMSL, "closed_loop")
-	field(DOL,	"${MON}Sweep-Calc_")
-	field(OUT,  "SR:C30-DI{KH526}Out-SP CA")
-}
-
-#implementation of synchronous delay using calcout with ODLY and OUT to .PROC
-record(calcout,"${MON}Delay-Calc_")
-{
-	field(DESC, "wait for the source stable")
-	field(INPA, "${MON}Delay-Calc_")
-	field(CALC, "!A")
-	field(ODLY, "5")
-	#be careful: ODLY doesn't delay the processing of FLNK
-	#it's better to use OUT pointing to recordA.PROC to trigger recordA processed 
-	field(OUT, "${MON}CalOutput-Wf_.PROC")
- 	#field(FLNK, "${MON}CalOutput-Wf")
-}
-
-record(compress,"${MON}CalOutput-Wf_")
-{
-	field(DESC, "output data")
-	field(INP,"${MON}AveI-I")
-	field(ALG,"Circular Buffer")
-	field(NSAM,"19")
-	#FLNK seems not working for automatic loop-processing
-	#field(FLNK,"${MON}Sweep-Calc_.PROC")
-}
-
-record(calc,"${MON}CalInput-Calc_")
-{
-	field(DESC, "DC source input")
-	field(INPA, "${MON}Sweep-Calc_ CP")
-	field(CALC, "A*10")
-	field(FLNK, "${MON}CalInput-Wf_")
-}
-
-record(compress,"${MON}CalInput-Wf_")
-{
-	field(DESC, "DC source input")
-	field(INP,"${MON}CalInput-Calc_")
-	field(ALG,"Circular Buffer")
-	field(NSAM,"19")
-}
-
-record(bo, "${MON}StartFit-Cmd")
-{
-	field(DESC, "start polyfit")
-	field(ZNAM, "StopFit")
-	field(ONAM, "StartFit")
-	field(FLNK, "${MON}ShiftCalInput-acalc_")
-}
-
-record(acalcout,"${MON}ShiftCalInput-acalc_")
-{
-   field(DESC,"Right-shift of CalInput-Wf_")
-   field(NELM,"19")
-   field(INAA,"${MON}CalInput-Wf_")
-   field(CALC,"AA>>1")
-   field(NUSE,"19")
-   field(OUT,"${MON}CalInput-Wf PP")
+        field(EGU,  "mA")
+        field(PREC, "1")
+        field(VAL,  "180")
+        field(PINI, "YES")
+        info(autosaveFields_pass0, "VAL")
 }
 
 record(waveform,"${MON}CalInput-Wf")
 {
    field(DESC,"DC source input")
-   field(NELM,"19")
+   field(NELM,"100")
    field(FTVL,"DOUBLE")
-   field(PREC,"1")
+   field(PREC,"3")
    field(EGU,"mA")
-   field(FLNK,"${MON}CalOutput-Wf")
 }
 
 record(waveform,"${MON}CalOutput-Wf")
 {
    field(DESC,"Readback data")
-   field(NELM,"19")
+   field(NELM,"100")
    field(FTVL,"DOUBLE")
-   field(PREC,"1")
+   field(PREC,"3")
    field(EGU,"mA")
-   field(INP,"${MON}CalOutput-Wf_")
 }
 
 #First-order coefficients by python-based polyfit
@@ -341,20 +245,6 @@ record(ai, "${MON}CalP0-I")
 
 record(ai, "${MON}CalP1-I")
 { 
-    field(PREC, "6")
+    field(PREC, "3")
+    field(EGU,  "mA")
 }
-
-record(calcout,"${MON}Iterate-Calc_")
-{
-	field(DESC, "iterate 19 times")
-	field(DISV, "17")
-	field(INPA, "${MON}Iterate-Calc_")
-	#INPB just for triggering record processing; CP breaks lock-set
-	field(INPB, "${MON}DelayFan-Calc_ CP")
-	#field(INPB, "${MON}Delay-Calc_ CP")
-	field(CALC, "A+1")
-	#field(ODLY, "3")
-	field(OUT,  "${MON}Iterate-Calc_.DISA")
-	#field(FLNK, "${MON}Sweep-Calc_")
-}
-

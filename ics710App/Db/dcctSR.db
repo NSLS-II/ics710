@@ -149,7 +149,7 @@ record(ai, "SR:C03-BI{DCCT:1}Lifetime-I")
 
 record(ai, "SR:C03-BI{DCCT:1}LifeHour-I")
 {
-   field(DESC, "Life*Hour)
+   field(DESC, "Life*Hour")
    field(PREC, "3")
    field(EGU,  "mAh")
    #field(TSEL, "")
