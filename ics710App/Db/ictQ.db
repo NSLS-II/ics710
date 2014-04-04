@@ -173,6 +173,16 @@ record(ai, "${MON}QSum:1h-I_")
     field(MDEL,"-1")
 }
 
+record(calc, "${MON}Q-I_")
+{
+    field(DESC, "remove negative Q")
+    field(INPA, "${MON}Q-I CP")
+    field(CALC, "A<0.0?0:A")
+    field(PREC, "3")
+    field(EGU, "nC")
+    field(MDEL,"-1")
+}
+
 #QSum:1h-I: one-hour integrated charge calculated by aSub
 record(aSub, "$(MON)calc-ASub_") {
   field(INAM, "InitTimedBuffer")
@@ -183,7 +193,7 @@ record(aSub, "$(MON)calc-ASub_") {
   field(FTVA, "DOUBLE") # Sum
   field(FTVB, "ULONG")  # Invalid Count
   field(FTVC, "ULONG")  # Total Count
-  field(INPA, "$(MON)Q-I CP")
+  field(INPA, "${MON}Q-I_ CP")
   field(INPB, "3600")
   field(INPC, "0")
   field(OUTA, "$(MON)QSum:1h-Calc_.A PP MSS")
