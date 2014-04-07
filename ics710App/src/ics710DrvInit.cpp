@@ -335,7 +335,12 @@ ics710DaqThread(void *arg)
                             pics710Driver->module, errorCode);
                     pics710Driver->readErrors++;
                 }
+
                 epicsMutexUnlock(pics710Driver->daqMutex);
+                scanIoRequest(pics710Driver->ioscanpvt);
+                ics710Debug("send interrupt to waveform records of card#%d \n",
+                    pics710Driver->module);
+                epicsEventSignal(pics710Driver->runSemaphore);
 
                 //split the raw DMA buffer data into the data of individual channel
                 if (splitUnpackedData710(pics710Driver) != 0)
@@ -346,11 +351,6 @@ ics710DaqThread(void *arg)
 
                 pics710Driver->count++;
             }//if (ICS710_OK != errorCode)
-            scanIoRequest(pics710Driver->ioscanpvt);
-            ics710Debug("send interrupt to waveform records of card#%d \n",
-                    pics710Driver->module);
-
-            epicsEventSignal(pics710Driver->runSemaphore);
         } //while (pics710Driver->running);
     }//while(1)
 }//void ics710DaqThread(void *arg)

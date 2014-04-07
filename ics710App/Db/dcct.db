@@ -48,7 +48,7 @@ record(ao,"${MON}IOffset-SP")
    field(PREC,"3")
    field(EGU,"mA")
    info(autosaveFields_pass0, "VAL")
-   field(FLNK,"BR-BI{DCCT:1}QOffset-I.PROC")
+   #field(FLNK,"BR-BI{DCCT:1}QOffset-I.PROC")
 }
 
 #${MON}IOffset-SP is based on AveI

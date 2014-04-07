@@ -255,7 +255,7 @@ record(longout,"${DIG}Samples-SP")
    field(HOPR, "${NELM}")
    field(LOPR, "1")
    field(EGU, "samples")
-   info(autosaveFields_pass0, "VAL")
+   info(autosaveFields_pass0, "VAL DRVL DRVH HOPR LOPR")
    field(FLNK, "${DIG}Samples-RB")
 }
 
