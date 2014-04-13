@@ -128,9 +128,10 @@ record(calcout, "LTB-BI{ICT:1}CrossCheck-Calc_")
   field(INPE, "0.1")
   field(INPF, "0.5")
   field(CALC, "(A<E&&B<E&&C<E&&D<E)?0:(A>=B*F&&A>=C*F&&A>=D*F)?1:2")
-  field(OUT,  "LTB-BI{ICT:1}CrossCheck-Sts PP")
+  #field(OUT,  "LTB-BI{ICT:1}CrossCheck-Sts PP")
 }
 
+#Cross-checking is done in Python -- chargeMisc
 record(mbbi, "LTB-BI{ICT:1}CrossCheck-Sts")
 {
   field(DESC, "Cross check result")

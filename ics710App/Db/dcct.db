@@ -82,30 +82,40 @@ record(acalcout, "${MON}StdOverAveI-acalc_")
     field(OUT,  "${MON}StdOverAveI-I PP")
 }
 
+#Is this the DCCT resolutoin? Not sure
 record(ai, "${MON}StdOverAveI-I")
 {
 	field(EGU, "mA")
 }
 
+record(calc,"${MON}RMSNoise-I")
+{
+   field(DESC,"Resolution")
+   field(INPA,"${MON}StdV-I CP")
+   field(INPB,"${MON}IVSlope-Calc_")
+   field(CALC,"A*B")
+   field(PREC,"5")
+   field(EGU,"mA")
+}
+
 record(acalcout,"${MON}I-aCalc_")
 {
    field(DESC,"Beam current by DCCT")
-   field(NELM,"100000")
-   field(NUSE,"100000")
+   field(NELM,"18000")
+   field(NUSE,"18000")
    field(INAA,"${MON}V-Wf CP")
    field(INPA,"${MON}IVSlope-Calc_")
    field(INPB,"${MON}IOffset-SP")
    field(CALC,"ABS((A*AA)-B)")
    field(PREC,"3")
    field(EGU,"mA")
-   field(NUSE,"100000")
    field(OUT,"${MON}I-Wf_ PP")
 }
 
 record(waveform,"${MON}I-Wf_")
 {
    field(DESC,"beam current waveform data")
-   field(NELM,"100000")
+   field(NELM,"18000")
    field(FTVL,"DOUBLE")
    field(PREC,"3")
    field(EGU,"mA")
@@ -116,9 +126,9 @@ record(subArray,"${MON}I-Wf")
 {
    field(DESC,"reduced waveform data")
    field(INP, "${MON}I-Wf_")
-   field(MALM,"100000")
+   field(MALM,"18000")
    field(INDX,"63")
-   field(NELM,"99937")
+   field(NELM,"17937")
    field(FTVL,"DOUBLE")
    field(PREC,"3")
    field(EGU,"mA")
@@ -137,22 +147,21 @@ record(calc,"${MON}AveQ-I")
 record(acalcout,"${MON}Q-aCalc_")
 {
    field(DESC,"Beam charge by DCCT")
-   field(NELM,"100000")
-   field(NUSE,"100000")
+   field(NELM,"18000")
+   field(NUSE,"18000")
    field(INAA,"${MON}V-Wf CP")
    field(INPA,"${MON}QVSlope-Calc_")
    field(INPB,"${MON}QOffset-I")
    field(CALC,"ABS((A*AA)-B)")
    field(PREC,"3")
    field(EGU,"nC")
-   field(NUSE,"100000")
    field(OUT,"${MON}Q-Wf_ PP")
 }
 
 record(waveform,"${MON}Q-Wf_")
 {
    field(DESC,"beam charge waveform data")
-   field(NELM,"100000")
+   field(NELM,"18000")
    field(FTVL,"DOUBLE")
    field(PREC,"3")
    field(EGU,"nC")
@@ -163,9 +172,9 @@ record(subArray,"${MON}Q-Wf")
 {
    field(DESC,"reduced waveform data")
    field(INP, "${MON}Q-Wf_")
-   field(MALM,"100000")
+   field(MALM,"18000")
    field(INDX,"63")
-   field(NELM,"99937")
+   field(NELM,"17937")
    field(FTVL,"DOUBLE")
    field(PREC,"3")
    field(EGU,"nC")
