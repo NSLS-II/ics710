@@ -53,6 +53,7 @@ record(ai,"${MON}Q-I")
    field(PREC,"3")
    field(EGU,"nC")
    field(MDEL,"-1")
+   field(TSEL, "LTB-TS{EVR:Q1B}EvtGCnt-I.TIME")
    #field(FLNK,"${MON}Buffer-aSub_")
    field(FLNK,"${MON}CircularQ-com_")
 }

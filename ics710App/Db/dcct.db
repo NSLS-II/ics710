@@ -95,7 +95,7 @@ record(calc,"${MON}RMSNoise-I")
    field(INPB,"${MON}IVSlope-Calc_")
    field(CALC,"A*B")
    field(PREC,"5")
-   field(EGU,"mA")
+   field(EGU,"uA")
 }
 
 record(acalcout,"${MON}I-aCalc_")

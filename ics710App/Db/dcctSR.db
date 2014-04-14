@@ -275,6 +275,7 @@ record(calc,"SR:C03-BI{DCCT:1}Q:Total-I")
    field(HIHI,"1320")
    field(HSV ,"MINOR")
    field(HHSV,"MAJOR")
+   field(TSEL, "SR:C03-TS{EVR:G1A}EvtGCnt-I.TIME")
    field(FLNK,"SR-BI{}Eff:SRInj-I")
 }
 
