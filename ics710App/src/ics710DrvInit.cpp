@@ -35,7 +35,7 @@ const int GAIN = 0;
 const int FILTER = 1;
 const double SAMPLING_RATE = 20.0;
 //0:ICS710_SAMP_NORMAL(best SNR),1:*_DOUBLE,2:ICS710_SAMP_QUAD(fastest)
-const int OSR = 2;
+const int OSR = 0;
 const int TRIG_SEL = 1;//ICS710_TRIG_INTERNAL or ICS710_TRIG_EXTERNAL
 /*May-13-2011: it's better not to use Continuous acquisition mode
  * which sometimes gives glitch data;

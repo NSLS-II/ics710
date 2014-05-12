@@ -1,0 +1,113 @@
+#Beam dosage (mAh) related to vacumm system
+record(compress,"SR:C03-BI{DCCT:1}Dosage:1h-Com_")
+{
+        field(DESC, "average I over 1-hour")
+        #INP is scalar
+        field(INP,"SR:C03-BI{DCCT:1}I:Total-I CP")
+        field(ALG,"N to 1 Average")
+        field(NSAM,"1")
+        field(N,"3600")
+        field(PREC,"3")
+        field(EGU,"mA")
+        info(autosaveFields_pass0, "N")
+        field(FLNK,"SR:C03-BI{DCCT:1}Dosage:1h-Calc_")
+}
+
+record(calcout, "SR:C03-BI{DCCT:1}Dosage:1h-Calc_")
+{
+        field(INPA, "SR:C03-BI{DCCT:1}Dosage:1h-Com_")
+	#don't need multipling 3600
+        #field(CALC, "A*3600")
+        field(CALC, "A")
+        field(PREC, "3")
+        field(EGU,  "mA")
+        field(OUT,  "SR:C03-BI{DCCT:1}Dosage:1h-I PP" )
+}
+
+record(ai, "SR:C03-BI{DCCT:1}Dosage:1h-I")
+{
+        field(DESC, "average I over 1-hour")
+        field(PREC, "3")
+        field(EGU,  "mAh")
+}
+
+record(compress,"SR:C03-BI{DCCT:1}Dosage:1d-Com_")
+{
+        field(DESC, "average I over 1-day")
+        #INP is scalar
+        field(INP,"SR:C03-BI{DCCT:1}Dosage:1h-I CP")
+        field(ALG,"N to 1 Average")
+        field(NSAM,"1")
+        field(N,"24")
+        field(PREC,"3")
+        field(EGU,"mA")
+        info(autosaveFields_pass0, "N")
+        field(FLNK,"SR:C03-BI{DCCT:1}Dosage:1d-Calc_")
+}
+
+record(calcout, "SR:C03-BI{DCCT:1}Dosage:1d-Calc_")
+{
+        field(INPA, "SR:C03-BI{DCCT:1}Dosage:1d-Com_")
+        #field(CALC, "A*24")
+        field(CALC, "A")
+        field(PREC, "3")
+        field(EGU,  "mA")
+        field(OUT,  "SR:C03-BI{DCCT:1}Dosage:1d-I PP" )
+}
+
+record(ai, "SR:C03-BI{DCCT:1}Dosage:1d-I")
+{
+        field(DESC, "average I over 1-day")
+        field(PREC, "3")
+        field(EGU,  "mAh")
+}
+
+record(compress,"SR:C03-BI{DCCT:1}Dosage:1w-Com")
+{
+        field(DESC, "1-week dosage")
+        #INP is scalar
+        field(INP,"SR:C03-BI{DCCT:1}Dosage:1h-I CP")
+        field(ALG,"Circular Buffer")
+        field(NSAM,"168")
+        field(PREC,"3")
+        field(EGU,"mAh")
+}
+
+record(stringin, "SR:C03-BI{DCCT:1}Dosage:ST-Str")
+{
+        field(DESC, "Start time")
+        field(PINI, "1")
+        field(VAL,  "2014-03-10 00:00:00")
+        info(autosaveFields_pass0, "VAL")
+}
+
+record(stringin, "SR:C03-BI{DCCT:1}Dosage:ET-Str")
+{
+        field(DESC, "End Time")
+        field(PINI, "1")
+        field(VAL,  "2014-03-12 00:00:00")
+        info(autosaveFields_pass0, "VAL")
+}
+
+record(calc, "SR:C03-BI{DCCT:1}Dosage-Cmd")
+{
+        field(INPA, "SR:C03-BI{DCCT:1}Dosage-Cmd")
+        field(CALC, "A+1")
+}
+
+record(mbbi, "SR:C03-BI{DCCT:1}Dosage-Sts")
+{
+        field(ZRST, "Done")
+        field(ONST, "time input error")
+        field(TWST, "Retrieving data, wait...")
+        field(THST, "Failed to retrieve data")
+}
+
+record(ai, "SR:C03-BI{DCCT:1}Dosage:Total-I")
+{
+        field(DESC, "Total beam dosage")
+        field(EGU,  "mAh")
+        field(PREC, "3")
+        field(MDEL, "-1")
+}
+

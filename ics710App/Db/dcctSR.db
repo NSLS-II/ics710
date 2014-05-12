@@ -5,6 +5,18 @@
 #### Dev	-	Device name
 #### MON	-	SR:C03-BI{DCCT:1}
 
+#
+record(waveform,"SR:C03-BI{DCCT:1}I-Wf__")
+{
+   field(DESC,"for injectedQ")
+   field(NELM,"${NELM}")
+   field(FTVL,"DOUBLE")
+   field(PREC,"3")
+   field(EGU,"mA")
+   field(INP, "SR:C03-BI{DCCT:1}I-Wf_ CP")
+   field(TSEL, "SR:C03-TS{EVR:G1A}EvtGCnt-I.TIME")
+}
+
 #for NSLS-2 SR, Trev=528*5 = 2640 ns
 record(calc,"SR:C03-BI{DCCT:1}QVSlope-Calc_")
 {
@@ -58,7 +70,7 @@ record(subArray,"SR:C03-BI{DCCT:1}I:PointX-Sub_")
 {
    field(DESC,"user selected pointX")
    field(INP,"SR:C03-BI{DCCT:1}I-Wf CPP")
-   field(MALM,"100000")
+   field(MALM,"${NELM}")
    #INDX can be changed by caput
    field(INDX,"266")
    field(NELM,"1")
@@ -87,31 +99,11 @@ record(calc,"SR:C03-BI{DCCT:1}Q:PointX-I")
    field(EGU,"nC")
 }
 
-record(subArray,"SR:C03-BI{DCCT:1}I:Point3-Wf")
-{
-   field(DESC,"for lifetime calc")
-   #field(INP,"SR:C03-BI{DCCT:1}I-Wf CP")
-   field(INP,"SR:C03-BI{DCCT:1}I-Wf")
-   field(MALM,"100000")
-   #INDX can be changed by caput
-   field(INDX,"100")
-   field(NELM,"5000")
-   field(FTVL,"DOUBLE")
-   field(PREC,"3")
-   field(EGU,"mA")
-   field(PINI,"YES")
-   info(autosaveFields_pass0, INDX)
-   #field(FLNK,"SR:C03-BI{DCCT:1}I:Mean-aCalc_")
-}
-
 record(acalcout,"SR:C03-BI{DCCT:1}I:Mean-aCalc_")
 {
    field(DESC,"averaged beam current")
-   #field(NELM,"5000")
-   field(NELM,"18000")
-   field(NUSE,"18000")
-   #field(NUSE,"5000")
-   #field(INAA,"SR:C03-BI{DCCT:1}I:Point3-Wf")
+   field(NELM,"${NELM}")
+   field(NUSE,"${NELM}")
    field(INAA,"SR:C03-BI{DCCT:1}I-Wf_ CP")
    field(CALC,"AVG(AA)")
    field(OUT,"SR:C03-BI{DCCT:1}I:Mean-I PP")
@@ -164,17 +156,98 @@ record(longout, "SR:C03-BI{DCCT:1}SamplesForLf-SP")
 {
    field(DESC, "number of samples")
    field(DRVH, "600")
-   field(DRVL, "2")
+   field(DRVL, "60")
    field(VAL,  "60")
    field(PINI, "1")
    info(autosaveFields_pass0, VAL)
+}
+
+
+record(subArray,"SR:C03-BI{DCCT:1}I:Stored-Wf_")
+{
+   field(DESC,"the stored beam")
+   field(INP,"SR:C03-BI{DCCT:1}I-Wf_ CP")
+   field(MALM,"${NELM}")
+   #INDX can be changed by caput
+   field(INDX,"0")
+   #1KHz sampling rate
+   field(NELM,"300")
+   field(FTVL,"DOUBLE")
+   field(PREC,"3")
+   field(EGU,"mA")
+   field(FLNK,"SR:C03-BI{DCCT:1}I:Injected-Wf_")
+   info(autosaveFields_pass0, INDX)
+}
+
+record(subArray,"SR:C03-BI{DCCT:1}I:Injected-Wf_")
+{
+   field(DESC,"injected beam")
+   field(INP,"SR:C03-BI{DCCT:1}I-Wf_")
+   field(MALM,"${NELM}")
+   #INDX can be changed by caput
+   field(INDX,"500")
+   #1KHz sampling rate             
+   field(NELM,"300")
+   field(FTVL,"DOUBLE")
+   field(PREC,"3")
+   field(EGU,"mA")
+   field(FLNK,"SR:C03-BI{DCCT:1}I:Stored-aCalc_")
+   info(autosaveFields_pass0, INDX)
+}
+
+record(acalcout,"SR:C03-BI{DCCT:1}I:Stored-aCalc_")
+{
+   field(DESC,"averaged beam current")
+   field(NELM,"300")
+   field(NUSE,"300")
+   field(INAA,"SR:C03-BI{DCCT:1}I:Stored-Wf_")
+   field(CALC,"AVG(AA)")
+   field(OUT,"SR:C03-BI{DCCT:1}I:Stored-I PP")
+}
+
+record(ai, "SR:C03-BI{DCCT:1}I:Stored-I")
+{
+   field(DESC, "stored beam")
+   field(PREC, "3")
+   field(EGU,  "mA")
+   field(FLNK, "SR:C03-BI{DCCT:1}I:Injected-aCalc_")
+}
+
+record(acalcout,"SR:C03-BI{DCCT:1}I:Injected-aCalc_")
+{
+   field(DESC,"averaged beam current")
+   field(NELM,"300")
+   field(NUSE,"300")
+   field(INAA,"SR:C03-BI{DCCT:1}I:Injected-Wf_")
+   field(CALC,"AVG(AA)")
+   field(OUT,"SR:C03-BI{DCCT:1}I:Injected-I PP")
+}
+
+record(ai, "SR:C03-BI{DCCT:1}I:Injected-I")
+{
+   field(DESC, "stored beam")
+   field(PREC, "3")
+   field(EGU,  "mA")
+   field(FLNK, "SR:C03-BI{DCCT:1}Q:Injected-I")
+}
+
+record(calc,"SR:C03-BI{DCCT:1}Q:Injected-I")
+{
+   field(DESC,"injected charge")
+   field(INPA,"SR:C03-BI{DCCT:1}I:Injected-I")
+   field(INPB,"2640.0")
+   field(CALC,"A*B*0.001")
+   field(PREC,"3")
+   field(EGU,"nC")
+   field(MDEL,"-1")
+   field(TSEL, "SR:C03-TS{EVR:G1A}EvtGCnt-I.TIME")
 }
 
 record(subArray,"SR:C03-BI{DCCT:1}I:Point1-I")
 {
    field(DESC,"the stored beam")
    field(INP,"SR:C03-BI{DCCT:1}I-Wf")
-   field(MALM,"100000")
+   field(MALM,"${NELM}")
    #INDX can be changed by caput
    field(INDX,"0")
    field(NELM,"1")
@@ -190,7 +263,7 @@ record(subArray,"SR:C03-BI{DCCT:1}I:Point2-I")
 {
    field(DESC,"beam injected: spike point")
    field(INP,"SR:C03-BI{DCCT:1}I-Wf")
-   field(MALM,"100000")
+   field(MALM,"${NELM}")
    field(INDX,"268")
    field(NELM,"1")
    field(FTVL,"DOUBLE")
@@ -200,6 +273,7 @@ record(subArray,"SR:C03-BI{DCCT:1}I:Point2-I")
    field(PINI,"YES")
    info(autosaveFields_pass0, INDX)
 }
+
 
 record(calc,"SR:C03-BI{DCCT:1}Q:Point1-I")
 {
@@ -220,10 +294,10 @@ record(calc,"SR:C03-BI{DCCT:1}Q:Point2-I")
    field(CALC,"A*B*0.001")   
    field(PREC,"3")
    field(EGU,"nC")
-   field(FLNK,"SR:C03-BI{DCCT:1}I:Injected-I")
+   field(FLNK,"SR:C03-BI{DCCT:1}I:Injected-I_")
 }
 
-record(calc,"SR:C03-BI{DCCT:1}I:Injected-I")
+record(calc,"SR:C03-BI{DCCT:1}I:Injected-I_")
 {
    field(DESC,"injected beam")
    field(INPA,"SR:C03-BI{DCCT:1}I:Point2-I")
@@ -247,13 +321,13 @@ record(calc,"SR:C03-BI{DCCT:1}I:Total-I")
    field(PREC,"3")
    field(EGU,"mA")
    field(MDEL,"-1")
-   field(FLNK,"SR:C03-BI{DCCT:1}Q:Injected-I")
+   field(FLNK,"SR:C03-BI{DCCT:1}Q:Injected-I_")
 }
 
-record(calc,"SR:C03-BI{DCCT:1}Q:Injected-I")
+record(calc,"SR:C03-BI{DCCT:1}Q:Injected-I_")
 {
    field(DESC,"injected charge")
-   field(INPA,"SR:C03-BI{DCCT:1}I:Injected-I")
+   field(INPA,"SR:C03-BI{DCCT:1}I:Injected-I_")
    field(INPB,"2640.0")
    field(CALC,"A*B*0.001")
    field(PREC,"3")
@@ -282,8 +356,8 @@ record(calc,"SR:C03-BI{DCCT:1}Q:Total-I")
 record(calc,"SR-BI{}Eff:SRInj-I")
 {
    field(DESC,"efficiency:charge loss")
-   field(INPA,"SR:C03-BI{DCCT:1}Q:Injected-I")
-   field(INPB,"BTS-BI{ICT:1}Q-I")
+   field(INPA,"SR:C03-BI{DCCT:1}Q:Injected-I_")
+   field(INPB,"BTS-BI{ICT:2}Q-I")
    field(INPC,"-1")
    field(INPD,"0.1")
    field(CALC,"A<D||A<B?C:100*B/A")   
@@ -355,7 +429,6 @@ record(compress,"SR:C03-BI{DCCT:1}AveQOverINOS-I")
 	field(ALG,"N to 1 Average")
 	field(NSAM,"1")
 	#N can't be DB_LINK, must be constant
-	#field(N,"${MON}NbrShots-SP CP NMS")
 	#N can be changed to the interested number of shots at run-time
 	field(N,"10")
 	field(PREC,"3")
@@ -375,7 +448,6 @@ record(calc,"SR:C03-BI{DCCT:1}AveIOverINOS-I")
 }
 
 #circular buffer of injected charge Q
-#record(compress,"${MON}CircularQ-com_")
 record(compress,"SR:C03-BI{DCCT:1}CircularQ-com_")
 {
     field(DESC, "circular buffer Q")

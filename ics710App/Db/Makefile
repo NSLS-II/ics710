@@ -26,6 +26,7 @@ DB += ictQSpecific.db
 DB += dcct.db
 DB += dcctBR.db
 DB += dcctSR.db
+DB += beamDosage.db
 DB_INSTALLS += $(EPICS_BASE)/db/iocAdminSoft.db
 DB_INSTALLS += $(EPICS_BASE)/db/save_restoreStatus.db
 #----------------------------------------------------
