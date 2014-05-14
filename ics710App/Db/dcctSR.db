@@ -220,14 +220,20 @@ record(acalcout,"SR:C03-BI{DCCT:1}I:Injected-aCalc_")
    field(NUSE,"300")
    field(INAA,"SR:C03-BI{DCCT:1}I:Injected-Wf_")
    field(CALC,"AVG(AA)")
-   field(OUT,"SR:C03-BI{DCCT:1}I:Injected-I PP")
+   field(OUT,"SR:C03-BI{DCCT:1}I:Injected-I.B")
+   field(FLNK, "SR:C03-BI{DCCT:1}I:Injected-I")
 }
 
-record(ai, "SR:C03-BI{DCCT:1}I:Injected-I")
+record(calc, "SR:C03-BI{DCCT:1}I:Injected-I")
 {
    field(DESC, "stored beam")
-   field(PREC, "3")
-   field(EGU,  "mA")
+   field(INPA,"SR:C03-BI{DCCT:1}I:Stored-I")
+   #threshold: (0.1 nC / 528 ns)*1000 = 0.189 mA
+   field(INPC,"0.05")
+   field(CALC,"(A-B>C)?(A-B):0")
+   field(PREC,"3")
+   field(EGU,"mA")
+   field(MDEL,"-1")
    field(FLNK, "SR:C03-BI{DCCT:1}Q:Injected-I")
 }
 
