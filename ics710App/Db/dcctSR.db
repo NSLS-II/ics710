@@ -141,7 +141,27 @@ record(ai, "SR:C03-BI{DCCT:1}Lifetime-I")
    field(DESC, "beam lifetime")
    field(PREC, "3")
    field(EGU,  "hour")
+   field(MDEL, "-1")
+   field(ADEL, "-1")
    #field(TSEL, "")
+}
+
+record(ai, "SR:C03-BI{DCCT:1}Lifetime:5min-I")
+{
+   field(DESC, "by 300 samples")
+   field(PREC, "3")
+   field(EGU,  "hour")
+   field(MDEL, "-1")
+   field(ADEL, "-1")
+}
+
+record(ai, "SR:C03-BI{DCCT:1}Lifetime:30s-I")
+{
+   field(DESC, "30 samples")
+   field(PREC, "3")
+   field(EGU,  "hour")
+   field(MDEL, "-1")
+   field(ADEL, "-1")
 }
 
 record(ai, "SR:C03-BI{DCCT:1}LifeHour-I")
@@ -150,6 +170,20 @@ record(ai, "SR:C03-BI{DCCT:1}LifeHour-I")
    field(PREC, "3")
    field(EGU,  "mAh")
    #field(TSEL, "")
+}
+
+record(ai, "SR:C03-BI{DCCT:1}LifeHour:5min-I")
+{
+   field(DESC, "Life*Hour")
+   field(PREC, "3")
+   field(EGU,  "mAh")
+}
+
+record(ai, "SR:C03-BI{DCCT:1}LifeHour:30s-I")
+{
+   field(DESC, "Life*Hour")
+   field(PREC, "3")
+   field(EGU,  "mAh")
 }
 
 record(longout, "SR:C03-BI{DCCT:1}SamplesForLf-SP")
@@ -234,6 +268,7 @@ record(calc, "SR:C03-BI{DCCT:1}I:Injected-I")
    field(PREC,"3")
    field(EGU,"mA")
    field(MDEL,"-1")
+   field(ADEL, "-1")
    field(FLNK, "SR:C03-BI{DCCT:1}Q:Injected-I")
 }
 
@@ -246,6 +281,7 @@ record(calc,"SR:C03-BI{DCCT:1}Q:Injected-I")
    field(PREC,"3")
    field(EGU,"nC")
    field(MDEL,"-1")
+   field(ADEL, "-1")
    field(TSEL, "SR:C03-TS{EVR:G1A}EvtGCnt-I.TIME")
 }
 

@@ -223,9 +223,10 @@ record(ao, "${MON}CalMaxInput-SP")
 {
         field(EGU,  "mA")
         field(PREC, "1")
-        field(VAL,  "180")
+        field(VAL,  "90")
         field(PINI, "YES")
-        info(autosaveFields_pass0, "VAL")
+	field(DRVH, "90")
+        info(autosaveFields_pass0, "VAL DRVH")
 }
 
 record(waveform,"${MON}CalInput-Wf")
