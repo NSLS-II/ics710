@@ -7,3 +7,5 @@ O.*
 ^bin
 ^include
 ^lib
+ics710App/src/libics710.a
+iocBoot/iocics710/envPaths

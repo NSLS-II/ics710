@@ -205,7 +205,7 @@ record(subArray,"SR:C03-BI{DCCT:1}I:Stored-Wf_")
    #INDX can be changed by caput
    field(INDX,"0")
    #1KHz sampling rate
-   field(NELM,"300")
+   field(NELM,"100")
    field(FTVL,"DOUBLE")
    field(PREC,"3")
    field(EGU,"mA")
@@ -262,7 +262,6 @@ record(calc, "SR:C03-BI{DCCT:1}I:Injected-I")
 {
    field(DESC, "stored beam")
    field(INPA,"SR:C03-BI{DCCT:1}I:Stored-I")
-   #threshold: (0.1 nC / 528 ns)*1000 = 0.189 mA
    field(INPC,"0.01")
    field(CALC,"(B-A>C)?(B-A):0")
    field(PREC,"3")

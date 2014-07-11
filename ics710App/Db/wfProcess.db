@@ -3,151 +3,52 @@ record(ai, "${MON}SampleRate-RB")
 	field(INP,  "SR:C30-BI{DIG:CBLM}SampleRate-RB CP")
 }
 
-record(longout, "${MON}ROI0:StartPoint-SP")
+record(calc, "SR:C30-BI{DIG:CBLM}SampleInterval-RB")
 {
-        #don't need PP
-        field(OUT, "$(MON)ROI0:V-Sub.INDX")
-        info(autosaveFields_pass0, "VAL")
-        field(FLNK, "${MON}ROI0:Samples-Calc_")
-}
-
-record(calcout, "$(MON)ROI0:EndPoint-SP_")
-{
-        field(INPA, "$(MON)ROI0:EndPoint-SP CP")
-        field(INPB, "$(MON)ROI0:StartPoint-SP CP")
-        field(CALC, "A<=B+0.1?B+1:A")
-        field(OUT,  "$(MON)ROI0:EndPoint-SP CA")
-}
-
-record(longout, "${MON}ROI0:EndPoint-SP")
-{
-	field(VAL,  "10")
-	field(PINI, "1")
-	info(autosaveFields_pass0, "VAL")
-   	field(FLNK, "${MON}ROI0:Samples-Calc_")
-}
-
-record(calc, "${MON}ROI0:Samples-Calc_")
-{
-        field(INPA, "$(MON)ROI0:EndPoint-SP")
-        field(INPB, "$(MON)ROI0:StartPoint-SP")
-        field(CALC, "A-B+1")
-        field(FLNK, "${MON}ROI0:Samples-Dfan_")
-}
-
-record(dfanout, "${MON}ROI0:Samples-Dfan_")
-{
-	field(DOL,  "${MON}ROI0:Samples-Calc_")
-	field(OMSL, "closed_loop")
-	field(OUTA, "$(MON)ROI0:V-Sub.NELM")
-	field(OUTB, "$(MON)ROI0:Mean-Acalc_.NUSE")
-	field(OUTC, "$(MON)ROI0:Std-Acalc_.NUSE")
-	field(OUTD, "$(MON)ROI0:Sum-Acalc_.NUSE")
-	field(FLNK, "${MON}ROI0:Length-I")
-}
-
-record(calc, "${MON}ROI0:Length-I")
-{
-        field(INPA, "$(MON)ROI0:EndPoint-SP")
-        field(INPB, "$(MON)ROI0:StartPoint-SP")
-        field(INPC, "${MON}SampleRate-RB")
-        field(CALC, "(A-B)/C")
-        field(EGU,  "ms")
-        field(PREC, "3")
-}
-
-record(subArray,"$(MON)ROI0:V-Sub")
-{
-        field(DESC, "subArray data")
-        field(INP,"$(MON)V-Wf CP")
-        field(MALM,"180000")
-        field(INDX,"0")
-        field(NELM,"10")
-        field(FTVL,"DOUBLE")
-	field(FLNK, "$(MON)ROI0:Mean-Acalc_")
-}
-
-record(acalcout, "$(MON)ROI0:Mean-Acalc_")
-{
-        field(NELM, "180000")
-        field(NUSE, "180000")
-        field(INAA, "$(MON)ROI0:V-Sub")
-        field(CALC, "AVG(AA)")
-        field(OUT,  "${MON}AveVROI0-I PP")
-}
-
-record(ai, "${MON}AveVROI0-I")
-{
-	field(EGU,  "V")
-	field(PREC, "6")
-	field(FLNK, "$(MON)ROI0:Std-Acalc_")
-}
-
-record(acalcout, "$(MON)ROI0:Std-Acalc_")
-{
-        field(NELM, "180000")
-        field(NUSE, "180000")
-        field(INAA, "$(MON)ROI0:V-Sub")
-        field(CALC, "STD(AA)")
-	field(OUT,  "${MON}StdVROI0-I.A")
-        field(FLNK,  "${MON}StdVROI0-I")
-}
-
-record(calc, "${MON}StdVROI0-I")
-{
-        field(EGU,  "mV")
-        field(PREC, "3")
-	field(CALC, "A*1000")
-        field(FLNK, "$(MON)ROI0:Sum-Acalc_")
-}
-
-record(acalcout, "$(MON)ROI0:Sum-Acalc_")
-{
-        field(NELM, "180000")
-        field(NUSE, "180000")
-        field(INAA, "$(MON)ROI0:V-Sub")
-        field(CALC, "SUM(AA)")
-        field(OUT,  "${MON}SumVROI0-I PP")
-}
-
-record(ai, "${MON}SumVROI0-I")
-{
-        #field(EGU,  "V")
-        field(PREC, "6")
+        field(INPA, "SR:C30-BI{DIG:CBLM}SampleRate-RB CP")
+	field(CALC, "1.0/A")
+	field(EGU,  "ms")
+	field(PREC, "4")
 }
 
 
-#caput ${MON}GetNoiseLevel-Cmd.PROC 1
+#caput ${MON}GetOffset-Cmd.PROC 1
+#get system noise level when everything is on while no beam
+#Use original waveform data (no substraction): ${MON}AveV-I
 record(bo, "${MON}GetOffset-Cmd")
 {
-	field(PINI, "1")
-	field(FLNK, "${MON}Offset:LG-Calc_")
+        field(FLNK, "${MON}Offset-fanout_")
 }
 
+record(fanout, "${MON}Offset-fanout_")
+{
+	field(LNK1, "${MON}Offset:LG-Calc_")
+	field(LNK2, "${MON}Offset:HG-Calc_")
+}
 record(calcout, "${MON}Offset:LG-Calc_")
 {
-	field(INPA, "${MON}AveVROI0-I")
-	field(INPB, "SR:C30-BI{CBLM}Gain-Cmd.B${BIT}")
-	field(CALC, "B")
-	field(OOPT, "When Non-zero")
-	field(OCAL, "A")
-	field(DOPT, "Use OCAL")
-	field(OUT,  "${MON}Offset:LG-I")
-	field(FLNK, "${MON}Offset:LG-I")
+        field(INPA, "${MON}AveV-I")
+        field(INPB, "SR:C30-BI{CBLM}Gain-Cmd.B${BIT}")
+        field(CALC, "B")
+        field(OOPT, "When Non-zero")
+        field(OCAL, "A")
+        field(DOPT, "Use OCAL")
+        field(OUT,  "${MON}Offset:LG-I PP")
 }
 
 record(ai, "${MON}Offset:LG-I")
 {
-	field(DESC, "low-gain offset/noise")
-	field(EGU,  "V")
-	field(PREC, "6")
-	field(UDF,  "0")
-	field(FLNK, "${MON}Offset:HG-Calc_")
+        field(DESC, "low-gain offset/noise")
+        field(EGU,  "V")
+        field(PREC, "6")
+        field(UDF,  "0")
+	field(PINI, "1")
+        info(autosaveFields_pass0, "VAL")
 }
 
 record(calcout, "${MON}Offset:HG-Calc_")
-{ 
-        field(INPA, "${MON}AveVROI0-I")
+{
+        field(INPA, "${MON}AveV-I")
         field(INPB, "SR:C30-BI{CBLM}Gain-Cmd.B${BIT}")
         field(CALC, "B")
         field(OOPT, "When Zero")
@@ -157,20 +58,164 @@ record(calcout, "${MON}Offset:HG-Calc_")
 }
 
 record(ai, "${MON}Offset:HG-I")
-{ 
+{
         field(DESC, "high-gain offset/noise")
         field(EGU,  "V")
         field(PREC, "6")
+        field(PINI, "1")
+        info(autosaveFields_pass0, "VAL")
 }
+
+record(calc, "${MON}Noise-I")
+{
+	field(SCAN, "2 second")
+        field(INPA, "${MON}Offset:HG-I")
+        field(INPB, "${MON}Offset:LG-I")
+        field(INPC, "SR:C30-BI{CBLM}Gain-Cmd.B${BIT}")
+        field(CALC, "C?B:A")
+	field(PREC, "6")
+	field(EGU,  "V")
+}
+
+
+record(acalcout, "$(MON)V-Acalc_")
+{
+        field(NELM, "180000")
+        field(NUSE, "180000")
+        field(INAA, "$(MON)V-Wf CP")
+        field(INPA, "${MON}Noise-I")
+        field(CALC, "AA-A")
+        field(OUT,  "${MON}V-Wf_ PP")
+}
+
+record(waveform, "${MON}V-Wf_")
+{
+	field(DESC, "wf of substracted noise")
+	field(NELM, "180000")
+	field(FTVL, "DOUBLE")
+}
+
+
+record(longout, "${MON}ROI${N}:StartPoint-SP")
+{
+        #don't need PP
+        field(OUT, "$(MON)ROI${N}:V-Sub.INDX")
+        info(autosaveFields_pass0, "VAL")
+        field(FLNK, "${MON}ROI${N}:Samples-Calc_")
+}
+
+record(calcout, "$(MON)ROI${N}:EndPoint-SP_")
+{
+        field(INPA, "$(MON)ROI${N}:EndPoint-SP CP")
+        field(INPB, "$(MON)ROI${N}:StartPoint-SP CP")
+        field(CALC, "A<=B+0.1?B+1:A")
+        field(OUT,  "$(MON)ROI${N}:EndPoint-SP CA")
+}
+
+record(longout, "${MON}ROI${N}:EndPoint-SP")
+{
+	field(VAL,  "1600")
+	field(PINI, "1")
+	info(autosaveFields_pass0, "VAL")
+   	field(FLNK, "${MON}ROI${N}:Samples-Calc_")
+}
+
+record(calc, "${MON}ROI${N}:Samples-Calc_")
+{
+        field(INPA, "$(MON)ROI${N}:EndPoint-SP")
+        field(INPB, "$(MON)ROI${N}:StartPoint-SP")
+        field(CALC, "A-B+1")
+        field(FLNK, "${MON}ROI${N}:Samples-Dfan_")
+}
+
+record(dfanout, "${MON}ROI${N}:Samples-Dfan_")
+{
+	field(DOL,  "${MON}ROI${N}:Samples-Calc_")
+	field(OMSL, "closed_loop")
+	field(OUTA, "$(MON)ROI${N}:V-Sub.NELM")
+	field(OUTB, "$(MON)ROI${N}:Mean-Acalc_.NUSE")
+	field(OUTC, "$(MON)ROI${N}:Std-Acalc_.NUSE")
+	field(OUTD, "$(MON)ROI${N}:Sum-Acalc_.NUSE")
+	field(FLNK, "${MON}ROI${N}:Length-I")
+}
+
+record(calc, "${MON}ROI${N}:Length-I")
+{
+        field(INPA, "$(MON)ROI${N}:EndPoint-SP")
+        field(INPB, "$(MON)ROI${N}:StartPoint-SP")
+        field(INPC, "${MON}SampleRate-RB")
+        field(CALC, "(A-B)/C")
+        field(EGU,  "ms")
+        field(PREC, "3")
+}
+
+record(subArray,"$(MON)ROI${N}:V-Sub")
+{
+        field(DESC, "subArray data")
+        field(INP,"$(MON)V-Wf_ CP")
+        field(MALM,"180000")
+        field(INDX,"0")
+        field(NELM,"10")
+        field(FTVL,"DOUBLE")
+	field(FLNK, "$(MON)ROI${N}:Mean-Acalc_")
+}
+
+record(acalcout, "$(MON)ROI${N}:Mean-Acalc_")
+{
+        field(NELM, "180000")
+        field(NUSE, "180000")
+        field(INAA, "$(MON)ROI${N}:V-Sub")
+        field(CALC, "AVG(AA)")
+        field(OUT,  "${MON}AveVROI${N}-I PP")
+}
+
+record(ai, "${MON}AveVROI${N}-I")
+{
+	field(EGU,  "V")
+	field(PREC, "6")
+	field(FLNK, "$(MON)ROI${N}:Std-Acalc_")
+}
+
+record(acalcout, "$(MON)ROI${N}:Std-Acalc_")
+{
+        field(NELM, "180000")
+        field(NUSE, "180000")
+        field(INAA, "$(MON)ROI${N}:V-Sub")
+        field(CALC, "STD(AA)")
+	field(OUT,  "${MON}StdVROI${N}-I.A")
+        field(FLNK,  "${MON}StdVROI${N}-I")
+}
+
+record(calc, "${MON}StdVROI${N}-I")
+{
+        field(EGU,  "mV")
+        field(PREC, "3")
+	field(CALC, "A*1000")
+        field(FLNK, "$(MON)ROI${N}:Sum-Acalc_")
+}
+
+record(acalcout, "$(MON)ROI${N}:Sum-Acalc_")
+{
+        field(NELM, "180000")
+        field(NUSE, "180000")
+        field(INAA, "$(MON)ROI${N}:V-Sub")
+        field(CALC, "SUM(AA)")
+        field(OUT,  "${MON}SumVROI${N}-I PP")
+}
+
+record(ai, "${MON}SumVROI${N}-I")
+{
+        #field(EGU,  "V")
+        field(PREC, "6")
+}
+
 
 record(calc, "${MON}PulseIntegral-I")
 {
-	field(INPA, "${MON}SumVROI-I CP")
-	field(INPB, "${MON}AveVROI0-I")
-	field(INPC, "${MON}ROILength-I")
-	field(INPD, "${MON}SampleRate-RB")
-	field(CALC, "ABS(1000*(A/D-B*C))")
-	field(EGU,  "V*ns")
+	field(INPA, "${MON}SumVROI1-I CP")
+	field(INPB, "${MON}SampleRate-RB")
+	field(CALC, "ABS(0.001*A/B)")
+	field(EGU,  "V.S")
 	field(PREC, "6")
 	field(FLNK, "${MON}QLoss-I")
 }
@@ -178,7 +223,8 @@ record(calc, "${MON}PulseIntegral-I")
 record(ao, "${MON}CoeffLoss:LG-SP")
 {
 	field(DESC, "Injection loss coefficiency")
-	field(EGU,  "6")
+	field(PREC,  "6")
+	field(EGU,  "nC/V.S")
 	field(VAL , "1")
 	info(autosaveFields_pass0, "VAL")
 }
@@ -186,7 +232,8 @@ record(ao, "${MON}CoeffLoss:LG-SP")
 record(ao, "${MON}CoeffLoss:HG-SP")
 {
         field(DESC, "Injection loss coefficiency")
-        field(EGU,  "6")
+        field(EGU,  "nC/V.S")
+	field(PREC, "6")
 	field(VAL , "1")
         info(autosaveFields_pass0, "VAL")
 }
@@ -198,7 +245,19 @@ record(calc, "${MON}QLoss-I")
 	field(INPB, "${MON}CoeffLoss:LG-SP")
 	field(INPC, "${MON}CoeffLoss:HG-SP")
 	field(INPD, "SR:C30-BI{CBLM}Gain-Cmd.B${BIT}")
-	field(CALC, "D?A/B:A/C")
+	field(CALC, "D?A*B:A*C")
 	field(EGU,  "nC")
 	field(PREC, "3")
+}
+
+record(calc, "${MON}QLossRate-I")
+{
+        field(DESC, "Loss rate")
+        field(INPA, "${MON}AveVROI2-I-I")
+        field(INPB, "${MON}CoeffLoss:LG-SP")
+        field(INPC, "${MON}CoeffLoss:HG-SP")
+        field(INPD, "SR:C30-BI{CBLM}Gain-Cmd.B${BIT}")
+        field(CALC, "D?A*B:A*C")
+        field(EGU,  "nC/S")
+        field(PREC, "3")
 }
