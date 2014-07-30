@@ -27,17 +27,20 @@ record(mbbo, "${MON}FullScale-I")
   field(ONST, "2A")
   field(TWST, "200mA")
   field(THST, "20mA")
-  field(FLNK, "${MON}IVSlope-Calc_")
+  #field(FLNK, "${MON}IVSlope-Calc_")
 }
 
-record(calc,"${MON}IVSlope-Calc_")
+record(ai,"${MON}IVSlope-Calc_")
 {
    field(DESC,"slope:beam current/V")
-   field(INPA,"${MON}FullScale-I.RVAL")
-   field(INPB,"10.0")
-   field(CALC,"A/B")
+   #field(INPA,"${MON}FullScale-I.RVAL")
+   #field(INPB,"10.0")
+   #field(CALC,"A/B")
+   field(VAL, "20")
    field(PREC,"5")
    field(EGU,"mA/V")
+   field(PINI, "1")
+   info(autosaveFields_pass0, "VAL")
    field(FLNK, "${MON}QVSlope-Calc_.PROC")
 }
 
@@ -251,10 +254,22 @@ record(waveform,"${MON}CalOutput-Wf")
 record(ai, "${MON}CalP0-I")
 {
     field(PREC, "6")
+    field(EGU,  "mA/V")
+    field(PINI, "1")
+    info(autosaveFields_pass0, "VAL")
 }
 
 record(ai, "${MON}CalP1-I")
 { 
     field(PREC, "3")
     field(EGU,  "mA")
+    field(PINI, "1")
+    info(autosaveFields_pass0, "VAL")
+}
+
+record(calcout, "${MON}ApplyFit-Calc_")
+{
+    field(INPA, "${MON}CalP0-I")
+    field(CALC, "A")
+    field(OUT,  "${MON}IVSlope-Calc_ PP")
 }

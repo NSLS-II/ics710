@@ -1,62 +1,70 @@
 #Beam dosage (mAh) related to vacumm system
-record(compress,"SR:C03-BI{DCCT:1}Dosage:1h-Com_")
+record(compress,"SR:C03-BI{DCCT:1}Dosage:1min-Com_")
 {
-        field(DESC, "average I over 1-hour")
+        field(DESC, "average I over 1-min")
         #INP is scalar
         field(INP,"SR:C03-BI{DCCT:1}I:Total-I CP")
         field(ALG,"N to 1 Average")
         field(NSAM,"1")
-        field(N,"3600")
+        field(N,"60")
         field(PREC,"3")
         field(EGU,"mA")
-        info(autosaveFields_pass0, "N")
-        field(FLNK,"SR:C03-BI{DCCT:1}Dosage:1h-Calc_")
+        field(FLNK,"SR:C03-BI{DCCT:1}Dosage:1min-I")
 }
 
-record(calcout, "SR:C03-BI{DCCT:1}Dosage:1h-Calc_")
+record(ai, "SR:C03-BI{DCCT:1}Dosage:1min-I")
 {
-        field(INPA, "SR:C03-BI{DCCT:1}Dosage:1h-Com_")
-	#don't need multipling 3600
-        #field(CALC, "A*3600")
-        field(CALC, "A")
+        field(DESC, "average I over 1-min")
+	field(INP,  "SR:C03-BI{DCCT:1}Dosage:1min-Com_")
         field(PREC, "3")
-        field(EGU,  "mA")
-        field(OUT,  "SR:C03-BI{DCCT:1}Dosage:1h-I PP" )
+        field(EGU,  "mAh")
+        field(MDEL, "-1")
+	field(ADEL, "-1")
+	field(FLNK, "SR:C03-BI{DCCT:1}Dosage:1h-Com_")
+}
+
+record(compress,"SR:C03-BI{DCCT:1}Dosage:1h-Com_")
+{
+        field(DESC, "average I over 1-hour")
+        #INP is scalar
+        field(INP,"SR:C03-BI{DCCT:1}Dosage:1min-I")
+        field(ALG,"N to 1 Average")
+        field(NSAM,"1")
+        field(N,"60")
+        field(PREC,"3")
+        field(EGU,"mA")
+        field(FLNK,"SR:C03-BI{DCCT:1}Dosage:1h-I")
 }
 
 record(ai, "SR:C03-BI{DCCT:1}Dosage:1h-I")
 {
+	field(INP,  "SR:C03-BI{DCCT:1}Dosage:1h-Com_")  
+        field(MDEL, "-1")
+        field(ADEL, "-1")
         field(DESC, "average I over 1-hour")
         field(PREC, "3")
         field(EGU,  "mAh")
+	field(FLNK, "SR:C03-BI{DCCT:1}Dosage:1d-Com_")
 }
 
 record(compress,"SR:C03-BI{DCCT:1}Dosage:1d-Com_")
 {
         field(DESC, "average I over 1-day")
         #INP is scalar
-        field(INP,"SR:C03-BI{DCCT:1}Dosage:1h-I CP")
+        field(INP,"SR:C03-BI{DCCT:1}Dosage:1h-I")
         field(ALG,"N to 1 Average")
         field(NSAM,"1")
         field(N,"24")
         field(PREC,"3")
         field(EGU,"mA")
-        info(autosaveFields_pass0, "N")
-        field(FLNK,"SR:C03-BI{DCCT:1}Dosage:1d-Calc_")
-}
-
-record(calcout, "SR:C03-BI{DCCT:1}Dosage:1d-Calc_")
-{
-        field(INPA, "SR:C03-BI{DCCT:1}Dosage:1d-Com_")
-        #field(CALC, "A*24")
-        field(CALC, "A")
-        field(PREC, "3")
-        field(EGU,  "mA")
-        field(OUT,  "SR:C03-BI{DCCT:1}Dosage:1d-I PP" )
+        field(FLNK,"SR:C03-BI{DCCT:1}Dosage:1d-I")
 }
 
 record(ai, "SR:C03-BI{DCCT:1}Dosage:1d-I")
 {
+        field(INP,  "SR:C03-BI{DCCT:1}Dosage:1d-Com_")
+        field(MDEL, "-1")
+        field(ADEL, "-1")
         field(DESC, "average I over 1-day")
         field(PREC, "3")
         field(EGU,  "mAh")
@@ -77,7 +85,7 @@ record(stringin, "SR:C03-BI{DCCT:1}Dosage:ST-Str")
 {
         field(DESC, "Start time")
         field(PINI, "1")
-        field(VAL,  "2014-03-10 00:00:00")
+        field(VAL,  "2014-03-10 00:00")
         info(autosaveFields_pass0, "VAL")
 }
 
@@ -85,14 +93,23 @@ record(stringin, "SR:C03-BI{DCCT:1}Dosage:ET-Str")
 {
         field(DESC, "End Time")
         field(PINI, "1")
-        field(VAL,  "2014-03-12 00:00:00")
+        field(VAL,  "2014-03-12 00:00")
         info(autosaveFields_pass0, "VAL")
 }
 
+#caput SR:C03-BI{DCCT:1}Dosage-Cmd.PROC 1
 record(calc, "SR:C03-BI{DCCT:1}Dosage-Cmd")
 {
         field(INPA, "SR:C03-BI{DCCT:1}Dosage-Cmd")
         field(CALC, "A+1")
+}
+
+record(bo, "SR:C03-BI{DCCT:1}DataInterval-Cmd")
+{
+	field(DESC, "1-minute or 1-hour?")
+        field(ZNAM, "Use hour-dosage")
+        field(ONAM, "Use minute-dosage")
+	field(HIGH, "900")
 }
 
 record(mbbi, "SR:C03-BI{DCCT:1}Dosage-Sts")
@@ -109,5 +126,6 @@ record(ai, "SR:C03-BI{DCCT:1}Dosage:Total-I")
         field(EGU,  "mAh")
         field(PREC, "3")
         field(MDEL, "-1")
+	field(ADEL, "-1")
 }
 
