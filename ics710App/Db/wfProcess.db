@@ -11,6 +11,21 @@ record(calc, "SR:C30-BI{DIG:CBLM}SampleInterval-RB")
 	field(PREC, "4")
 }
 
+record(calcout, "$(MON)StartPoint-Calc_")
+{
+	field(DESC, "for offset from AveVROI")
+        field(INPA, "$(MON)ROI0:StartPoint-SP CP")
+        field(CALC, "A")
+        field(OUT,  "$(MON)StartPoint-SP CA")
+}
+
+record(calcout, "$(MON)EndPoint-Calc_")
+{
+	field(DESC, "for offset from AveVROI")
+        field(INPA, "$(MON)ROI0:EndPoint-SP CP")
+        field(CALC, "A")
+        field(OUT,  "$(MON)EndPoint-SP CA")
+}
 
 #caput ${MON}GetOffset-Cmd.PROC 1
 #get system noise level when everything is on while no beam
@@ -27,7 +42,9 @@ record(fanout, "${MON}Offset-fanout_")
 }
 record(calcout, "${MON}Offset:LG-Calc_")
 {
-        field(INPA, "${MON}AveV-I")
+#offset is calculated from AveVROI which is actually ROI0
+        #field(INPA, "${MON}AveV-I")
+        field(INPA, "${MON}AveVROI-I")
         field(INPB, "SR:C30-BI{CBLM}Gain-Cmd.B${BIT}")
         field(CALC, "B")
         field(OOPT, "When Non-zero")
@@ -48,7 +65,8 @@ record(ai, "${MON}Offset:LG-I")
 
 record(calcout, "${MON}Offset:HG-Calc_")
 {
-        field(INPA, "${MON}AveV-I")
+        #field(INPA, "${MON}AveV-I")
+        field(INPA, "${MON}AveVROI-I")
         field(INPB, "SR:C30-BI{CBLM}Gain-Cmd.B${BIT}")
         field(CALC, "B")
         field(OOPT, "When Zero")
