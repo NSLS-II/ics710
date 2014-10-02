@@ -158,6 +158,7 @@ record(ai,"${MON}AveV-I")
    field(DESC,"averaged voltage")
    field(INP,"${MON}Raw-aSub_.VALB")
    field(PREC,"6")
+   field(MDEL, "-1")
    field(EGU,"V")
 }
 

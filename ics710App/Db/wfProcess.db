@@ -235,6 +235,7 @@ record(calc, "${MON}PulseIntegral-I")
 	field(CALC, "ABS(0.001*A/B)")
 	field(EGU,  "V.S")
 	field(PREC, "6")
+        field(TSEL, "LTB-TS{EVR:Q1B}EvtGCnt-I.TIME")
 	field(FLNK, "${MON}QLoss-I")
 }
 
