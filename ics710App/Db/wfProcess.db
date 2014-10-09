@@ -1,3 +1,5 @@
+#data processing for Storage Ring Cerenkov Beam Loss Monitor (SR CBLM) 
+
 record(ai, "${MON}SampleRate-RB")
 {
 	field(INP,  "SR:C30-BI{DIG:CBLM}SampleRate-RB CP")
@@ -235,7 +237,7 @@ record(calc, "${MON}PulseIntegral-I")
 	field(CALC, "ABS(0.001*A/B)")
 	field(EGU,  "V.S")
 	field(PREC, "6")
-        field(TSEL, "LTB-TS{EVR:Q1B}EvtGCnt-I.TIME")
+        #field(TSEL, "LTB-TS{EVR:Q1B}EvtGCnt-I.TIME")
 	field(FLNK, "${MON}QLoss-I")
 }
 

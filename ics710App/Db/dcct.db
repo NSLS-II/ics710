@@ -5,9 +5,11 @@
 #### Dev	-	Device name
 #### MON	-	BR-BI{DCCT:1}
 
-#stored beam current at Booster and Ring
+#common database for stored beam current at Booster and Storage Ring
+#dcctSR.db and dcctBR are specific for SR and BR
 #Bergoz DCCT current is calibrated against gain settings 
 #and Q offset (background noise)
+
 #The RVAL and VAL of mbbi: [0, 15]; 
 #use mbbo here: VAL--[0,15], RVAL--[0,65535] 
 #record(mbbi, "${MON}FullScale-I")
@@ -27,23 +29,26 @@ record(mbbo, "${MON}FullScale-I")
   field(ONST, "2A")
   field(TWST, "200mA")
   field(THST, "20mA")
-  #field(FLNK, "${MON}IVSlope-Calc_")
 }
 
+#IVSlope is calculated in Python-based calibration ioc
+#IVSlope is a negative value for SR DCCT
 record(ai,"${MON}IVSlope-Calc_")
 {
    field(DESC,"slope:beam current/V")
    #field(INPA,"${MON}FullScale-I.RVAL")
    #field(INPB,"10.0")
    #field(CALC,"A/B")
-   field(VAL, "20")
+   field(VAL, "-20")
    field(PREC,"5")
    field(EGU,"mA/V")
    field(PINI, "1")
    info(autosaveFields_pass0, "VAL")
-   field(FLNK, "${MON}QVSlope-Calc_.PROC")
+#${MON}QVSlope-Calc_ is in another ioc: QVSlope is different for BR and SR
+   #field(FLNK, "${MON}QVSlope-Calc_.PROC")
 }
 
+#${MON}IOffset-SP is based on AveI
 record(ao,"${MON}IOffset-SP")
 {
    field(DESC,"beam current offset")
@@ -54,7 +59,6 @@ record(ao,"${MON}IOffset-SP")
    #field(FLNK,"BR-BI{DCCT:1}QOffset-I.PROC")
 }
 
-#${MON}IOffset-SP is based on AveI
 record(calc,"${MON}AveI-I")
 {
    field(DESC,"average current")
@@ -65,7 +69,6 @@ record(calc,"${MON}AveI-I")
    field(EGU,"mA")
    field(FLNK,"${MON}AveI-Com_")
 }
-
 record(compress,"${MON}AveI-Com_")
 {
 	field(DESC, "circular buffer of AveI")
@@ -73,7 +76,6 @@ record(compress,"${MON}AveI-Com_")
 	field(ALG,	"Circular Buffer")
 	field(NSAM, "10")
 }
-
 record(acalcout, "${MON}StdOverAveI-acalc_")
 {
     field(DESC, "std of AveI")
@@ -84,23 +86,34 @@ record(acalcout, "${MON}StdOverAveI-acalc_")
     field(NUSE, "10")
     field(OUT,  "${MON}StdOverAveI-I PP")
 }
-
 #Is this the DCCT resolutoin? Not sure
 record(ai, "${MON}StdOverAveI-I")
 {
-	field(EGU, "mA")
+    field(EGU, "mA")
+   field(FLNK,"${MON}AveQ-I")
 }
-
+record(calc,"${MON}AveQ-I")
+{
+   field(DESC,"average charge")
+   field(INPA,"${MON}AveV-I")
+   field(INPB,"${MON}QVSlope-Calc_")
+   field(CALC,"A*B")
+   field(PREC,"5")
+   field(EGU,"nC")
+}
+#it seems this is the DCCT resolution: StdV over the whole waveform data
 record(calc,"${MON}RMSNoise-I")
 {
    field(DESC,"Resolution")
    field(INPA,"${MON}StdV-I CP")
    field(INPB,"${MON}IVSlope-Calc_")
-   field(CALC,"A*B")
+#IVSlope is a negative value
+   field(CALC,"-1.0*A*B")
    field(PREC,"5")
    field(EGU,"uA")
 }
 
+#waveforms: I and Q
 record(acalcout,"${MON}I-aCalc_")
 {
    field(DESC,"Beam current by DCCT")
@@ -109,12 +122,15 @@ record(acalcout,"${MON}I-aCalc_")
    field(INAA,"${MON}V-Wf CP")
    field(INPA,"${MON}IVSlope-Calc_")
    field(INPB,"${MON}IOffset-SP")
-   field(CALC,"ABS((A*AA)-B)")
+   #field(CALC,"ABS((A*AA)-B)")
+   field(CALC,"(A*AA)-B")
    field(PREC,"3")
    field(EGU,"mA")
    field(OUT,"${MON}I-Wf_ PP")
 }
-
+#I-Wf_ is used for SR DCCT and I-Wf is for BR DCCT
+#the ICS 710 digitizer has ~63 pre-trigger (useless) data, which is not
+#desired for BR DCCT
 record(waveform,"${MON}I-Wf_")
 {
    field(DESC,"beam current waveform data")
@@ -124,7 +140,6 @@ record(waveform,"${MON}I-Wf_")
    field(EGU,"mA")
    field(FLNK, "${MON}I-Wf")
 }
-
 record(subArray,"${MON}I-Wf")
 {
    field(DESC,"reduced waveform data")
@@ -135,32 +150,22 @@ record(subArray,"${MON}I-Wf")
    field(FTVL,"DOUBLE")
    field(PREC,"3")
    field(EGU,"mA")
+   field(FLNK, "${MON}Q-aCalc_")
 }
-
-record(calc,"${MON}AveQ-I")
-{
-   field(DESC,"average charge")
-   field(INPA,"${MON}AveV-I CP")
-   field(INPB,"${MON}QVSlope-Calc_")
-   field(CALC,"A*B")
-   field(PREC,"5")
-   field(EGU,"nC")
-}
-
 record(acalcout,"${MON}Q-aCalc_")
 {
    field(DESC,"Beam charge by DCCT")
    field(NELM,"${NELM}")
    field(NUSE,"${NELM}")
-   field(INAA,"${MON}V-Wf CP")
+   field(INAA,"${MON}V-Wf")
    field(INPA,"${MON}QVSlope-Calc_")
    field(INPB,"${MON}QOffset-I")
-   field(CALC,"ABS((A*AA)-B)")
+   #field(CALC,"ABS((A*AA)-B)")
+   field(CALC,"(A*AA)-B")
    field(PREC,"3")
    field(EGU,"nC")
    field(OUT,"${MON}Q-Wf_ PP")
 }
-
 record(waveform,"${MON}Q-Wf_")
 {
    field(DESC,"beam charge waveform data")
@@ -170,7 +175,6 @@ record(waveform,"${MON}Q-Wf_")
    field(EGU,"nC")
    field(FLNK, "${MON}Q-Wf")
 }
-
 record(subArray,"${MON}Q-Wf")
 {
    field(DESC,"reduced waveform data")
@@ -193,7 +197,6 @@ record(bo, "${MON}StartCal-Sel")
 	field(VAL,  "1")
 	field(OUT, "${MON}StartCal-Calc.PROC")
 }
-
 record(calc, "${MON}StartCal-Calc")
 {
         field(DESC, "counter")
@@ -201,7 +204,6 @@ record(calc, "${MON}StartCal-Calc")
         field(INPA, "${MON}StartCal-Calc")
         field(CALC,  "A+1")
 }
-
 record(mbbi, "${MON}CalStatus-Sts")
 {
 	field(DESC, "system status")
@@ -212,7 +214,6 @@ record(mbbi, "${MON}CalStatus-Sts")
 	field(FRST, "Adjust cal step size")
 	field(FVST, "Only 100 steps performed")
 }
-
 record(ao, "${MON}CalStepSize-SP")
 {
 	field(EGU,  "mA")
@@ -221,7 +222,6 @@ record(ao, "${MON}CalStepSize-SP")
 	field(PINI, "YES")
         info(autosaveFields_pass0, "VAL")
 }
-
 record(ao, "${MON}CalMaxInput-SP")
 {
         field(EGU,  "mA")
@@ -231,7 +231,6 @@ record(ao, "${MON}CalMaxInput-SP")
 	field(DRVH, "90")
         info(autosaveFields_pass0, "VAL DRVH")
 }
-
 record(waveform,"${MON}CalInput-Wf")
 {
    field(DESC,"DC source input")
@@ -239,8 +238,9 @@ record(waveform,"${MON}CalInput-Wf")
    field(FTVL,"DOUBLE")
    field(PREC,"3")
    field(EGU,"mA")
+    field(PINI, "1")
+    info(autosaveFields_pass0, "VAL")
 }
-
 record(waveform,"${MON}CalOutput-Wf")
 {
    field(DESC,"Readback data")
@@ -248,8 +248,9 @@ record(waveform,"${MON}CalOutput-Wf")
    field(FTVL,"DOUBLE")
    field(PREC,"3")
    field(EGU,"mA")
+    field(PINI, "1")
+    info(autosaveFields_pass0, "VAL")
 }
-
 #First-order coefficients by python-based polyfit
 record(ai, "${MON}CalP0-I")
 {
@@ -258,7 +259,6 @@ record(ai, "${MON}CalP0-I")
     field(PINI, "1")
     info(autosaveFields_pass0, "VAL")
 }
-
 record(ai, "${MON}CalP1-I")
 { 
     field(PREC, "3")
@@ -266,7 +266,6 @@ record(ai, "${MON}CalP1-I")
     field(PINI, "1")
     info(autosaveFields_pass0, "VAL")
 }
-
 record(calcout, "${MON}ApplyFit-Calc_")
 {
     field(INPA, "${MON}CalP0-I")

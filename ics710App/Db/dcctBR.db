@@ -192,7 +192,7 @@ record(calc,"BR-BI{DCCT:1}Q:Point4-I")
    field(CALC,"A*B*0.001")   
    field(PREC,"3")
    field(EGU,"nC")
-   field(TSEL, "LTB-TS{EVR:Q1B}EvtGCnt-I.TIME")
+   #field(TSEL, "LTB-TS{EVR:Q1B}EvtGCnt-I.TIME")
    field(FLNK,"BR-BI{DCCT:1}I:1stShot-I")
 }
 
@@ -265,7 +265,7 @@ record(calc,"BR-BI{DCCT:1}Q:Total-I")
    field(PREC,"3")
    field(EGU,"nC")
    field(MDEL,"-1")
-   field(TSEL, "LTB-TS{EVR:Q1B}EvtGCnt-I.TIME")
+   #field(TSEL, "LTB-TS{EVR:Q1B}EvtGCnt-I.TIME")
    field(FLNK,"BR-BI{DCCT:1}I:Extracted-I")
 }
 
