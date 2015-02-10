@@ -1,9 +1,116 @@
-#Beam dosage (mAh) related to vacumm system
+# Real beam current: no DCCT internal test && no DCCT external test source
+## && data > offset 
+record(calcout, "SR:C03-BI{DCCT:1}I:Real-Calc_")
+{
+    field(DESC, "Real beam?")
+    #DCCT test mode: 0 means Inactive
+    field(INPA, "SR:C03-BI{DCCT:1}I:Total-I CP")
+    field(INPB, "SR:C03-BI{DCCT:1}TestMode-Sel")
+    #external DC calibrator
+    field(INPC, "SR:C03-BI{DCCT:1}Out:CalSrc-SP")
+    #DCCT offset level
+    field(INPD, "0.03")
+    #RF status
+    field(INPE, "SR-RF{Xmtr:D}State:Cur-Sts")
+    #P3 secured?
+    #field(INPF, "SR-RF{Xmtr:D}State:Cur-Sts")
+    #PDU port for the external DC calibrator 
+    #field(INPG, "SR:C02-CS{PDU:RGG1}Sts:Outlet5-Sts")
+    field(CALC, "B=0&&C<0.001&&A>D?A:0")
+    #field(OOPT, "When Non-zero")
+    #field(DOPT, "Use OCAL")
+    #field(OCAL, "A")
+    field(OUT,  "SR:C03-BI{DCCT:1}I:Real-I PP")
+}
+
+record(ai, "SR:C03-BI{DCCT:1}I:Real-I")
+{
+    field(DESC, "Real beam current")
+    field(EGU,  "mA")
+    field(PREC, "3")
+    field(MDEL, "-1")
+    field(ADEL, "-1")
+    field(FLNK, "SR:C03-BI{DCCT:1}Dosage-Calc_")
+}
+
+record(calcout, "SR:C03-BI{DCCT:1}Dosage-Calc_")
+{
+    field(DESC, "accumulated dosage")
+    field(INPA, "SR:C03-BI{DCCT:1}Dosage-I")
+    field(INPB, "SR:C03-BI{DCCT:1}I:Real-I")
+    #C: for offset / compesation?
+    field(INPC, "0.0")
+    field(CALC, "A+B/3600.0+C")
+    field(OUT,  "SR:C03-BI{DCCT:1}Dosage-I PP")  
+}
+
+record(ai, "SR:C03-BI{DCCT:1}Dosage-I")
+{
+    field(DESC, "accumulated dosage")
+    field(EGU,  "mAh")
+    field(PREC, "3")
+    field(PINI, "1")
+    # use autosave to handle ioc restart problem:
+    ## will the accumulated dosage be zero?
+    info(autosaveFields_pass0, "VAL")
+}
+
+record(bo, "SR:C03-BI{DCCT:1}DosageReset:h-Cmd")
+{
+	field(DESC, "reset hourly dosage")
+        field(ZNAM, "No reset")
+        field(ONAM, "Reset")
+	field(HIGH, "3")
+}
+
+record(bo, "SR:C03-BI{DCCT:1}DosageReset:d-Cmd")
+{
+	field(DESC, "reset daily dosage")
+        field(ZNAM, "No reset")
+        field(ONAM, "Reset")
+	field(HIGH, "3")
+}
+
+record(bo, "SR:C03-BI{DCCT:1}DosageReset:m-Cmd")
+{
+	field(DESC, "reset monthly dosage")
+        field(ZNAM, "No reset")
+        field(ONAM, "Reset")
+	field(HIGH, "3")
+}
+
+#min-, hourly-, daily-, monthly-dosage are calculated by Python
+record(ai, "SR:C03-BI{DCCT:1}Dosage:1min-I_")
+{
+        field(DESC, "average I over 1-min")
+        field(PREC, "3")
+        field(EGU,  "mAh")
+}
+record(ai, "SR:C03-BI{DCCT:1}Dosage:1h-I_")
+{
+        field(DESC, "average I over 1-hour")
+        field(PREC, "3")
+        field(EGU,  "mAh")
+}
+record(ai, "SR:C03-BI{DCCT:1}Dosage:1d-I_")
+{
+        field(DESC, "average I over 1-day")
+        field(PREC, "3")
+        field(EGU,  "mAh")
+}
+record(ai, "SR:C03-BI{DCCT:1}Dosage:1mon-I_")
+{
+        field(DESC, "average I over 1-month")
+        field(PREC, "3")
+        field(EGU,  "mAh")
+}
+
+#Beam dosage (mAh) related to vacumm system: compress-record-based calculation
 record(compress,"SR:C03-BI{DCCT:1}Dosage:1min-Com_")
 {
         field(DESC, "average I over 1-min")
         #INP is scalar
-        field(INP,"SR:C03-BI{DCCT:1}I:Total-I CP")
+        field(INP,"SR:C03-BI{DCCT:1}I:Real-I CP")
         field(ALG,"N to 1 Average")
         field(NSAM,"1")
         field(N,"60")
@@ -56,16 +163,17 @@ record(compress,"SR:C03-BI{DCCT:1}Dosage:1d-Com_")
         field(NSAM,"1")
         field(N,"24")
         field(PREC,"3")
-        field(EGU,"mA")
+        field(EGU,"mAh")
         field(FLNK,"SR:C03-BI{DCCT:1}Dosage:1d-I")
 }
 
-record(ai, "SR:C03-BI{DCCT:1}Dosage:1d-I")
+record(calc, "SR:C03-BI{DCCT:1}Dosage:1d-I")
 {
-        field(INP,  "SR:C03-BI{DCCT:1}Dosage:1d-Com_")
+        field(INPA,  "SR:C03-BI{DCCT:1}Dosage:1d-Com_")
         field(MDEL, "-1")
         field(ADEL, "-1")
-        field(DESC, "average I over 1-day")
+        field(CALC, "24.0*A")
+        field(DESC, "accumulated over 1-day")
         field(PREC, "3")
         field(EGU,  "mAh")
 }
@@ -122,7 +230,7 @@ record(mbbi, "SR:C03-BI{DCCT:1}Dosage-Sts")
 
 record(ai, "SR:C03-BI{DCCT:1}Dosage:Total-I")
 {
-        field(DESC, "Total beam dosage")
+        field(DESC, "Total dosage calc from archiver")
         field(EGU,  "mAh")
         field(PREC, "3")
         field(MDEL, "-1")
