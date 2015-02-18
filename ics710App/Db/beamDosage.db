@@ -79,31 +79,128 @@ record(bo, "SR:C03-BI{DCCT:1}DosageReset:m-Cmd")
 	field(HIGH, "3")
 }
 
-#min-, hourly-, daily-, monthly-dosage are calculated by Python
+#use case: operators can reset dosage after vaccumm leak
+record(bo, "SR:C03-BI{DCCT:1}DosageReset-Cmd")
+{
+	field(DESC, "reset custom dosage")
+        field(ZNAM, "No reset")
+        field(ONAM, "Reset")
+	field(HIGH, "3")
+        field(FLNK, "SR:C03-BI{DCCT:1}DosageReset:TS-Sts")
+}
+
+record(stringin, "SR:C03-BI{DCCT:1}DosageReset:TS-Sts")
+{
+    field(DESC, "Timestamp for reset")
+    field(DTYP, "Soft Timestamp")
+    field(PINI,"YES")
+    #%s gives a number (seconds since EPICS epoc)
+    #field(INP,"@%s")
+    field(INP, "@%b %d, %Y %H:%M:%S.%03f")
+    info(autosaveFields_pass0, "VAL")
+}
+
+record(calcout, "SR:C03-BI{DCCT:1}DosSinceReset-Calc_")
+{
+    field(DESC, "accumulated dos since reset")
+    field(INPA, "SR:C03-BI{DCCT:1}DosSinceReset-I")
+    field(INPB, "SR:C03-BI{DCCT:1}I:Real-I CP")
+    field(INPC, "SR:C03-BI{DCCT:1}DosageReset-Cmd")
+    field(CALC, "C==1?0:A+B/3600.0")
+    field(OUT,  "SR:C03-BI{DCCT:1}DosSinceReset-I PP")  
+}
+
+record(ai, "SR:C03-BI{DCCT:1}DosSinceReset-I")
+{
+    field(DESC, "accumulated dos since reset")
+    field(EGU,  "mAh")
+    field(PREC, "3")
+}
+
+#When we started to calculate the accumulated dosage (no reset)? Feb 10 2015
+record(stringin, "SR:C03-BI{DCCT:1}Dos:StartTS-Sts")
+{
+  field(DESC, "timestamp:dos calc")
+  field(PINI,"YES")
+  field(VAL,"Feb 10 2015")
+  info(autosaveFields_pass0, "VAL")
+}
+
+#hourly-, daily-, monthly-dosage is automatically reseted by Python
 record(ai, "SR:C03-BI{DCCT:1}Dosage:1min-I_")
 {
         field(DESC, "average I over 1-min")
         field(PREC, "3")
         field(EGU,  "mAh")
 }
+record(calcout, "SR:C03-BI{DCCT:1}Dosage:1h-Calc_")
+{
+    field(DESC, "average I over 1-hour")
+    field(INPA, "SR:C03-BI{DCCT:1}Dosage:1h-I_")
+    field(INPB, "SR:C03-BI{DCCT:1}I:Real-I CP")
+    #C: for offset / compesation?
+    field(INPC, "0.0")
+    field(CALC, "A+B/3600.0+C")
+    field(OUT,  "SR:C03-BI{DCCT:1}Dosage:1h-I_ PP")  
+}
 record(ai, "SR:C03-BI{DCCT:1}Dosage:1h-I_")
 {
         field(DESC, "average I over 1-hour")
         field(PREC, "3")
         field(EGU,  "mAh")
+        field(PINI,"YES")
+        info(autosaveFields_pass0, "VAL")
+}
+record(calcout, "SR:C03-BI{DCCT:1}Dosage:1d-Calc_")
+{
+    field(DESC, "average I over 1-day")
+    field(INPA, "SR:C03-BI{DCCT:1}Dosage:1d-I_")
+    field(INPB, "SR:C03-BI{DCCT:1}I:Real-I CP")
+    #C: for offset / compesation?
+    field(INPC, "0.0")
+    field(CALC, "A+B/3600.0+C")
+    field(OUT,  "SR:C03-BI{DCCT:1}Dosage:1d-I_ PP")  
 }
 record(ai, "SR:C03-BI{DCCT:1}Dosage:1d-I_")
 {
         field(DESC, "average I over 1-day")
         field(PREC, "3")
         field(EGU,  "mAh")
+        field(PINI,"YES")
+        info(autosaveFields_pass0, "VAL")
+}
+record(calcout, "SR:C03-BI{DCCT:1}Dosage:1mon-Calc_")
+{
+    field(DESC, "average I over 1-month")
+    field(INPA, "SR:C03-BI{DCCT:1}Dosage:1mon-I_")
+    field(INPB, "SR:C03-BI{DCCT:1}I:Real-I CP")
+    #C: for offset / compesation?
+    field(INPC, "0.0")
+    field(CALC, "A+B/3600.0+C")
+    field(OUT,  "SR:C03-BI{DCCT:1}Dosage:1mon-I_ PP")  
 }
 record(ai, "SR:C03-BI{DCCT:1}Dosage:1mon-I_")
 {
         field(DESC, "average I over 1-month")
         field(PREC, "3")
         field(EGU,  "mAh")
+        field(PINI,"YES")
+        info(autosaveFields_pass0, "VAL")
 }
+#PreMon-PreDay: 02-17 (Feb 17, 2015)
+record(stringin, "SR:C03-BI{DCCT:1}Dos:PreDay-Sts")
+{
+  field(PINI,"YES")
+  field(VAL,"17")
+  info(autosaveFields_pass0, "VAL")
+}
+record(stringin, "SR:C03-BI{DCCT:1}Dos:PreMon-Sts")
+{
+  field(PINI,"YES")
+  field(VAL,"02")
+  info(autosaveFields_pass0, "VAL")
+}
+
 
 #Beam dosage (mAh) related to vacumm system: compress-record-based calculation
 record(compress,"SR:C03-BI{DCCT:1}Dosage:1min-Com_")
