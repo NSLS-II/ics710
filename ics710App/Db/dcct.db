@@ -48,15 +48,30 @@ record(ai,"${MON}IVSlope-Calc_")
    #field(FLNK, "${MON}QVSlope-Calc_.PROC")
 }
 
-#${MON}IOffset-SP is based on AveI
+#${MON}IOffset-SP is calculated in Python-based calibration ioc
 record(ao,"${MON}IOffset-SP")
 {
-   field(DESC,"beam current offset")
+   field(DESC,"Offset I0")
    field(PINI,"1")
    field(PREC,"3")
    field(EGU,"mA")
    info(autosaveFields_pass0, "VAL")
-   #field(FLNK,"BR-BI{DCCT:1}QOffset-I.PROC")
+}
+record(ao,"${MON}3rdOrderCoef-SP")
+{
+   field(DESC,"3dr order")
+   field(PINI,"1")
+   field(PREC,"3")
+   field(EGU,"mA/V^3")
+   info(autosaveFields_pass0, "VAL")
+}
+record(ao,"${MON}2ndOrderCoef-SP")
+{
+   field(DESC,"2nd order")
+   field(PINI,"1")
+   field(PREC,"3")
+   field(EGU,"mA/V^2")
+   info(autosaveFields_pass0, "VAL")
 }
 
 record(calc,"${MON}AveI-I")
@@ -64,7 +79,10 @@ record(calc,"${MON}AveI-I")
    field(DESC,"average current")
    field(INPA,"${MON}AveV-I CP")
    field(INPB,"${MON}IVSlope-Calc_")
-   field(CALC,"A*B")
+   field(INPC,"${MON}IOffset-SP")
+   field(INPD,"${MON}3rdOrderCoef-SP")
+   field(INPE,"${MON}2ndOrderCoef-SP")
+   field(CALC,"D*A*A*A+E*A*A+B*A+C")
    field(PREC,"5")
    field(EGU,"mA")
    field(FLNK,"${MON}AveI-Com_")
@@ -213,6 +231,7 @@ record(mbbi, "${MON}CalStatus-Sts")
 	field(THST, "Adjust cal Max. input")
 	field(FRST, "Adjust cal step size")
 	field(FVST, "Only 100 steps performed")
+	field(SXST, "DC calibrator not working")
 }
 record(ao, "${MON}CalStepSize-SP")
 {
@@ -228,47 +247,234 @@ record(ao, "${MON}CalMaxInput-SP")
         field(PREC, "1")
         field(VAL,  "90")
         field(PINI, "YES")
-	field(DRVH, "90")
+	field(DRVH, "1200")
         info(autosaveFields_pass0, "VAL DRVH")
 }
 record(waveform,"${MON}CalInput-Wf")
 {
-   field(DESC,"DC source input")
+   field(DESC,"DC source output")
    field(NELM,"100")
    field(FTVL,"DOUBLE")
    field(PREC,"3")
    field(EGU,"mA")
-    field(PINI, "1")
-    info(autosaveFields_pass0, "VAL")
+   field(PINI, "1")
+   info(autosaveFields_pass0, "VAL")
 }
 record(waveform,"${MON}CalOutput-Wf")
 {
-   field(DESC,"Readback data")
+   field(DESC,"Readback voltage")
    field(NELM,"100")
    field(FTVL,"DOUBLE")
    field(PREC,"3")
-   field(EGU,"mA")
-    field(PINI, "1")
-    info(autosaveFields_pass0, "VAL")
+   field(EGU,"V")
+   field(PINI, "1")
+   info(autosaveFields_pass0, "VAL")
 }
 #First-order coefficients by python-based polyfit
-record(ai, "${MON}CalP0-I")
+record(ai, "${MON}CalP0:200mA-I")
 {
+    field(DESC, "3rd order")
     field(PREC, "6")
+    field(EGU,  "mA/V^3")
+    field(PINI, "1")
+    info(autosaveFields_pass0, "VAL")
+    field(FLNK, "${MON}CalP0-I")
+}
+record(ai, "${MON}CalP0:2A-I")
+{
+    field(DESC, "3rd order")
+    field(PREC, "6")
+    field(EGU,  "mA/V^3")
+    field(PINI, "1")
+    info(autosaveFields_pass0, "VAL")
+    field(FLNK, "${MON}CalP0-I")
+}
+record(ai, "${MON}CalP1:200mA-I")
+{
+    field(DESC, "2nd order") 
+    field(PREC, "3")
+    field(EGU,  "mA/V^2")
+    field(PINI, "1")
+    info(autosaveFields_pass0, "VAL")
+    field(FLNK, "${MON}CalP1-I")
+}
+record(ai, "${MON}CalP1:2A-I")
+{
+    field(DESC, "2nd order") 
+    field(PREC, "3")
+    field(EGU,  "mA/V^2")
+    field(PINI, "1")
+    info(autosaveFields_pass0, "VAL")
+    field(FLNK, "${MON}CalP1-I")
+}
+record(ai, "${MON}CalP2:200mA-I")
+{
+    field(DESC, "1st order") 
+    field(PREC, "3")
     field(EGU,  "mA/V")
     field(PINI, "1")
     info(autosaveFields_pass0, "VAL")
+    field(FLNK, "${MON}CalP2-I")
 }
-record(ai, "${MON}CalP1-I")
-{ 
+record(ai, "${MON}CalP2:2A-I")
+{
+    field(DESC, "1st order") 
+    field(PREC, "3")
+    field(EGU,  "mA/V")
+    field(PINI, "1")
+    info(autosaveFields_pass0, "VAL")
+    field(FLNK, "${MON}CalP2-I")
+}
+record(ai, "${MON}CalP3:200mA-I")
+{
+    field(DESC, "Offset I0") 
     field(PREC, "3")
     field(EGU,  "mA")
     field(PINI, "1")
     info(autosaveFields_pass0, "VAL")
+    field(FLNK, "${MON}CalP3-I")
 }
+record(ai, "${MON}CalP3:2A-I")
+{
+    field(DESC, "Offset I0") 
+    field(PREC, "3")
+    field(EGU,  "mA")
+    field(PINI, "1")
+    info(autosaveFields_pass0, "VAL")
+    field(FLNK, "${MON}CalP3-I")
+}
+record(calc, "${MON}CalP0-I")
+{
+    field(DESC, "3rd order")
+    field(PREC, "3")
+    field(EGU,  "mA/V^3")
+    field(PINI, "1")
+    field(INPA, "${MON}CalP0:200mA-I")
+    field(INPB, "${MON}CalP0:2A-I")
+    #Range-Sel: 1-->2A; 2-->200mA
+    field(INPC, "${MON}Range-Sel")
+    field(CALC, "C==1?B:A")
+    info(autosaveFields_pass0, "VAL")
+}
+record(calc, "${MON}CalP1-I")
+{
+    field(DESC, "2nd order") 
+    field(PREC, "3")
+    field(EGU,  "mA/V^2")
+    field(PINI, "1")
+    field(INPA, "${MON}CalP1:200mA-I")
+    field(INPB, "${MON}CalP1:2A-I")
+    #Range-Sel: 1-->2A; 2-->200mA
+    field(INPC, "${MON}Range-Sel")
+    field(CALC, "C==1?B:A")
+    info(autosaveFields_pass0, "VAL")
+}
+record(calc, "${MON}CalP2-I")
+{
+    field(DESC, "1st order")
+    field(PREC, "3")
+    field(EGU,  "mA/V")
+    field(PINI, "1")
+    field(INPA, "${MON}CalP2:200mA-I")
+    field(INPB, "${MON}CalP2:2A-I")
+    #Range-Sel: 1-->2A; 2-->200mA
+    field(INPC, "${MON}Range-Sel")
+    field(CALC, "C==1?B:A")
+    info(autosaveFields_pass0, "VAL")
+}
+record(calc, "${MON}CalP3-I")
+{
+    field(DESC, "Offset I0")
+    field(PREC, "6")
+    field(EGU,  "mA")
+    field(PINI, "1")
+    field(INPA, "${MON}CalP3:200mA-I")
+    field(INPB, "${MON}CalP3:2A-I")
+    #Range-Sel: 1-->2A; 2-->200mA
+    field(INPC, "${MON}Range-Sel")
+    field(CALC, "C==1?B:A")
+    info(autosaveFields_pass0, "VAL")
+}
+
 record(calcout, "${MON}ApplyFit-Calc_")
 {
-    field(INPA, "${MON}CalP0-I")
-    field(CALC, "A")
+    field(INPA, "${MON}CalP2:200mA-I")
+    field(INPB, "${MON}CalP2:2A-I")
+    #Range-Sel: 1-->2A; 2-->200mA
+    field(INPC, "${MON}Range-Sel")
+    field(CALC, "C==1?B:A")
     field(OUT,  "${MON}IVSlope-Calc_ PP")
+    field(FLNK, "${MON}ApplyFit-Calc2_")
 }
+record(calcout, "${MON}ApplyFit-Calc2_")
+{
+    field(INPA, "${MON}CalP3:200mA-I")
+    field(INPB, "${MON}CalP3:2A-I")
+    #Range-Sel: 1-->2A; 2-->200mA
+    field(INPC, "${MON}Range-Sel")
+    field(CALC, "C==1?B:A")
+    field(OUT,  "${MON}IOffset-SP PP")
+    field(FLNK, "${MON}ApplyFit-Calc3_")
+}
+record(calcout, "${MON}ApplyFit-Calc3_")
+{
+    field(INPA, "${MON}CalP0:200mA-I")
+    field(INPB, "${MON}CalP0:2A-I")
+    #Range-Sel: 1-->2A; 2-->200mA
+    field(INPC, "${MON}Range-Sel")
+    field(CALC, "C==1?B:A")
+    field(OUT,  "${MON}3rdOrderCoef-SP PP")
+    field(FLNK, "${MON}ApplyFit-Calc4_")
+}
+record(calcout, "${MON}ApplyFit-Calc4_")
+{
+    field(INPA, "${MON}CalP1:200mA-I")
+    field(INPB, "${MON}CalP1:2A-I")
+    #Range-Sel: 1-->2A; 2-->200mA
+    field(INPC, "${MON}Range-Sel")
+    field(CALC, "C==1?B:A")
+    field(OUT,  "${MON}2ndOrderCoef-SP PP")
+}
+
+#auto switch coefficiency & offset based on DCCT range 
+record(calcout, "${MON}CoefSwitch-Calc_")
+{
+    field(INPA, "${MON}CalP2:200mA-I")
+    field(INPB, "${MON}CalP2:2A-I")
+    #Range-Sel: 1-->2A; 2-->200mA
+    field(INPC, "${MON}Range-Sel CP")
+    field(CALC, "C==1?B:A")
+    field(OUT,  "${MON}IVSlope-Calc_ PP")
+    field(FLNK, "${MON}OffsetSwitch-Calc_")
+}
+record(calcout, "${MON}OffsetSwitch-Calc_")
+{
+    field(INPA, "${MON}CalP3:200mA-I")
+    field(INPB, "${MON}CalP3:2A-I")
+    #Range-Sel: 1-->2A; 2-->200mA
+    field(INPC, "${MON}Range-Sel")
+    field(CALC, "C==1?B:A")
+    field(OUT,  "${MON}IOffset-SP PP")
+    field(FLNK, "${MON}P0Switch-Calc_")
+}
+record(calcout, "${MON}P0Switch-Calc_")
+{
+    field(INPA, "${MON}CalP0:200mA-I")
+    field(INPB, "${MON}CalP0:2A-I")
+    #Range-Sel: 1-->2A; 2-->200mA
+    field(INPC, "${MON}Range-Sel")
+    field(CALC, "C==1?B:A")
+    field(OUT,  "${MON}3rdOrderCoef-SP PP")
+    field(FLNK, "${MON}P1Switch-Calc_")
+}
+record(calcout, "${MON}P1Switch-Calc_")
+{
+    field(INPA, "${MON}CalP1:200mA-I")
+    field(INPB, "${MON}CalP1:2A-I")
+    #Range-Sel: 1-->2A; 2-->200mA
+    field(INPC, "${MON}Range-Sel")
+    field(CALC, "C==1?B:A")
+    field(OUT,  "${MON}2ndOrderCoef-SP PP")
+}
+
+
