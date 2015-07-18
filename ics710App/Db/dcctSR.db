@@ -58,7 +58,8 @@ record(calc,"SR:C03-BI{DCCT:1}Q:Total-I")
 record(compress, "SR:C03-BI{DCCT:1}I:Mean-Com_")
 {
     field(DESC, "data for lifetime calc")
-    field(INP,  "SR:C03-BI{DCCT:1}AveI-I CP")
+    #field(INP,  "SR:C03-BI{DCCT:1}AveI-I CP")
+    field(INP,  "SR:C03-BI{DCCT:1}I:Real-I CP")
     field(ALG,  "Circular Buffer")
     field(NSAM, "600")
 }
