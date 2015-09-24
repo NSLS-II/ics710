@@ -207,6 +207,49 @@ record(calc,"SR:C03-BI{DCCT:1}Q:Injected-I")
    #field(TSEL, "SR:C03-TS{EVR:G1A}EvtGCnt-I.TIME")
    field(FLNK, "SR:C03-BI{DCCT:1}QLoss-I")
 }
+#QSum:1h-I: one-hour integrated injected charge calculated by aSub
+record(aSub, "SR:C03-BI{DCCT:1}calc-ASub_") {
+  field(INAM, "InitTimedBuffer")
+  field(SNAM, "ProcTimedBuffer")
+  field(FTA , "DOUBLE") # Input value
+  field(FTB , "DOUBLE") # Time interval (sec)
+  field(FTC , "UCHAR")  # 1==Reset
+  field(FTVA, "DOUBLE") # Sum
+  field(FTVB, "ULONG")  # Invalid Count
+  field(FTVC, "ULONG")  # Total Count
+  field(INPA, "SR:C03-BI{DCCT:1}I:Injected-I CP")
+  field(INPB, "3600")
+  field(INPC, "0")
+  field(OUTA, "SR:C03-BI{DCCT:1}QSum:1h-Calc_.A PP MSS")
+  field(OUTB, "SR:C03-BI{DCCT:1}Cnt:bad-I PP MSS")
+  field(OUTC, "SR:C03-BI{DCCT:1}Cnt:total-I PP MSS")
+}
+
+record(calcout, "SR:C03-BI{DCCT:1}QSum:1h-Calc_")
+{
+    field(DESC, "one-hour integrated charge")
+    field(CALC, "A/1000.0")
+    field(OUT,  "SR:C03-BI{DCCT:1}QInjected:1h-I PP MSS")
+}
+
+record(ai, "SR:C03-BI{DCCT:1}QInjected:1h-I") {
+    field(DESC, "one-hour integrated charge")
+    field(PREC, "3")
+    field(EGU, "uC")
+    field(MDEL,"-1")
+    #field(HIGH,"324")
+    #field(HIHI,"360")
+    #field(HSV ,"MINOR")
+    #field(HHSV,"MAJOR")
+    info(autosaveFields_pass0, "HIGH HIHI")
+}
+
+record(longin, "SR:C03-BI{DCCT:1}Cnt:bad-I") {
+}
+
+record(longin, "SR:C03-BI{DCCT:1}Cnt:total-I") {
+}
+
 record(calc,"SR:C03-BI{DCCT:1}QLoss-I")
 {
    field(DESC,"charge loss")
