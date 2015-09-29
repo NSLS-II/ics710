@@ -48,6 +48,16 @@ record(ai, "SR:C03-BI{DCCT:1}I:Real-I")
     field(FLNK, "SR:C03-BI{DCCT:1}Dosage-Calc_")
 }
 
+record(calc, "SR:C03-BI{DCCT:1}Q:Real-I")
+{
+    field(DESC, "Real beam Q")
+    field(INPA, "SR:C03-BI{DCCT:1}I:Real-I CP")
+    field(INPB,"2640.0")
+    field(CALC,"A*B*0.001")   
+    field(PREC,"3")
+    field(EGU,"nC")
+}
+
 record(calcout, "SR:C03-BI{DCCT:1}Dosage-Calc_")
 {
     field(DESC, "accumulated dosage")
