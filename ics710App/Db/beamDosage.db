@@ -1,42 +1,43 @@
 # Real beam current: no DCCT internal test && no DCCT external test source
 ## && data > offset 
-record(calcout, "SR:C03-BI{DCCT:1}I:Real-Calc_")
-{
-    field(DESC, "Real beam?")
+#record(calcout, "SR:C03-BI{DCCT:1}I:Real-Calc_")
+#{
+    #field(DESC, "Real beam?")
     #DCCT test mode: 0 means Inactive
-    field(INPA, "SR:C03-BI{DCCT:1}I:Total-I CP")
-    field(INPB, "SR:C03-BI{DCCT:1}TestMode-Sel")
+    #field(INPA, "SR:C03-BI{DCCT:1}I:Total-I CP")
+    #field(INPB, "SR:C03-BI{DCCT:1}TestMode-Sel")
     #external DC calibrator
     #field(INPC, "SR:C03-BI{DCCT:1}Out:CalSrc-SP")
     #DCCT offset level
-    field(INPD, "0.03")
+    #field(INPD, "0.03")
     #RF status (RF power)
-    field(INPE, "SR-RF{Xmtr:C-Cav}Pwr:Fwd-I")
+    #field(INPE, "SR-RF{Xmtr:C-Cav}Pwr:Fwd-I")
     #P3 secured?
     #field(INPF, "SR-RF{Xmtr:D}State:Cur-Sts")
     #PDU port for the external DC calibrator 
     #field(INPG, "SR:C02-CS{PDU:RGG1}Sts:Outlet5-Sts")
     #field(CALC, "B=0&&C<0.001&&A>D&&E>1.0?A:0")
     #field(CALC, "B=0&&C<0.001&&A>D?A:0")
-    field(CALC, "B=0&&A>D?A:0")
+    #field(CALC, "B=0&&A>D?A:0")
     #field(OOPT, "When Non-zero")
     #field(DOPT, "Use OCAL")
     #field(OCAL, "A")
     #field(OUT,  "SR:C03-BI{DCCT:1}I:Real-I PP")
-    field(OUT,  "SR:C03-BI{DCCT:1}I:Real-Calc2_ PP")
-    info(autosaveFields_pass0, "D")
-}
+    #field(OUT,  "SR:C03-BI{DCCT:1}I:Real-Calc2_ PP")
+    #info(autosaveFields_pass0, "D")
+#}
 
-record(calcout, "SR:C03-BI{DCCT:1}I:Real-Calc2_")
+record(calcout, "SR:C03-BI{DCCT:1}I:Real-Calc_")
 {
     field(DESC, "Real beam?")
+    field(INPA, "SR:C03-BI{DCCT:1}I:Total-I CP")
     #1: 2 A; 2: 200 mA
-    field(INPA, "SR:C03-BI{DCCT:1}Range-Sel")
-    field(INPB, "SR:C03-BI{DCCT:1}I:Real-Calc2_")
+    field(INPB, "SR:C03-BI{DCCT:1}Range-Sel")
     field(INPC, "TossSbcmB-Calc")
-    field(INPD, "SR:C03-BI{DCCT:1}I:Real-Calc_.D")
-    field(CALC, "A=1&&C>D?C:B")
+    field(INPD, "0.03")
+    field(CALC, "B=1&&C>D?C:B=2&&A>D?A:0")
     field(OUT,  "SR:C03-BI{DCCT:1}I:Real-I PP")
+    info(autosaveFields_pass1, "D")
 }
 
 record(ai, "SR:C03-BI{DCCT:1}I:Real-I")
