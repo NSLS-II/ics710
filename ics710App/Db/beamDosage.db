@@ -58,6 +58,8 @@ record(calc, "SR:C03-BI{DCCT:1}Q:Real-I")
     field(CALC,"A*B*0.001")   
     field(PREC,"3")
     field(EGU,"nC")
+    field(MDEL, "-1")
+    field(ADEL, "-1")
 }
 
 record(calcout, "SR:C03-BI{DCCT:1}Dosage-Calc_")
