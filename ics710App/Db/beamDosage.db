@@ -31,8 +31,9 @@ record(calcout, "SR:C03-BI{DCCT:1}I:Real-Calc_")
 {
     field(DESC, "Real beam?")
     field(INPA, "SR:C03-BI{DCCT:1}I:Total-I CP")
-    #1: 2 A; 2: 200 mA
+    #1: >200mA; 2: 200 mA
     field(INPB, "SR:C03-BI{DCCT:1}Range-Sel")
+    #INPC can be changed from CSS: either TossSbcmB or TossSbcmA 
     field(INPC, "TossSbcmB-Calc")
     field(INPD, "0.03")
     field(CALC, "B=1&&C>D?C:B=2&&A>D?A:0")
