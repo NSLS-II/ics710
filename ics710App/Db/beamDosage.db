@@ -36,7 +36,8 @@ record(calcout, "SR:C03-BI{DCCT:1}I:Real-Calc_")
     #INPC can be changed from CSS: either TossSbcmB or TossSbcmA 
     field(INPC, "TossSbcmB-Calc")
     field(INPD, "0.03")
-    field(CALC, "B=1&&C>D?C:B=2&&A>D?A:0")
+    #field(CALC, "B=1&&C>D?C:B=2&&A>D?A:0")
+    field(CALC, "A>D?A:0")
     field(OUT,  "SR:C03-BI{DCCT:1}I:Real-I PP")
     info(autosaveFields_pass1, "D")
 }

@@ -100,8 +100,8 @@ record(calc, "${MON}Noise-I")
 
 record(acalcout, "$(MON)V-Acalc_")
 {
-        field(NELM, "180000")
-        field(NUSE, "180000")
+        field(NELM, "$(NELM)")
+        field(NUSE, "$(NELM)")
         field(INAA, "$(MON)V-Wf CP")
         field(INPA, "${MON}Noise-I")
         field(CALC, "AA-A")
@@ -111,7 +111,7 @@ record(acalcout, "$(MON)V-Acalc_")
 record(waveform, "${MON}V-Wf_")
 {
 	field(DESC, "wf of substracted noise")
-	field(NELM, "180000")
+	field(NELM, "$(NELM)")
 	field(FTVL, "DOUBLE")
 }
 
@@ -173,7 +173,7 @@ record(subArray,"$(MON)ROI${N}:V-Sub")
 {
         field(DESC, "subArray data")
         field(INP,"$(MON)V-Wf_ CP")
-        field(MALM,"180000")
+        field(MALM,"$(NELM)")
         field(INDX,"0")
         field(NELM,"10")
         field(FTVL,"DOUBLE")
@@ -182,8 +182,8 @@ record(subArray,"$(MON)ROI${N}:V-Sub")
 
 record(acalcout, "$(MON)ROI${N}:Mean-Acalc_")
 {
-        field(NELM, "180000")
-        field(NUSE, "180000")
+        field(NELM, "$(NELM)")
+        field(NUSE, "$(NELM)")
         field(INAA, "$(MON)ROI${N}:V-Sub")
         field(CALC, "AVG(AA)")
         field(OUT,  "${MON}AveVROI${N}-I PP")
@@ -198,8 +198,8 @@ record(ai, "${MON}AveVROI${N}-I")
 
 record(acalcout, "$(MON)ROI${N}:Std-Acalc_")
 {
-        field(NELM, "180000")
-        field(NUSE, "180000")
+        field(NELM, "$(NELM)")
+        field(NUSE, "$(NELM)")
         field(INAA, "$(MON)ROI${N}:V-Sub")
         field(CALC, "STD(AA)")
 	field(OUT,  "${MON}StdVROI${N}-I.A")
@@ -216,8 +216,8 @@ record(calc, "${MON}StdVROI${N}-I")
 
 record(acalcout, "$(MON)ROI${N}:Sum-Acalc_")
 {
-        field(NELM, "180000")
-        field(NUSE, "180000")
+        field(NELM, "$(NELM)")
+        field(NUSE, "$(NELM)")
         field(INAA, "$(MON)ROI${N}:V-Sub")
         field(CALC, "SUM(AA)")
         field(OUT,  "${MON}SumVROI${N}-I PP")
